@@ -190,7 +190,9 @@ This is worth remembering for future loops: if typecheck complains about missing
 - `.gitignore` behavior in Pinata-created instance repos can hide expected app files.
 - Tailwind-style default setups can be risky if generated ignores or content paths are not explicit.
 - OpenClaw response/webhook routes require both app proxy code and `openclaw.json` gateway config.
-- It is not obvious which runtime environment variables Pinata injects by default, including whether there is a canonical public base URL for the hosted route. Developers may need to inspect the runtime environment manually from a terminal until this is documented or surfaced.
+- Pinata injects useful runtime variables, including `AGENT_ID`, `AGENT_NAME`, `AGENT_EMOJI`, `AGENT_VIBE`, `OPENCLAW_GATEWAY_TOKEN`, `AGENTS_API_URL`, `USER_NAME`, `USER_EMAIL`, and `HOSTNAME`.
+- `AGENTS_API_URL` appears to point at the Pinata agents API, not the hosted app route.
+- A hosted app URL can be derived from the observed `HOSTNAME` pattern: `xwvqggt3-0` maps to `https://xwvqggt3.agents.pinata.cloud/app`. This is useful for agents that want to direct chat users to the dashboard after updating data, but it should be documented officially or surfaced in the UI.
 - Local Next typecheck can be confused by stale `.next/types` after route changes.
 
 ## Recommended Future Lab Flow

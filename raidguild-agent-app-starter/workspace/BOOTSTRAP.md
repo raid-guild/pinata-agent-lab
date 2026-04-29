@@ -24,7 +24,9 @@ Raid Guild cohort note:
 
 Environment note:
 
-- Do not invent the public app host. If the user needs a full URL, first direct them to the Routes tab. If they have terminal access and want to inspect injected runtime environment variables, suggest checking the environment explicitly before relying on a variable name.
+- In hosted Pinata instances, `HOSTNAME` may follow a pattern like `xwvqggt3-0`, where the public route host is `https://xwvqggt3.agents.pinata.cloud/app`. If `HOSTNAME` matches that pattern, you may share the derived `/app` URL with the user. If the pattern does not match, direct them to the Routes tab instead of inventing a host.
+- `AGENTS_API_URL` points at the Pinata agents API and should not be treated as the hosted app base URL.
+- If the user has terminal access and wants to inspect injected runtime environment variables, suggest checking the environment explicitly before relying on a variable name.
 
 Then ask:
 
