@@ -65,6 +65,8 @@ export default function Home() {
       quests: bundle.quests.filter((quest) => quest.status === item)
     }));
   }, [bundle.quests]);
+  const totalPoints = useMemo(() => bundle.quests.reduce((sum, quest) => sum + quest.points, 0), [bundle.quests]);
+  const shippedPercent = totalPoints ? Math.round((bundle.recap.pointsShipped / totalPoints) * 100) : 0;
 
   async function loadBundle(questId: number | null) {
     const suffix = questId ? `?questId=${questId}` : "";
@@ -78,39 +80,54 @@ export default function Home() {
 
   return (
     <main className="shell">
-      <header className="topbar">
+      <section className="guildHeader">
         <div>
-          <p className="eyebrow">Read-only guild coordination</p>
+          <p className="eyebrow">Raid report</p>
           <h1>Community Quest Board</h1>
+          <p>Read-only mission control for guild work, owners, outcomes, and weekly coordination.</p>
         </div>
-        <div className="metrics" aria-label="Weekly metrics">
-          <span><strong>{bundle.recap.pointsShipped}</strong> points shipped</span>
-          <span><strong>{bundle.recap.inFlight.length}</strong> in flight</span>
-          <span><strong>{bundle.recap.open.length}</strong> open</span>
+        <div className="xpPanel" aria-label="Guild progress">
+          <span>Guild XP</span>
+          <strong>{bundle.recap.pointsShipped}/{totalPoints || 0}</strong>
+          <div className="xpBar"><span style={{ width: `${Math.min(100, shippedPercent)}%` }} /></div>
+          <em>{shippedPercent}% shipped</em>
         </div>
-      </header>
+      </section>
 
-      <section className="board" aria-label="Quest board columns">
+      <section className="statusBanners" aria-label="Quest status counts">
         {columns.map((column) => (
-          <section className="column" key={column.status}>
-            <div className="columnHeader">
+          <button
+            className={`banner ${column.status}`}
+            key={column.status}
+            onClick={() => column.quests[0] ? setSelectedId(column.quests[0].id) : undefined}
+            type="button"
+          >
+            <span>{column.status}</span>
+            <strong>{column.quests.length}</strong>
+          </button>
+        ))}
+      </section>
+
+      <section className="questMap" aria-label="Quest bounty board">
+        {columns.map((column) => (
+          <section className={`questZone ${column.status}`} key={column.status}>
+            <div className="zoneHeader">
               <h2>{column.status}</h2>
-              <span>{column.quests.length}</span>
+              <span>{column.quests.reduce((sum, quest) => sum + quest.points, 0)} pts</span>
             </div>
-            <div className="questList">
+            <div className="bounties">
               {column.quests.map((quest) => (
                 <button
-                  className={quest.id === selectedQuest?.id ? "quest active" : "quest"}
+                  className={quest.id === selectedQuest?.id ? "bounty active" : "bounty"}
                   key={quest.id}
                   onClick={() => setSelectedId(quest.id)}
                   type="button"
                 >
-                  <span className="questTop">
-                    <strong>{quest.title}</strong>
-                    <em>{quest.points} pts</em>
-                  </span>
+                  <span className="rank">{rankForPoints(quest.points)}</span>
+                  <strong>{quest.title}</strong>
                   <span>{quest.summary}</span>
-                  <span className="questMeta">
+                  <span className="bountyMeta">
+                    <em>{quest.points} pts</em>
                     <small>{quest.owner || "Unclaimed"}</small>
                     <time>{formatDate(quest.dueDate)}</time>
                   </span>
@@ -121,32 +138,32 @@ export default function Home() {
         ))}
       </section>
 
-      <section className="workspace">
-        <section className="panel detail">
+      <section className="missionGrid">
+        <section className="briefing">
           {selectedQuest ? (
             <>
-              <div className="detailHead">
+              <div className="briefingHead">
                 <div>
-                  <p className="eyebrow">{selectedQuest.status}</p>
+                  <p className="eyebrow">{selectedQuest.status} mission</p>
                   <h2>{selectedQuest.title}</h2>
                   <p>{selectedQuest.summary}</p>
                 </div>
-                <span className="status">{selectedQuest.owner || "Unclaimed"}</span>
+                <span>{rankForPoints(selectedQuest.points)}</span>
               </div>
 
               <div className="questStats" aria-label="Selected quest status">
-                <div>
+                <article>
                   <span>Owner</span>
                   <strong>{selectedQuest.owner || "Unclaimed"}</strong>
-                </div>
-                <div>
+                </article>
+                <article>
                   <span>Due</span>
                   <strong>{formatDate(selectedQuest.dueDate)}</strong>
-                </div>
-                <div>
-                  <span>Points</span>
-                  <strong>{selectedQuest.points}</strong>
-                </div>
+                </article>
+                <article>
+                  <span>Reward</span>
+                  <strong>{selectedQuest.points} pts</strong>
+                </article>
               </div>
 
               <div className="outcome">
@@ -154,8 +171,8 @@ export default function Home() {
                 <strong>{selectedQuest.outcome || "No outcome recorded yet."}</strong>
               </div>
 
-              <div className="timeline">
-                <h3>Updates</h3>
+              <div className="updates">
+                <h3>Mission log</h3>
                 {bundle.updates.length > 0 ? (
                   bundle.updates.map((item) => (
                     <article key={item.id}>
@@ -170,16 +187,16 @@ export default function Home() {
               </div>
             </>
           ) : (
-            <p>No quests yet.</p>
+            <p className="empty">No quests yet.</p>
           )}
         </section>
 
-        <aside className="panel recap">
-          <div className="panelHeader">
-            <h2>Weekly recap</h2>
+        <aside className="ledger">
+          <div className="sectionHead">
+            <h2>Guild ledger</h2>
             <span>{bundle.recap.completed.length} done</span>
           </div>
-          <div className="recapBlock">
+          <section>
             <h3>Shipped</h3>
             {bundle.recap.completed.length > 0 ? (
               bundle.recap.completed.map((quest) => (
@@ -191,8 +208,8 @@ export default function Home() {
             ) : (
               <p className="empty">No completed quests yet.</p>
             )}
-          </div>
-          <div className="recapBlock">
+          </section>
+          <section>
             <h3>Next asks</h3>
             {bundle.recap.open.slice(0, 3).map((quest) => (
               <button key={quest.id} onClick={() => setSelectedId(quest.id)} type="button">
@@ -200,20 +217,29 @@ export default function Home() {
                 <span>{quest.points} points available</span>
               </button>
             ))}
-          </div>
-          <div className="recapBlock">
-            <h3>In review</h3>
+          </section>
+          <section>
+            <h3>In flight</h3>
             {bundle.recap.inFlight.slice(0, 4).map((quest) => (
               <button key={quest.id} onClick={() => setSelectedId(quest.id)} type="button">
                 <strong>{quest.title}</strong>
                 <span>{quest.status} by {quest.owner || "unassigned"}</span>
               </button>
             ))}
-          </div>
+          </section>
         </aside>
       </section>
+
+      <footer className="cohortFooter">built by the RaidGuild cohort</footer>
     </main>
   );
+}
+
+function rankForPoints(points: number) {
+  if (points >= 8) return "S";
+  if (points >= 5) return "A";
+  if (points >= 3) return "B";
+  return "C";
 }
 
 function formatDate(value: string) {
