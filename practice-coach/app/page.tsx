@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Goal = {
   id: number;
@@ -51,32 +51,17 @@ const emptyBundle: Bundle = {
 export default function Home() {
   const [bundle, setBundle] = useState<Bundle>(emptyBundle);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [minutes, setMinutes] = useState(30);
-  const [drill, setDrill] = useState("");
-  const [reflection, setReflection] = useState("");
-  const [nextDrill, setNextDrill] = useState("");
-  const [nextSessionDate, setNextSessionDate] = useState(today());
-  const [plan, setPlan] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadBundle(selectedId);
   }, [selectedId]);
 
-  useEffect(() => {
-    if (bundle.selected) {
-      setMinutes(bundle.selected.targetMinutes);
-      setDrill(bundle.selected.nextDrill);
-      setNextDrill(bundle.selected.nextDrill);
-      setNextSessionDate(bundle.selected.nextSessionDate || today());
-      setPlan(`${bundle.selected.targetMinutes} minutes for ${bundle.selected.discipline}:\n\n1. Warm up for 5 minutes.\n2. Work the focus: ${bundle.selected.focus}.\n3. Close by writing one adjustment for the next session.`);
-    }
-  }, [bundle.selected]);
-
   const selectedGoal = bundle.selected;
   const totals = useMemo(() => {
     const minutesLogged = bundle.sessions.reduce((sum, session) => sum + session.minutes, 0);
+    const averageMinutes = bundle.sessions.length > 0 ? Math.round(minutesLogged / bundle.sessions.length) : 0;
     return {
+      averageMinutes,
       minutesLogged,
       sessionCount: bundle.sessions.length
     };
@@ -92,58 +77,18 @@ export default function Home() {
     }
   }
 
-  async function submitSession(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedGoal) {
-      return;
-    }
-
-    setIsSaving(true);
-    const response = await fetch("/app/api/practice", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        goalId: selectedGoal.id,
-        minutes,
-        drill,
-        reflection,
-        nextDrill,
-        nextSessionDate
-      })
-    });
-    const nextBundle = (await response.json()) as Bundle;
-    setBundle(nextBundle);
-    setReflection("");
-    setIsSaving(false);
-  }
-
-  async function savePlan() {
-    if (!selectedGoal) {
-      return;
-    }
-
-    setIsSaving(true);
-    const response = await fetch("/app/api/plans", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ goalId: selectedGoal.id, body: plan })
-    });
-    const nextBundle = (await response.json()) as Bundle;
-    setBundle(nextBundle);
-    setIsSaving(false);
-  }
-
   return (
     <main className="shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">Skill-building companion</p>
+          <p className="eyebrow">Read-only training status</p>
           <h1>Practice Coach</h1>
         </div>
         <div className="metrics" aria-label="Selected goal progress">
           <span><strong>{selectedGoal?.currentStreak ?? 0}</strong> day streak</span>
           <span><strong>{selectedGoal?.bestStreak ?? 0}</strong> best</span>
           <span><strong>{totals.minutesLogged}</strong> min logged</span>
+          <span><strong>{totals.averageMinutes}</strong> avg min</span>
         </div>
       </header>
 
@@ -181,47 +126,40 @@ export default function Home() {
                 <span className="status">{selectedGoal.targetMinutes} min target</span>
               </div>
 
-              <div className="nextDrill">
-                <span>Suggested next drill</span>
-                <strong>{selectedGoal.nextDrill || "Choose a focused drill before the next session."}</strong>
-                <time>{selectedGoal.nextSessionDate || "Unscheduled"}</time>
+              <div className="trainingGrid" aria-label="Selected goal status">
+                <div className="trainingMetric">
+                  <span>Target</span>
+                  <strong>{selectedGoal.targetMinutes} min</strong>
+                  <time>{selectedGoal.cadence}</time>
+                </div>
+                <div className="trainingMetric">
+                  <span>Streak</span>
+                  <strong>{selectedGoal.currentStreak} days</strong>
+                  <time>Best {selectedGoal.bestStreak}</time>
+                </div>
+                <div className="trainingMetric highlight">
+                  <span>Due practice</span>
+                  <strong>{selectedGoal.nextSessionDate || "Unscheduled"}</strong>
+                  <time>{selectedGoal.nextDrill || "No drill queued"}</time>
+                </div>
               </div>
 
-              <form className="form" onSubmit={submitSession}>
-                <div className="formRow">
-                  <label>
-                    Minutes
-                    <input min="1" type="number" value={minutes} onChange={(event) => setMinutes(Number(event.target.value))} />
-                  </label>
-                  <label>
-                    Next session
-                    <input type="date" value={nextSessionDate} onChange={(event) => setNextSessionDate(event.target.value)} />
-                  </label>
-                </div>
-                <label>
-                  Drill practiced
-                  <input value={drill} onChange={(event) => setDrill(event.target.value)} placeholder="Name the exercise, prompt, workout, or focus block." />
-                </label>
-                <label>
-                  Reflection
-                  <textarea value={reflection} onChange={(event) => setReflection(event.target.value)} placeholder="What improved, what resisted, and what should change next time?" />
-                </label>
-                <label>
-                  Next drill
-                  <textarea value={nextDrill} onChange={(event) => setNextDrill(event.target.value)} />
-                </label>
-                <button disabled={isSaving || !drill.trim() || !reflection.trim()} type="submit">Log session</button>
-              </form>
-
               <div className="timeline">
-                <h3>Recent sessions ({totals.sessionCount})</h3>
-                {bundle.sessions.map((item) => (
-                  <article key={item.id}>
-                    <time>{formatDate(item.practicedOn)}</time>
-                    <strong>{item.minutes} min · {item.drill}</strong>
-                    <p>{item.reflection}</p>
-                  </article>
-                ))}
+                <div className="panelHeader">
+                  <h3>Recent sessions</h3>
+                  <span className="countTag">{totals.sessionCount}</span>
+                </div>
+                {bundle.sessions.length > 0 ? (
+                  bundle.sessions.map((item) => (
+                    <article key={item.id}>
+                      <time>{formatDate(item.practicedOn)}</time>
+                      <strong>{item.minutes} min · {item.drill}</strong>
+                      <p>{item.reflection}</p>
+                    </article>
+                  ))
+                ) : (
+                  <p className="empty">No sessions logged for this goal.</p>
+                )}
               </div>
             </>
           ) : (
@@ -233,39 +171,49 @@ export default function Home() {
           <section className="panel">
             <div className="panelHeader">
               <h2>Due today</h2>
-              <span>{bundle.dueGoals.length}</span>
+              <span className="countTag">{bundle.dueGoals.length}</span>
             </div>
             <div className="dueList">
-              {bundle.dueGoals.map((goal) => (
-                <button key={goal.id} onClick={() => setSelectedId(goal.id)} type="button">
-                  <strong>{goal.discipline}</strong>
-                  <span>{goal.nextDrill}</span>
-                </button>
-              ))}
+              {bundle.dueGoals.length > 0 ? (
+                bundle.dueGoals.map((goal) => (
+                  <button key={goal.id} onClick={() => setSelectedId(goal.id)} type="button">
+                    <strong>{goal.discipline}</strong>
+                    <span>{goal.nextDrill}</span>
+                    <time>{goal.nextSessionDate}</time>
+                  </button>
+                ))
+              ) : (
+                <p className="empty">No practice blocks are due today.</p>
+              )}
             </div>
           </section>
 
           <section className="panel">
-            <h2>Next session plan</h2>
-            <textarea className="planBox" value={plan} onChange={(event) => setPlan(event.target.value)} />
-            <button disabled={isSaving || !plan.trim()} onClick={savePlan} type="button">Store plan</button>
+            <div className="panelHeader">
+              <h2>Stored plans</h2>
+              <span className="countTag">{bundle.plans.length}</span>
+            </div>
             <div className="plans">
-              {bundle.plans.map((item) => (
-                <article key={item.id}>
-                  <strong>{item.title}</strong>
-                  <p>{item.body}</p>
-                </article>
-              ))}
+              {bundle.plans.length > 0 ? (
+                bundle.plans.map((item) => (
+                  <article key={item.id}>
+                    <div>
+                      <strong>{item.title}</strong>
+                      <span className="tag">{item.status}</span>
+                    </div>
+                    <p>{item.body}</p>
+                    <time>{formatDate(item.createdAt)}</time>
+                  </article>
+                ))
+              ) : (
+                <p className="empty">No next-session plans stored.</p>
+              )}
             </div>
           </section>
         </aside>
       </section>
     </main>
   );
-}
-
-function today() {
-  return new Date().toISOString().slice(0, 10);
 }
 
 function formatDate(value: string) {

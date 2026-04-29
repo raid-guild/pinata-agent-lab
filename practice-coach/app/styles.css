@@ -5,9 +5,10 @@
   --ink: #1c2420;
   --muted: #657169;
   --line: #d8ded8;
-  --accent: #2563eb;
-  --accent-strong: #1e40af;
-  --gold: #b45309;
+  --accent: #f04f2f;
+  --accent-strong: #b9321b;
+  --track: #101820;
+  --gold: #c58a1c;
   --shadow: 0 16px 45px rgba(30, 43, 36, 0.08);
 }
 
@@ -23,8 +24,7 @@ body {
 }
 
 button,
-input,
-textarea {
+time {
   font: inherit;
 }
 
@@ -85,12 +85,28 @@ h3 {
 }
 
 .metrics span,
-.status {
-  background: #e8f3ef;
-  border: 1px solid #bfddd5;
+.status,
+.tag,
+.countTag {
+  background: #fff1e8;
+  border: 1px solid #f3c6b4;
   border-radius: 999px;
   color: var(--accent-strong);
+  white-space: nowrap;
+}
+
+.metrics span,
+.status {
   padding: 8px 12px;
+}
+
+.tag,
+.countTag {
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 700;
+  padding: 6px 10px;
+  text-transform: uppercase;
 }
 
 .grid {
@@ -108,8 +124,7 @@ h3 {
 }
 
 .panelHeader,
-.detailHead,
-.formRow {
+.detailHead {
   align-items: flex-start;
   display: flex;
   gap: 14px;
@@ -138,8 +153,8 @@ h3 {
 }
 
 .goal.active {
-  background: #eef4ff;
-  border-color: #9db7ff;
+  background: #fff1e8;
+  border-color: #f0a083;
 }
 
 .goal span {
@@ -151,8 +166,11 @@ h3 {
 .goal em,
 .detailHead p,
 .timeline time,
-.nextDrill span,
-.nextDrill time {
+.trainingMetric span,
+.trainingMetric time,
+.plans time,
+.dueList time,
+.empty {
   color: var(--muted);
 }
 
@@ -175,64 +193,42 @@ h3 {
   margin-bottom: 8px;
 }
 
-.nextDrill {
-  background: #fff8e8;
-  border: 1px solid #f0d8a8;
+.trainingGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.trainingMetric {
+  background: #f7f8f5;
+  border: 1px solid var(--line);
   border-radius: 8px;
   display: grid;
   gap: 6px;
-  margin-bottom: 18px;
+  min-height: 128px;
   padding: 14px;
 }
 
-.nextDrill strong {
-  color: #6f430a;
+.trainingMetric strong {
+  color: var(--track);
+  font-size: 1.45rem;
+  line-height: 1;
 }
 
-.form {
-  border-bottom: 1px solid var(--line);
-  display: grid;
-  gap: 14px;
-  margin-bottom: 18px;
-  padding-bottom: 18px;
+.trainingMetric.highlight {
+  background: #101820;
+  border-color: #101820;
 }
 
-label {
-  color: var(--muted);
-  display: grid;
-  font-size: 0.86rem;
-  gap: 6px;
+.trainingMetric.highlight strong,
+.trainingMetric.highlight span,
+.trainingMetric.highlight time {
+  color: #ffffff;
 }
 
-input,
-textarea {
-  background: #fbfcfb;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  color: var(--ink);
-  min-width: 0;
-  padding: 10px 12px;
-  width: 100%;
-}
-
-textarea {
-  min-height: 110px;
-  resize: vertical;
-}
-
-button[type="submit"],
-.panel > button {
-  background: var(--accent);
-  border: 0;
-  border-radius: 6px;
-  color: white;
-  font-weight: 700;
-  padding: 11px 14px;
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
+.trainingMetric.highlight time {
+  color: #f6d5c9;
 }
 
 .timeline {
@@ -245,6 +241,13 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px;
+}
+
+.plans article div {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
 }
 
 .timeline p,
@@ -275,13 +278,9 @@ button:disabled {
   text-align: left;
 }
 
-.dueList span {
+.dueList span,
+.dueList time {
   color: var(--muted);
-}
-
-.planBox {
-  margin: 14px 0 10px;
-  min-height: 160px;
 }
 
 .plans {
@@ -299,6 +298,10 @@ button:disabled {
     grid-column: 1 / -1;
     grid-template-columns: 1fr 1fr;
   }
+
+  .trainingGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 760px) {
@@ -308,8 +311,7 @@ button:disabled {
 
   .topbar,
   .grid,
-  .sideStack,
-  .formRow {
+  .sideStack {
     display: grid;
     grid-template-columns: 1fr;
   }

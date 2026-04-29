@@ -1,9 +1,47 @@
 {
-  "name": "Personal Practice Coach",
-  "slug": "practice-coach",
-  "description": "A habit and skill-building companion for logging focused practice, reflections, streaks, and next-session plans.",
-  "entrypoint": "/app",
-  "runtime": "nextjs",
-  "features": ["practice_goals", "sessions", "streaks", "reflections", "next_session_plans"],
-  "requiresSecrets": false
+  "$schema": "https://pinata.cloud/schemas/template-manifest.json",
+  "version": "0.1.0",
+  "agent": {
+    "name": "Practice Coach Agent",
+    "description": "Chat-first training agent that logs focused practice, keeps streak context current, and stores next-session plans.",
+    "workspace": "workspace"
+  },
+  "template": {
+    "name": "Personal Practice Coach",
+    "slug": "practice-coach",
+    "description": "A read-only training status dashboard backed by local SQLite and operated through chat/API writes.",
+    "runtime": "nextjs",
+    "database": "sqlite",
+    "features": ["practice_goals", "sessions", "streaks", "due_practice", "next_session_plans"]
+  },
+  "secrets": [
+    {
+      "name": "APP_PASSWORD",
+      "required": false,
+      "description": "Optional password for HTTP Basic Auth on /app and /app/api/*."
+    }
+  ],
+  "scripts": {
+    "install": "npm install",
+    "dev": "npm run dev",
+    "build": "npm run build",
+    "start": "npm run start",
+    "typecheck": "npm run typecheck"
+  },
+  "routes": {
+    "app": "/app",
+    "health": "/app/api/health",
+    "api": [
+      {
+        "path": "/app/api/practice",
+        "methods": ["GET", "POST"],
+        "description": "Read practice status or log a completed practice session."
+      },
+      {
+        "path": "/app/api/plans",
+        "methods": ["POST"],
+        "description": "Store a next-session plan for a practice goal."
+      }
+    ]
+  }
 }
