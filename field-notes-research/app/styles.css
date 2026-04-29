@@ -1,14 +1,15 @@
 :root {
   color-scheme: light;
-  --bg: #f6f5f1;
+  --bg: #f7f4ed;
   --panel: #ffffff;
-  --ink: #1c2420;
-  --muted: #657169;
-  --line: #d8ded8;
-  --accent: #2563eb;
-  --accent-strong: #1d4ed8;
-  --gold: #a16207;
-  --shadow: 0 16px 45px rgba(30, 43, 36, 0.08);
+  --paper: #fffdf8;
+  --ink: #171717;
+  --muted: #66625a;
+  --line: #ded7ca;
+  --accent: #b91c1c;
+  --accent-strong: #7f1d1d;
+  --gold: #946a20;
+  --shadow: 0 18px 36px rgba(41, 35, 27, 0.08);
 }
 
 * {
@@ -19,13 +20,12 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Georgia, "Times New Roman", serif;
 }
 
 button,
-input,
 select,
-textarea {
+input {
   font: inherit;
 }
 
@@ -48,7 +48,8 @@ button {
 }
 
 .eyebrow {
-  color: var(--accent-strong);
+  color: var(--accent);
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0;
@@ -64,17 +65,19 @@ p {
 }
 
 h1 {
-  font-size: clamp(2rem, 5vw, 4.8rem);
-  line-height: 0.92;
+  font-size: clamp(2.4rem, 5vw, 5.6rem);
+  line-height: 0.95;
   margin-bottom: 0;
 }
 
 h2 {
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 1.2rem;
   margin-bottom: 0;
 }
 
 h3 {
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 1rem;
 }
 
@@ -87,21 +90,51 @@ h3 {
 
 .metrics span,
 .status {
-  background: #e8f3ef;
-  border: 1px solid #bfddd5;
+  background: #fff8e7;
+  border: 1px solid #e1cfa6;
   border-radius: 999px;
-  color: var(--accent-strong);
+  color: #5b3d0b;
+  font-family: Arial, Helvetica, sans-serif;
   padding: 8px 12px;
+}
+
+.summaryBand {
+  align-items: stretch;
+  background: var(--paper);
+  border-block: 3px solid var(--ink);
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  margin-bottom: 22px;
+  padding: 18px 0;
+}
+
+.summaryStats {
+  border-left: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+  padding-left: 18px;
+}
+
+.summaryStats span {
+  align-items: center;
+  background: #f3eee3;
+  border: 1px solid var(--line);
+  display: flex;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  min-height: 48px;
+  padding: 10px 12px;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr) 340px;
+  grid-template-columns: 280px minmax(0, 1fr) 320px;
   gap: 18px;
 }
 
 .panel {
-  background: var(--panel);
+  background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: var(--shadow);
@@ -109,8 +142,7 @@ h3 {
 }
 
 .panelHeader,
-.detailHead,
-.formRow {
+.detailHead {
   align-items: flex-start;
   display: flex;
   gap: 14px;
@@ -123,34 +155,25 @@ h3 {
 }
 
 .detailHead {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 3px solid var(--ink);
   margin-bottom: 18px;
   padding-bottom: 18px;
 }
 
 .detailHead h2 {
-  font-size: 2rem;
+  font-size: 1.8rem;
   margin-bottom: 8px;
-}
-
-.form {
-  border-bottom: 1px solid var(--line);
-  display: grid;
-  gap: 14px;
-  margin-bottom: 18px;
-  padding-bottom: 18px;
 }
 
 label {
   color: var(--muted);
   display: grid;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 0.86rem;
   gap: 6px;
 }
 
-input,
-select,
-textarea {
+select {
   background: #fbfcfb;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -160,25 +183,14 @@ textarea {
   width: 100%;
 }
 
-textarea {
-  min-height: 110px;
-  resize: vertical;
-}
-
-button[type="submit"],
-.panel > button,
 .panelHeader button {
-  background: var(--accent);
-  border: 0;
+  background: var(--ink);
+  border: 1px solid var(--ink);
   border-radius: 6px;
   color: white;
+  font-family: Arial, Helvetica, sans-serif;
   font-weight: 700;
-  padding: 11px 14px;
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
+  padding: 8px 10px;
 }
 
 .timeline {
@@ -189,6 +201,7 @@ button:disabled {
 .timeline article,
 .themeList article,
 .questionList article {
+  background: #fffefa;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px;
@@ -232,10 +245,11 @@ button:disabled {
 .noteHead span,
 .noteHead time {
   color: var(--muted);
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 0.86rem;
 }
 
-.capture {
+.dossier {
   min-height: 680px;
 }
 
@@ -253,11 +267,23 @@ button:disabled {
 }
 
 blockquote {
-  background: #eef4ff;
-  border-left: 4px solid #93b4f8;
-  color: #1e3a8a;
+  background: #f3eee3;
+  border-left: 4px solid var(--accent);
+  color: #3b3024;
+  font-size: 1.05rem;
+  line-height: 1.45;
   margin: 12px 0;
   padding: 10px 12px;
+}
+
+.themeTag {
+  color: var(--accent-strong);
+  display: inline-block;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-top: 12px;
+  text-transform: uppercase;
 }
 
 .chips {
@@ -268,10 +294,11 @@ blockquote {
 }
 
 .chips span {
-  background: #f1f5f9;
-  border: 1px solid #d6dee8;
+  background: #f8f0df;
+  border: 1px solid #e3d2ae;
   border-radius: 999px;
-  color: #334155;
+  color: #5b3d0b;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 0.82rem;
   padding: 5px 9px;
 }
@@ -283,16 +310,22 @@ blockquote {
 }
 
 .summaryDraft {
-  background: #fbfcfb;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   color: var(--ink);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
   line-height: 1.55;
-  margin: 14px 0 0;
+  margin: 0;
   overflow-wrap: anywhere;
-  padding: 12px;
+  padding: 0;
   white-space: pre-wrap;
+}
+
+.empty {
+  color: var(--muted);
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 @media (max-width: 1050px) {
@@ -300,9 +333,20 @@ blockquote {
     grid-template-columns: 260px minmax(0, 1fr);
   }
 
+  .summaryBand {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryStats {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    grid-template-columns: 1fr 1fr;
+    padding-left: 0;
+    padding-top: 14px;
+  }
+
   .sideStack {
     grid-column: 1 / -1;
-    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -314,7 +358,7 @@ blockquote {
   .topbar,
   .grid,
   .sideStack,
-  .formRow {
+  .summaryStats {
     display: grid;
     grid-template-columns: 1fr;
   }
@@ -323,7 +367,7 @@ blockquote {
     justify-content: start;
   }
 
-  .capture {
+  .dossier {
     min-height: 0;
   }
 }

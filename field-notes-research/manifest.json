@@ -1,9 +1,42 @@
 {
-  "name": "Field Notes Research Agent",
-  "slug": "field-notes-research",
-  "description": "A research notebook for observations from calls, fieldwork, interviews, Discord chats, and community sessions.",
-  "entrypoint": "/app",
-  "runtime": "nextjs",
-  "features": ["notes", "sources", "tags", "quotes", "themes", "follow_up_questions", "summary_draft"],
-  "requiresSecrets": false
+  "$schema": "https://pinata.cloud/schemas/template-manifest.json",
+  "version": "0.1.0",
+  "agent": {
+    "name": "Field Notes Research Agent",
+    "description": "Chat-first research agent that records observations, preserves source evidence, and keeps themes and follow-up questions current.",
+    "workspace": "workspace"
+  },
+  "template": {
+    "name": "Field Notes Research",
+    "slug": "field-notes-research",
+    "description": "A read-only research dossier backed by local SQLite and operated through chat/API writes.",
+    "runtime": "nextjs",
+    "database": "sqlite",
+    "features": ["notes", "sources", "tags", "quotes", "themes", "follow_up_questions", "summary_draft"]
+  },
+  "secrets": [
+    {
+      "name": "APP_PASSWORD",
+      "required": false,
+      "description": "Optional password for HTTP Basic Auth on /app and /app/api/*."
+    }
+  ],
+  "scripts": {
+    "install": "npm install",
+    "dev": "npm run dev",
+    "build": "npm run build",
+    "start": "npm run start",
+    "typecheck": "npm run typecheck"
+  },
+  "routes": {
+    "app": "/app",
+    "health": "/app/api/health",
+    "api": [
+      {
+        "path": "/app/api/research",
+        "methods": ["GET", "POST"],
+        "description": "Read the research dossier or add a sourced field note."
+      }
+    ]
+  }
 }
