@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 
 type Topic = {
   id: number;
@@ -53,13 +54,6 @@ const emptyBundle: Bundle = {
 export default function Home() {
   const [bundle, setBundle] = useState<Bundle>(emptyBundle);
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [growth, setGrowth] = useState(2);
-  const [sourceId, setSourceId] = useState<number | "">("");
-  const [targetId, setTargetId] = useState<number | "">("");
-  const [linkNote, setLinkNote] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadBundle(selectedTopicId);
@@ -80,60 +74,11 @@ export default function Home() {
     setBundle((await response.json()) as Bundle);
   }
 
-  async function submitMemory(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedTopic) {
-      return;
-    }
-
-    setIsSaving(true);
-    const response = await fetch("/app/api/memories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, body, topicId: selectedTopic.id, growth })
-    });
-    setBundle((await response.json()) as Bundle);
-    setTitle("");
-    setBody("");
-    setGrowth(2);
-    setIsSaving(false);
-  }
-
-  async function submitLink(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!sourceId || !targetId) {
-      return;
-    }
-
-    setIsSaving(true);
-    const response = await fetch("/app/api/links", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sourceId, targetId, note: linkNote, topicId: selectedTopic?.id })
-    });
-    setBundle((await response.json()) as Bundle);
-    setSourceId("");
-    setTargetId("");
-    setLinkNote("");
-    setIsSaving(false);
-  }
-
-  async function markMemorySeen(memoryId: number) {
-    setIsSaving(true);
-    const response = await fetch("/app/api/memories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ seenMemoryId: memoryId, topicId: selectedTopic?.id })
-    });
-    setBundle((await response.json()) as Bundle);
-    setIsSaving(false);
-  }
-
   return (
     <main className="shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">Personal knowledge template</p>
+          <p className="eyebrow">Read-only knowledge map</p>
           <h1>Memory Garden</h1>
         </div>
         <div className="metrics" aria-label="Garden totals">
@@ -143,8 +88,8 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="grid">
-        <aside className="panel topics" aria-label="Topics">
+      <section className="gardenGrid">
+        <aside className="topics" aria-label="Topics">
           <div className="panelHeader">
             <h2>Topic garden</h2>
             <span>{bundle.topics.length}</span>
@@ -155,7 +100,7 @@ export default function Home() {
                 className={topic.id === selectedTopic?.id ? "topic active" : "topic"}
                 key={topic.id}
                 onClick={() => setSelectedTopicId(topic.id)}
-                style={{ "--topic": topic.color, "--size": `${84 + topic.memoryCount * 18}px` } as React.CSSProperties}
+                style={{ "--topic": topic.color, "--size": `${84 + topic.memoryCount * 18}px` } as CSSProperties}
                 type="button"
               >
                 <strong>{topic.name}</strong>
@@ -165,7 +110,7 @@ export default function Home() {
           </div>
         </aside>
 
-        <section className="panel detail">
+        <section className="detail">
           {selectedTopic ? (
             <>
               <div className="detailHead">
@@ -176,22 +121,6 @@ export default function Home() {
                 </div>
                 <span className="status">{formatDate(selectedTopic.latestActivity)}</span>
               </div>
-
-              <form className="form" onSubmit={submitMemory}>
-                <label>
-                  Memory title
-                  <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Name the idea, note, or reflection." />
-                </label>
-                <label>
-                  Note
-                  <textarea value={body} onChange={(event) => setBody(event.target.value)} placeholder="Capture the useful context while it is fresh." />
-                </label>
-                <label>
-                  Growth
-                  <input max="5" min="1" type="range" value={growth} onChange={(event) => setGrowth(Number(event.target.value))} />
-                </label>
-                <button disabled={isSaving || !title.trim() || !body.trim()} type="submit">Plant memory</button>
-              </form>
 
               <div className="memoryList">
                 {bundle.memories.map((memory) => (
@@ -206,6 +135,7 @@ export default function Home() {
                     </footer>
                   </article>
                 ))}
+                {bundle.memories.length === 0 ? <p className="empty">No memories in this cluster yet.</p> : null}
               </div>
             </>
           ) : (
@@ -214,39 +144,26 @@ export default function Home() {
         </section>
 
         <aside className="sideStack">
-          <section className="panel">
+          <section className="panel resurfacePanel">
             <div className="panelHeader">
               <h2>Resurface</h2>
               <span>{bundle.resurfaced.length}</span>
             </div>
             <div className="resurfaceList">
               {bundle.resurfaced.map((memory) => (
-                <button key={memory.id} onClick={() => markMemorySeen(memory.id)} type="button">
+                <article key={memory.id}>
                   <strong>{memory.title}</strong>
                   <span>{memory.topicName} · {formatDate(memory.lastSeenAt)}</span>
-                </button>
+                </article>
               ))}
             </div>
           </section>
 
           <section className="panel">
-            <h2>Link ideas</h2>
-            <form className="linkForm" onSubmit={submitLink}>
-              <select value={sourceId} onChange={(event) => setSourceId(Number(event.target.value) || "")}>
-                <option value="">Source memory</option>
-                {bundle.allMemories.map((memory) => (
-                  <option key={memory.id} value={memory.id}>{memory.title}</option>
-                ))}
-              </select>
-              <select value={targetId} onChange={(event) => setTargetId(Number(event.target.value) || "")}>
-                <option value="">Target memory</option>
-                {bundle.allMemories.map((memory) => (
-                  <option key={memory.id} value={memory.id}>{memory.title}</option>
-                ))}
-              </select>
-              <textarea value={linkNote} onChange={(event) => setLinkNote(event.target.value)} placeholder="Why do these belong near each other?" />
-              <button disabled={isSaving || !sourceId || !targetId || sourceId === targetId} type="submit">Link memories</button>
-            </form>
+            <div className="panelHeader">
+              <h2>Idea links</h2>
+              <span>{bundle.links.length}</span>
+            </div>
             <div className="links">
               {bundle.links.map((link) => (
                 <article key={link.id}>
