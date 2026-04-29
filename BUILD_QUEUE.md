@@ -3,16 +3,16 @@
 State: in_progress
 
 Current project:
-- practice-coach
+- field-notes-research
 
 Queue:
-- practice-coach
 - field-notes-research
 - memory-garden
 - community-quest-board
 
 Completed:
 - micro-crm
+- practice-coach
 
 Blocked:
 - none

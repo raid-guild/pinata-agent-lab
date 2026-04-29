@@ -1,0 +1,9 @@
+{
+  "name": "Personal Practice Coach",
+  "slug": "practice-coach",
+  "description": "A habit and skill-building companion for logging focused practice, reflections, streaks, and next-session plans.",
+  "entrypoint": "/app",
+  "runtime": "nextjs",
+  "features": ["practice_goals", "sessions", "streaks", "reflections", "next_session_plans"],
+  "requiresSecrets": false
+}
