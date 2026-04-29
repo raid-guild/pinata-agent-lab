@@ -12,7 +12,7 @@
     "category": "productivity",
     "authorName": "Raid Guild",
     "authorUrl": "https://www.raidguild.org/join",
-    "authorLogoUrl": "https://www.brand.raidguild.org/assets/logos/symbol-m800.svg",
+    "authorLogoUrl": "https://www.brand.raidguild.org/assets/logos/symbol-m500.svg",
     "tags": ["raidguild", "pinata", "agent", "starter", "nextjs", "sqlite", "crud"]
   },
   "secrets": [],

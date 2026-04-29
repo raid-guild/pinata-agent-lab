@@ -150,7 +150,7 @@ export default function Home() {
 
       <footer className="cohortFooter">
         <a href="https://www.raidguild.org/join" rel="noreferrer" target="_blank">
-          <img alt="" src="https://www.brand.raidguild.org/assets/logos/symbol-m800.svg" />
+          <img alt="" src="https://www.brand.raidguild.org/assets/logos/symbol-m500.svg" />
           <span>built by the RaidGuild cohort</span>
         </a>
       </footer>
