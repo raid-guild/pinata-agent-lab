@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type QuestStatus = "open" | "claimed" | "review" | "done";
 
@@ -53,24 +53,10 @@ const statuses: QuestStatus[] = ["open", "claimed", "review", "done"];
 export default function Home() {
   const [bundle, setBundle] = useState<Bundle>(emptyBundle);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [author, setAuthor] = useState("Steward");
-  const [body, setBody] = useState("");
-  const [status, setStatus] = useState<QuestStatus>("open");
-  const [owner, setOwner] = useState("");
-  const [outcome, setOutcome] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadBundle(selectedId);
   }, [selectedId]);
-
-  useEffect(() => {
-    if (bundle.selected) {
-      setStatus(bundle.selected.status);
-      setOwner(bundle.selected.owner);
-      setOutcome(bundle.selected.outcome);
-    }
-  }, [bundle.selected]);
 
   const selectedQuest = bundle.selected;
   const columns = useMemo(() => {
@@ -90,36 +76,11 @@ export default function Home() {
     }
   }
 
-  async function submitUpdate(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedQuest) {
-      return;
-    }
-
-    setIsSaving(true);
-    const response = await fetch("/app/api/updates", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        questId: selectedQuest.id,
-        author,
-        body,
-        status,
-        owner,
-        outcome
-      })
-    });
-    const nextBundle = (await response.json()) as Bundle;
-    setBundle(nextBundle);
-    setBody("");
-    setIsSaving(false);
-  }
-
   return (
     <main className="shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">Guild coordination</p>
+          <p className="eyebrow">Read-only guild coordination</p>
           <h1>Community Quest Board</h1>
         </div>
         <div className="metrics" aria-label="Weekly metrics">
@@ -146,7 +107,7 @@ export default function Home() {
                 >
                   <span className="questTop">
                     <strong>{quest.title}</strong>
-                    <em>{quest.points} pt</em>
+                    <em>{quest.points} pts</em>
                   </span>
                   <span>{quest.summary}</span>
                   <span className="questMeta">
@@ -173,52 +134,39 @@ export default function Home() {
                 <span className="status">{selectedQuest.owner || "Unclaimed"}</span>
               </div>
 
+              <div className="questStats" aria-label="Selected quest status">
+                <div>
+                  <span>Owner</span>
+                  <strong>{selectedQuest.owner || "Unclaimed"}</strong>
+                </div>
+                <div>
+                  <span>Due</span>
+                  <strong>{formatDate(selectedQuest.dueDate)}</strong>
+                </div>
+                <div>
+                  <span>Points</span>
+                  <strong>{selectedQuest.points}</strong>
+                </div>
+              </div>
+
               <div className="outcome">
                 <span>Outcome</span>
                 <strong>{selectedQuest.outcome || "No outcome recorded yet."}</strong>
               </div>
 
-              <form className="form" onSubmit={submitUpdate}>
-                <div className="formRow">
-                  <label>
-                    Owner
-                    <input value={owner} onChange={(event) => setOwner(event.target.value)} placeholder="Name or team" />
-                  </label>
-                  <label>
-                    Status
-                    <select value={status} onChange={(event) => setStatus(event.target.value as QuestStatus)}>
-                      {statuses.map((item) => (
-                        <option key={item} value={item}>{item}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <label>
-                  Update
-                  <textarea value={body} onChange={(event) => setBody(event.target.value)} placeholder="Share progress, blockers, asks, or review notes." />
-                </label>
-                <label>
-                  Outcome
-                  <textarea className="short" value={outcome} onChange={(event) => setOutcome(event.target.value)} placeholder="Capture the shipped result when the quest closes." />
-                </label>
-                <div className="formRow">
-                  <label>
-                    Author
-                    <input value={author} onChange={(event) => setAuthor(event.target.value)} />
-                  </label>
-                  <button disabled={isSaving || !body.trim()} type="submit">Save update</button>
-                </div>
-              </form>
-
               <div className="timeline">
                 <h3>Updates</h3>
-                {bundle.updates.map((item) => (
-                  <article key={item.id}>
-                    <time>{formatDate(item.createdAt)}</time>
-                    <strong>{item.author}</strong>
-                    <p>{item.body}</p>
-                  </article>
-                ))}
+                {bundle.updates.length > 0 ? (
+                  bundle.updates.map((item) => (
+                    <article key={item.id}>
+                      <time>{formatDate(item.createdAt)}</time>
+                      <strong>{item.author}</strong>
+                      <p>{item.body}</p>
+                    </article>
+                  ))
+                ) : (
+                  <p className="empty">No updates recorded for this quest.</p>
+                )}
               </div>
             </>
           ) : (
@@ -233,12 +181,16 @@ export default function Home() {
           </div>
           <div className="recapBlock">
             <h3>Shipped</h3>
-            {bundle.recap.completed.map((quest) => (
-              <article key={quest.id}>
-                <strong>{quest.title}</strong>
-                <p>{quest.outcome}</p>
-              </article>
-            ))}
+            {bundle.recap.completed.length > 0 ? (
+              bundle.recap.completed.map((quest) => (
+                <article key={quest.id}>
+                  <strong>{quest.title}</strong>
+                  <p>{quest.outcome}</p>
+                </article>
+              ))
+            ) : (
+              <p className="empty">No completed quests yet.</p>
+            )}
           </div>
           <div className="recapBlock">
             <h3>Next asks</h3>
@@ -246,6 +198,15 @@ export default function Home() {
               <button key={quest.id} onClick={() => setSelectedId(quest.id)} type="button">
                 <strong>{quest.title}</strong>
                 <span>{quest.points} points available</span>
+              </button>
+            ))}
+          </div>
+          <div className="recapBlock">
+            <h3>In review</h3>
+            {bundle.recap.inFlight.slice(0, 4).map((quest) => (
+              <button key={quest.id} onClick={() => setSelectedId(quest.id)} type="button">
+                <strong>{quest.title}</strong>
+                <span>{quest.status} by {quest.owner || "unassigned"}</span>
               </button>
             ))}
           </div>

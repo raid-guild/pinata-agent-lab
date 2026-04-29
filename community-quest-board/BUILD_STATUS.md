@@ -3,11 +3,12 @@
 State: complete
 
 Last completed:
-- scaffolded a working Next.js App Router template using the shared Pinata rules
-- added SQLite persistence for quests, owners, claim status, updates, outcomes, and recap data
-- built the `/app` board UI with quest columns, quest detail, update form, and weekly recap panel
-- added required manifest, runtime config, README, and workspace files
-- validated install, typecheck, build, local app, and local health checks
+- converted the `/app` browser UI to a read-only coordination dashboard
+- preserved API write behavior through `/app/api/updates` for chat and agent use
+- added optional `APP_PASSWORD` Basic Auth for `/app` and `/app/api/*`
+- added `workspace/OPERATIONS.md` and expanded chat-first workspace setup docs
+- normalized `manifest.json` to the Pinata-style schema used by `pinata-tamagotchi`
+- refreshed the board design toward compact Airtable/Linear-style columns, status panels, outcomes, updates, and weekly recap
 
 Current task:
 - complete
@@ -19,12 +20,12 @@ Blockers:
 - none
 
 Validation:
-- install: passed (`npm install`)
-- typecheck: passed (`npm run typecheck`)
 - build: passed (`npm run build`)
-- local app: passed (`GET /app` returned 200 on port 3001)
-- local health: passed (`GET /app/api/health` returned 200 on port 3001)
+- typecheck: passed (`npm run typecheck`)
+- local app without `APP_PASSWORD`: passed (`GET /app` returned 200 on port 3107)
+- local health without `APP_PASSWORD`: passed (`GET /app/api/health` returned 200 on port 3107)
+- local auth with `APP_PASSWORD`: passed unauthenticated 401 and authenticated 200 checks for `/app` and `/app/api/health` on port 3108
 
 Notes:
-- Port 3000 was already in use during validation, so local checks ran on port 3001.
-- `npm install` reported two moderate dependency audit findings inherited from the current dependency set.
+- Local checks used alternate ports to avoid any existing port 3000 process.
+- `npm start` emits the existing Next.js standalone-output warning, but the custom server served `/app` and API checks successfully.

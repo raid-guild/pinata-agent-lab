@@ -1,9 +1,33 @@
 {
-  "name": "Community Quest Board",
-  "slug": "community-quest-board",
-  "description": "A lightweight coordination app for cohorts, guilds, and project groups to claim quests and ship weekly outcomes.",
-  "entrypoint": "/app",
-  "runtime": "nextjs",
-  "features": ["quests", "claim_status", "owners", "updates", "outcomes", "weekly_recap"],
-  "requiresSecrets": false
+  "$schema": "https://agents.pinata.cloud/schemas/manifest.v1.json",
+  "version": 1,
+  "agent": {
+    "name": "Community Quest Board Agent",
+    "description": "Chat-first coordination steward that keeps quests, owners, progress updates, outcomes, and weekly recap context current.",
+    "vibe": "Calm operational partner for turning community work into visible next actions and shipped outcomes"
+  },
+  "template": {
+    "slug": "community-quest-board",
+    "category": "productivity",
+    "authorName": "Raid Guild",
+    "tags": ["raidguild", "pinata", "agent", "coordination", "quests", "nextjs", "sqlite"]
+  },
+  "secrets": [
+    {
+      "name": "APP_PASSWORD",
+      "required": false,
+      "description": "Optional password for HTTP Basic Auth on /app and /app/api/*."
+    }
+  ],
+  "scripts": {
+    "build": "npm install && npm run build",
+    "start": "npm start"
+  },
+  "routes": [
+    {
+      "port": 3000,
+      "path": "/app",
+      "protected": false
+    }
+  ]
 }
