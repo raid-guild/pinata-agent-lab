@@ -1,0 +1,9 @@
+{
+  "name": "Community Quest Board",
+  "slug": "community-quest-board",
+  "description": "A lightweight coordination app for cohorts, guilds, and project groups to claim quests and ship weekly outcomes.",
+  "entrypoint": "/app",
+  "runtime": "nextjs",
+  "features": ["quests", "claim_status", "owners", "updates", "outcomes", "weekly_recap"],
+  "requiresSecrets": false
+}

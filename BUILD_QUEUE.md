@@ -1,18 +1,19 @@
 # Build Queue
 
-State: in_progress
+State: complete
 
 Current project:
-- community-quest-board
+- none
 
 Queue:
-- community-quest-board
+- none
 
 Completed:
 - micro-crm
 - practice-coach
 - field-notes-research
 - memory-garden
+- community-quest-board
 
 Blocked:
 - none

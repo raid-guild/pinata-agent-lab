@@ -1,26 +1,30 @@
 # Build Status: Community Quest Board
 
-State: queued
+State: complete
 
 Last completed:
-- project folder created
-- initial status file created
+- scaffolded a working Next.js App Router template using the shared Pinata rules
+- added SQLite persistence for quests, owners, claim status, updates, outcomes, and recap data
+- built the `/app` board UI with quest columns, quest detail, update form, and weekly recap panel
+- added required manifest, runtime config, README, and workspace files
+- validated install, typecheck, build, local app, and local health checks
 
 Current task:
-- wait for queue
+- complete
 
 Next task:
-- scaffold a working Pinata template app using the shared scaffold rules
+- none
 
 Blockers:
 - none
 
 Validation:
-- install: pending
-- typecheck: pending
-- build: pending
-- local app: pending
+- install: passed (`npm install`)
+- typecheck: passed (`npm run typecheck`)
+- build: passed (`npm run build`)
+- local app: passed (`GET /app` returned 200 on port 3001)
+- local health: passed (`GET /app/api/health` returned 200 on port 3001)
 
 Notes:
-- First slice should include quests, owners, claim status, updates, outcomes, and recap.
-
+- Port 3000 was already in use during validation, so local checks ran on port 3001.
+- `npm install` reported two moderate dependency audit findings inherited from the current dependency set.
