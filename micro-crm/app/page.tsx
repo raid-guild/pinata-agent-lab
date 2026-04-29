@@ -259,7 +259,12 @@ export default function Home() {
         </section>
       </section>
 
-      <footer className="cohortFooter">built by the RaidGuild cohort</footer>
+      <footer className="cohortFooter">
+        <a href="https://www.raidguild.org/join" rel="noreferrer" target="_blank">
+          <img alt="" src="https://www.brand.raidguild.org/assets/logos/symbol-m800.svg" />
+          <span>built by the RaidGuild cohort</span>
+        </a>
+      </footer>
     </main>
   );
 }

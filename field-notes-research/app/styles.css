@@ -344,13 +344,32 @@ blockquote {
 
 .cohortFooter {
   border-top: 2px solid var(--ink);
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 14px;
+}
+
+.cohortFooter a {
+  align-items: center;
   color: var(--muted);
+  display: inline-flex;
   font-size: 0.84rem;
   font-weight: 900;
+  gap: 8px;
   letter-spacing: 0;
-  padding-top: 14px;
-  text-align: right;
+  text-decoration: none;
   text-transform: uppercase;
+}
+
+.cohortFooter a:hover {
+  color: var(--ink);
+}
+
+.cohortFooter img {
+  display: block;
+  height: 18px;
+  opacity: 0.72;
+  width: 18px;
 }
 
 @keyframes evidenceFill {
@@ -410,6 +429,6 @@ blockquote {
   }
 
   .cohortFooter {
-    text-align: left;
+    justify-content: flex-start;
   }
 }

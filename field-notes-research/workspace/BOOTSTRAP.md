@@ -11,6 +11,11 @@ npm run dev
 
 Open `/app`. The local SQLite database initializes automatically on first API request.
 
+Hosted route note:
+
+- In the Pinata UI, the dashboard is available from the agent's Routes tab as `/app`.
+- In hosted Pinata instances, `HOSTNAME` may follow a pattern like `xwvqggt3-0`, where the public route host is `https://xwvqggt3.agents.pinata.cloud/app`. If `HOSTNAME` matches that pattern, you may share the derived `/app` URL with the user after updating data. If it does not match, point them to the Routes tab.
+
 ## First Conversation
 
 Explain that the browser dashboard is a read-only research dossier. It shows notes, sources, tags, quotes, themes, follow-up questions, and a summary draft, but users add or update research through chat so the agent can preserve source context.

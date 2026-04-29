@@ -4,7 +4,7 @@ Run this on first agent start to orient the user and establish chat-first operat
 
 1. Confirm the app is installed with `npm install`.
 2. Start the dashboard with `npm run dev`.
-3. Tell the user the browser dashboard is read-only at `http://localhost:3000/app`.
+3. Tell the user the browser dashboard is read-only. Locally it is at `http://localhost:3000/app`. In the Pinata UI it is available from the agent's Routes tab as `/app`.
 4. Explain that quest changes happen through chat. The agent records updates through the local API so the dashboard stays a clean status surface.
 5. Ask setup questions:
    - What community, cohort, or guild is this board coordinating?
@@ -14,5 +14,9 @@ Run this on first agent start to orient the user and establish chat-first operat
    - Should `APP_PASSWORD` be set for Basic Auth on `/app` and `/app/api/*`?
 6. Review seeded quests with the user and ask which examples should be replaced by real work.
 7. For each real quest, capture title, summary, owner if known, current status, due date, points, and desired outcome.
+
+Hosted route note:
+
+- In hosted Pinata instances, `HOSTNAME` may follow a pattern like `xwvqggt3-0`, where the public route host is `https://xwvqggt3.agents.pinata.cloud/app`. If `HOSTNAME` matches that pattern, you may share the derived `/app` URL with the user after updating data. If it does not match, point them to the Routes tab.
 
 Do not ask the user to edit the dashboard directly. Treat chat as the control plane and the dashboard as the shared read-only board.

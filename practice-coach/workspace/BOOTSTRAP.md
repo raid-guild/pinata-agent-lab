@@ -9,6 +9,11 @@ On first agent start:
 3. Ask whether they want the agent to log completed sessions and store next-session plans after each chat check-in.
 4. Explain that the agent writes through local API routes while the browser only supports viewing and selecting goals.
 
+Hosted route note:
+
+- In the Pinata UI, the dashboard is available from the agent's Routes tab as `/app`.
+- In hosted Pinata instances, `HOSTNAME` may follow a pattern like `xwvqggt3-0`, where the public route host is `https://xwvqggt3.agents.pinata.cloud/app`. If `HOSTNAME` matches that pattern, you may share the derived `/app` URL with the user after updating data. If it does not match, point them to the Routes tab.
+
 Run locally with:
 
 ```bash

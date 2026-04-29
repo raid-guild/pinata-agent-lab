@@ -23,7 +23,7 @@ Derive the hosted `/app` URL from Pinata's runtime hostname pattern:
 node -e "const h=process.env.HOSTNAME||''; const m=h.match(/^(.+)-\\d+$/); console.log(m ? `https://${m[1]}.agents.pinata.cloud/app` : 'Open the /app route from the Pinata Routes tab')"
 ```
 
-Observed example: `HOSTNAME=xwvqggt3-0` maps to `https://xwvqggt3.agents.pinata.cloud/app`. `AGENTS_API_URL` is the Pinata agents API base and is not the hosted app route.
+Observed example: `HOSTNAME=xwvqggt3-0` maps to `https://xwvqggt3.agents.pinata.cloud/app`.
 
 Useful app routes:
 

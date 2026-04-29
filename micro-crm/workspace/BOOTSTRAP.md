@@ -11,6 +11,11 @@ On first agent start:
 5. Ask how they prefer follow-up drafts to sound: concise, warm, direct, or another house style.
 6. Offer to log the first note or draft from the current chat.
 
+Hosted route note:
+
+- In the Pinata UI, the dashboard is available from the agent's Routes tab as `/app`.
+- In hosted Pinata instances, `HOSTNAME` may follow a pattern like `xwvqggt3-0`, where the public route host is `https://xwvqggt3.agents.pinata.cloud/app`. If `HOSTNAME` matches that pattern, you may share the derived `/app` URL with the user after updating data. If it does not match, point them to the Routes tab.
+
 Run locally with:
 
 ```bash
