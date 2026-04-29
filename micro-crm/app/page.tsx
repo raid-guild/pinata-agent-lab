@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Contact = {
   id: number;
@@ -47,23 +47,10 @@ const emptyBundle: Bundle = {
 export default function Home() {
   const [bundle, setBundle] = useState<Bundle>(emptyBundle);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [note, setNote] = useState("");
-  const [nextAction, setNextAction] = useState("");
-  const [nextActionDate, setNextActionDate] = useState(today());
-  const [draft, setDraft] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadBundle(selectedId);
   }, [selectedId]);
-
-  useEffect(() => {
-    if (bundle.selected) {
-      setNextAction(bundle.selected.nextAction);
-      setNextActionDate(bundle.selected.nextActionDate || today());
-      setDraft(`Hi ${bundle.selected.name.split(" ")[0]},\n\nFollowing up on ${bundle.selected.nextAction.toLowerCase() || "our last conversation"}. Would it be useful to compare next steps this week?`);
-    }
-  }, [bundle.selected]);
 
   const selectedContact = bundle.selected;
   const pipelineCounts = useMemo(() => {
@@ -83,50 +70,11 @@ export default function Home() {
     }
   }
 
-  async function submitNote(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedContact) {
-      return;
-    }
-
-    setIsSaving(true);
-    const response = await fetch("/app/api/contacts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contactId: selectedContact.id,
-        body: note,
-        nextAction,
-        nextActionDate
-      })
-    });
-    const nextBundle = (await response.json()) as Bundle;
-    setBundle(nextBundle);
-    setNote("");
-    setIsSaving(false);
-  }
-
-  async function saveDraft() {
-    if (!selectedContact) {
-      return;
-    }
-
-    setIsSaving(true);
-    const response = await fetch("/app/api/suggestions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contactId: selectedContact.id, body: draft })
-    });
-    const nextBundle = (await response.json()) as Bundle;
-    setBundle(nextBundle);
-    setIsSaving(false);
-  }
-
   return (
     <main className="shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">Solo operator workspace</p>
+          <p className="eyebrow">Read-only relationship portfolio</p>
           <h1>Micro CRM</h1>
         </div>
         <div className="metrics" aria-label="Pipeline counts">
@@ -142,7 +90,7 @@ export default function Home() {
         <aside className="panel contactList" aria-label="Contacts">
           <div className="panelHeader">
             <h2>Contacts</h2>
-            <span>{bundle.contacts.length}</span>
+            <span className="countTag">{bundle.contacts.length}</span>
           </div>
           {bundle.contacts.map((contact) => (
             <button
@@ -155,7 +103,7 @@ export default function Home() {
                 <strong>{contact.name}</strong>
                 <small>{contact.company}</small>
               </span>
-              <em>{contact.status}</em>
+              <em className="tag">{contact.status}</em>
             </button>
           ))}
         </aside>
@@ -172,38 +120,34 @@ export default function Home() {
                 <span className="status">{selectedContact.status}</span>
               </div>
 
-              <div className="nextAction">
-                <span>Next action</span>
-                <strong>{selectedContact.nextAction || "No action set"}</strong>
-                <time>{selectedContact.nextActionDate || "Unscheduled"}</time>
+              <div className="summaryGrid" aria-label="Selected contact status">
+                <div className="summaryItem">
+                  <span>Next action</span>
+                  <strong>{selectedContact.nextAction || "No action set"}</strong>
+                  <time>{selectedContact.nextActionDate || "Unscheduled"}</time>
+                </div>
+                <div className="summaryItem">
+                  <span>Last contacted</span>
+                  <strong>{selectedContact.lastContacted || "No date recorded"}</strong>
+                  <time>{selectedContact.email}</time>
+                </div>
               </div>
 
-              <form className="form" onSubmit={submitNote}>
-                <label>
-                  Note
-                  <textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Capture the latest conversation, decision, or signal." />
-                </label>
-                <div className="formRow">
-                  <label>
-                    Next action
-                    <input value={nextAction} onChange={(event) => setNextAction(event.target.value)} />
-                  </label>
-                  <label>
-                    Date
-                    <input type="date" value={nextActionDate} onChange={(event) => setNextActionDate(event.target.value)} />
-                  </label>
-                </div>
-                <button disabled={isSaving || !note.trim()} type="submit">Save note</button>
-              </form>
-
               <div className="timeline">
-                <h3>Notes</h3>
-                {bundle.notes.map((item) => (
-                  <article key={item.id}>
-                    <time>{formatDate(item.createdAt)}</time>
-                    <p>{item.body}</p>
-                  </article>
-                ))}
+                <div className="panelHeader">
+                  <h3>Timeline</h3>
+                  <span className="countTag">{bundle.notes.length}</span>
+                </div>
+                {bundle.notes.length > 0 ? (
+                  bundle.notes.map((item) => (
+                    <article key={item.id}>
+                      <time>{formatDate(item.createdAt)}</time>
+                      <p>{item.body}</p>
+                    </article>
+                  ))
+                ) : (
+                  <p className="empty">No notes stored for this contact.</p>
+                )}
               </div>
             </>
           ) : (
@@ -214,40 +158,50 @@ export default function Home() {
         <aside className="sideStack">
           <section className="panel">
             <div className="panelHeader">
-              <h2>Today</h2>
-              <span>{bundle.followUps.length}</span>
+              <h2>Due Follow-ups</h2>
+              <span className="countTag">{bundle.followUps.length}</span>
             </div>
             <div className="followups">
-              {bundle.followUps.map((contact) => (
-                <button key={contact.id} onClick={() => setSelectedId(contact.id)} type="button">
-                  <strong>{contact.nextAction}</strong>
-                  <span>{contact.name}</span>
-                </button>
-              ))}
+              {bundle.followUps.length > 0 ? (
+                bundle.followUps.map((contact) => (
+                  <button key={contact.id} onClick={() => setSelectedId(contact.id)} type="button">
+                    <strong>{contact.nextAction}</strong>
+                    <span>{contact.name}</span>
+                    <time>{contact.nextActionDate}</time>
+                  </button>
+                ))
+              ) : (
+                <p className="empty">No follow-ups are due.</p>
+              )}
             </div>
           </section>
 
           <section className="panel">
-            <h2>Draft follow-up</h2>
-            <textarea className="draftBox" value={draft} onChange={(event) => setDraft(event.target.value)} />
-            <button disabled={isSaving || !draft.trim()} onClick={saveDraft} type="button">Store draft</button>
+            <div className="panelHeader">
+              <h2>Stored Drafts</h2>
+              <span className="countTag">{bundle.drafts.length}</span>
+            </div>
             <div className="drafts">
-              {bundle.drafts.map((item) => (
-                <article key={item.id}>
-                  <strong>{item.subject}</strong>
-                  <p>{item.body}</p>
-                </article>
-              ))}
+              {bundle.drafts.length > 0 ? (
+                bundle.drafts.map((item) => (
+                  <article key={item.id}>
+                    <div>
+                      <strong>{item.subject}</strong>
+                      <span className="tag">{item.status}</span>
+                    </div>
+                    <p>{item.body}</p>
+                    <time>{formatDate(item.createdAt)}</time>
+                  </article>
+                ))
+              ) : (
+                <p className="empty">No follow-up drafts stored.</p>
+              )}
             </div>
           </section>
         </aside>
       </section>
     </main>
   );
-}
-
-function today() {
-  return new Date().toISOString().slice(0, 10);
 }
 
 function formatDate(value: string) {

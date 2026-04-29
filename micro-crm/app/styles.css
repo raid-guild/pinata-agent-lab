@@ -23,8 +23,7 @@ body {
 }
 
 button,
-input,
-textarea {
+time {
   font: inherit;
 }
 
@@ -85,12 +84,28 @@ h3 {
 }
 
 .metrics span,
-.status {
+.status,
+.tag,
+.countTag {
   background: #e8f3ef;
   border: 1px solid #bfddd5;
   border-radius: 999px;
   color: var(--accent-strong);
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.metrics span,
+.status {
   padding: 8px 12px;
+}
+
+.tag,
+.countTag {
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .grid {
@@ -108,8 +123,7 @@ h3 {
 }
 
 .panelHeader,
-.detailHead,
-.formRow {
+.detailHead {
   align-items: flex-start;
   display: flex;
   gap: 14px;
@@ -151,8 +165,11 @@ h3 {
 .contact em,
 .detailHead p,
 .timeline time,
-.nextAction span,
-.nextAction time {
+.summaryItem span,
+.summaryItem time,
+.drafts time,
+.followups time,
+.empty {
   color: var(--muted);
 }
 
@@ -175,64 +192,24 @@ h3 {
   margin-bottom: 8px;
 }
 
-.nextAction {
+.summaryGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.summaryItem {
   background: #fff8e8;
   border: 1px solid #f0d8a8;
   border-radius: 8px;
   display: grid;
   gap: 6px;
-  margin-bottom: 18px;
   padding: 14px;
 }
 
-.nextAction strong {
+.summaryItem strong {
   color: #6f430a;
-}
-
-.form {
-  border-bottom: 1px solid var(--line);
-  display: grid;
-  gap: 14px;
-  margin-bottom: 18px;
-  padding-bottom: 18px;
-}
-
-label {
-  color: var(--muted);
-  display: grid;
-  font-size: 0.86rem;
-  gap: 6px;
-}
-
-input,
-textarea {
-  background: #fbfcfb;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  color: var(--ink);
-  min-width: 0;
-  padding: 10px 12px;
-  width: 100%;
-}
-
-textarea {
-  min-height: 110px;
-  resize: vertical;
-}
-
-button[type="submit"],
-.panel > button {
-  background: var(--accent);
-  border: 0;
-  border-radius: 6px;
-  color: white;
-  font-weight: 700;
-  padding: 11px 14px;
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
 }
 
 .timeline {
@@ -251,6 +228,18 @@ button:disabled {
 .drafts p {
   line-height: 1.5;
   margin-bottom: 0;
+}
+
+.drafts article {
+  display: grid;
+  gap: 10px;
+}
+
+.drafts article > div {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
 }
 
 .sideStack {
@@ -279,11 +268,6 @@ button:disabled {
   color: var(--muted);
 }
 
-.draftBox {
-  margin: 14px 0 10px;
-  min-height: 160px;
-}
-
 .drafts {
   display: grid;
   gap: 10px;
@@ -309,7 +293,7 @@ button:disabled {
   .topbar,
   .grid,
   .sideStack,
-  .formRow {
+  .summaryGrid {
     display: grid;
     grid-template-columns: 1fr;
   }
