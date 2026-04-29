@@ -11,6 +11,8 @@
     "slug": "raidguild-agent-app-starter",
     "category": "productivity",
     "authorName": "Raid Guild",
+    "authorUrl": "https://www.raidguild.org/join",
+    "authorLogoUrl": "https://www.brand.raidguild.org/assets/logos/symbol-m800.svg",
     "tags": ["raidguild", "pinata", "agent", "starter", "nextjs", "sqlite", "crud"]
   },
   "secrets": [],

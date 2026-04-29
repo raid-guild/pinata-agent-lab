@@ -320,13 +320,32 @@ h1 {
 }
 
 .cohortFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 2px 0;
+}
+
+.cohortFooter a {
+  align-items: center;
   color: var(--muted);
+  display: inline-flex;
   font-size: 0.84rem;
   font-weight: 900;
+  gap: 8px;
   letter-spacing: 0;
-  padding: 8px 2px 0;
-  text-align: right;
+  text-decoration: none;
   text-transform: uppercase;
+}
+
+.cohortFooter a:hover {
+  color: var(--ink);
+}
+
+.cohortFooter img {
+  display: block;
+  height: 18px;
+  opacity: 0.72;
+  width: 18px;
 }
 
 @keyframes fill {
@@ -379,6 +398,6 @@ h1 {
   }
 
   .cohortFooter {
-    text-align: left;
+    justify-content: flex-start;
   }
 }
