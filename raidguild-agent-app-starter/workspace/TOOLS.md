@@ -51,3 +51,11 @@ Database:
 
 - SQLite database path: `data/starter.sqlite`
 - Schema and seed logic: `lib/db.ts`
+
+Experimental rebuild hook pattern:
+
+- `pinata-chef` has an experimental authenticated deploy hook pattern for rebuilding an already-running hosted app after repo or workspace changes.
+- The pattern is: protected API endpoint -> background script -> `npm run build` -> process reload -> status/log files under `workspace/runtime/`.
+- This starter does not expose that endpoint by default because the hosted rebuild behavior still needs more testing and this template currently starts with direct `node server.js`, not PM2.
+- If you adapt this starter and need self-rebuild behavior, copy the pattern only after deciding how the app process is managed. With PM2, the reload step can be `npm run pm2:reload`; without PM2, use the platform restart flow or a deliberately tested process manager.
+- Keep any rebuild endpoint authenticated, write status/log output to `workspace/runtime/`, reject concurrent rebuilds with a lock file, and avoid exposing arbitrary shell commands.
