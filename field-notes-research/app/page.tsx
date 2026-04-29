@@ -47,7 +47,19 @@ export default function Home() {
   }, [sourceFilter, tagFilter]);
 
   const activeNotes = bundle.notes;
-  const sourceTypes = useMemo(() => Array.from(new Set(activeNotes.map((note) => note.sourceType).filter(Boolean))), [activeNotes]);
+  const sourceCoverage = useMemo(() => {
+    const counts = activeNotes.reduce<Record<string, number>>((next, note) => {
+      const key = note.sourceType || "Unsorted";
+      next[key] = (next[key] ?? 0) + 1;
+      return next;
+    }, {});
+    const max = Math.max(1, ...Object.values(counts));
+    return Object.entries(counts).map(([sourceType, count]) => ({
+      count,
+      sourceType,
+      width: `${Math.max(14, (count / max) * 100)}%`
+    }));
+  }, [activeNotes]);
   const quoteCount = activeNotes.filter((note) => note.quote).length;
   const questionCount = activeNotes.filter((note) => note.followUp).length;
 
@@ -67,117 +79,125 @@ export default function Home() {
 
   return (
     <main className="shell">
-      <header className="topbar">
+      <section className="masthead">
         <div>
-          <p className="eyebrow">Read-only research dossier</p>
+          <p className="eyebrow">Evidence desk</p>
           <h1>Field Notes Research</h1>
         </div>
-        <div className="metrics" aria-label="Research counts">
+        <div className="deskStats" aria-label="Research counts">
           <span><strong>{bundle.notes.length}</strong> notes</span>
           <span><strong>{bundle.themes.length}</strong> themes</span>
-          <span><strong>{sourceTypes.length}</strong> source types</span>
+          <span><strong>{sourceCoverage.length}</strong> source types</span>
           <span><strong>{quoteCount}</strong> quotes</span>
         </div>
-      </header>
+      </section>
 
-      <section className="summaryBand" aria-label="Summary draft">
-        <div>
-          <p className="eyebrow">Working synthesis</p>
-          <pre className="summaryDraft">{bundle.summary}</pre>
-        </div>
-        <div className="summaryStats">
+      <section className="memo" aria-label="Working synthesis">
+        <div className="memoStamp">Working synthesis</div>
+        <pre>{bundle.summary}</pre>
+        <div className="memoFooter">
           <span>{questionCount} open questions</span>
           <span>{bundle.sources.length} sources indexed</span>
         </div>
       </section>
 
-      <section className="grid">
-        <aside className="panel filterPanel" aria-label="Filters">
-          <div className="panelHeader">
-            <h2>Filters</h2>
-            <button onClick={() => { setSourceFilter(""); setTagFilter(""); }} type="button">Clear</button>
-          </div>
+      <section className="filterTape" aria-label="Research filters">
+        <button className={!sourceFilter && !tagFilter ? "active" : ""} onClick={() => { setSourceFilter(""); setTagFilter(""); }} type="button">
+          All evidence
+        </button>
+        {bundle.sources.map((source) => (
+          <button
+            className={sourceFilter === source ? "active source" : "source"}
+            key={source}
+            onClick={() => setSourceFilter(sourceFilter === source ? "" : source)}
+            type="button"
+          >
+            {source}
+          </button>
+        ))}
+        {bundle.tags.map((tag) => (
+          <button
+            className={tagFilter === tag ? "active tag" : "tag"}
+            key={tag}
+            onClick={() => setTagFilter(tagFilter === tag ? "" : tag)}
+            type="button"
+          >
+            #{tag}
+          </button>
+        ))}
+      </section>
 
-          <label>
-            Source
-            <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}>
-              <option value="">All sources</option>
-              {bundle.sources.map((source) => (
-                <option key={source} value={source}>{source}</option>
-              ))}
-            </select>
-          </label>
+      <section className="deskGrid">
+        <aside className="indexRail">
+          <section className="coverage">
+            <div className="sectionHead">
+              <h2>Source coverage</h2>
+              <span>{sourceCoverage.length}</span>
+            </div>
+            {sourceCoverage.map((item) => (
+              <article key={item.sourceType}>
+                <div>
+                  <strong>{item.sourceType}</strong>
+                  <span>{item.count} notes</span>
+                </div>
+                <div className="coverageBar"><span style={{ width: item.width }} /></div>
+              </article>
+            ))}
+          </section>
 
-          <label>
-            Tag
-            <select value={tagFilter} onChange={(event) => setTagFilter(event.target.value)}>
-              <option value="">All tags</option>
-              {bundle.tags.map((tag) => (
-                <option key={tag} value={tag}>{tag}</option>
-              ))}
-            </select>
-          </label>
-
-          <div className="themeList">
-            <h3>Theme board</h3>
-            {bundle.themes.map((theme) => (
-              <article key={theme.name}>
+          <section className="themeIndex">
+            <div className="sectionHead">
+              <h2>Theme index</h2>
+              <span>{bundle.themes.length}</span>
+            </div>
+            {bundle.themes.map((theme, index) => (
+              <article className={`tab-${index % 4}`} key={theme.name}>
                 <strong>{theme.name}</strong>
                 <span>{theme.noteCount} notes</span>
                 <time>{formatDate(theme.latestSignal)}</time>
               </article>
             ))}
-          </div>
-        </aside>
-
-        <section className="panel dossier">
-          <div className="detailHead">
-            <div>
-              <p className="eyebrow">Evidence file</p>
-              <h2>Notes, quotes, and signals</h2>
-            </div>
-            <span className="status">Chat/API writes only</span>
-          </div>
-
-          <div className="timeline">
-            {activeNotes.map((note) => (
-              <article key={note.id}>
-                <div className="noteHead">
-                  <div>
-                    <strong>{note.title}</strong>
-                    <span>{note.source} · {note.sourceType}</span>
-                  </div>
-                  <time>{formatDate(note.createdAt)}</time>
-                </div>
-                <p>{note.body}</p>
-                {note.quote ? <blockquote>{note.quote}</blockquote> : null}
-                {note.theme ? <span className="themeTag">{note.theme}</span> : null}
-                <div className="chips">
-                  {note.tags.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag) => (
-                    <span key={tag}>{tag}</span>
-                  ))}
-                </div>
-                {note.followUp ? <p className="question">{note.followUp}</p> : null}
-              </article>
-            ))}
-            {activeNotes.length === 0 ? <p className="empty">No notes match the selected filters.</p> : null}
-          </div>
-        </section>
-
-        <aside className="sideStack">
-          <section className="panel">
-            <h2>Follow-up questions</h2>
-            <div className="questionList">
-              {activeNotes.filter((note) => note.followUp).map((note) => (
-                <article key={note.id}>
-                  <strong>{note.theme}</strong>
-                  <p>{note.followUp}</p>
-                </article>
-              ))}
-            </div>
           </section>
         </aside>
+
+        <section className="evidenceBoard" aria-label="Evidence notes">
+          {activeNotes.map((note) => (
+            <article className="evidenceCard" key={note.id}>
+              <div className="noteStamp">
+                <span>{note.sourceType || "Source"}</span>
+                <time>{formatDate(note.createdAt)}</time>
+              </div>
+              <h2>{note.title}</h2>
+              <p className="sourceLine">{note.source}</p>
+              <p>{note.body}</p>
+              {note.quote ? <blockquote>{note.quote}</blockquote> : null}
+              {note.theme ? <strong className="themeTag">{note.theme}</strong> : null}
+              <div className="chips">
+                {note.tags.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag) => (
+                  <span key={tag}>{tag}</span>
+                ))}
+              </div>
+              {note.followUp ? <p className="question">Open thread: {note.followUp}</p> : null}
+            </article>
+          ))}
+          {activeNotes.length === 0 ? <p className="empty">No notes match the selected filters.</p> : null}
+        </section>
+
+        <aside className="questionRail">
+          <div className="sectionHead">
+            <h2>Open threads</h2>
+            <span>{questionCount}</span>
+          </div>
+          {activeNotes.filter((note) => note.followUp).map((note) => (
+            <article key={note.id}>
+              <strong>{note.theme}</strong>
+              <p>{note.followUp}</p>
+            </article>
+          ))}
+        </aside>
       </section>
+
+      <footer className="cohortFooter">built by the RaidGuild cohort</footer>
     </main>
   );
 }
