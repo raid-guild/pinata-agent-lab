@@ -51,6 +51,15 @@ const emptyBundle: Bundle = {
   resurfaced: []
 };
 
+const islandPositions = [
+  { x: 18, y: 30 },
+  { x: 46, y: 18 },
+  { x: 72, y: 36 },
+  { x: 30, y: 66 },
+  { x: 62, y: 72 },
+  { x: 84, y: 62 }
+];
+
 export default function Home() {
   const [bundle, setBundle] = useState<Bundle>(emptyBundle);
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
@@ -67,6 +76,7 @@ export default function Home() {
 
   const selectedTopic = bundle.selectedTopic;
   const totalMemories = useMemo(() => bundle.topics.reduce((sum, topic) => sum + topic.memoryCount, 0), [bundle.topics]);
+  const selectedColor = selectedTopic?.color ?? "#2f7d66";
 
   async function loadBundle(topicId: number | null) {
     const suffix = topicId ? `?topicId=${topicId}` : "";
@@ -75,107 +85,108 @@ export default function Home() {
   }
 
   return (
-    <main className="shell">
-      <header className="topbar">
+    <main className="shell" style={{ "--active-topic": selectedColor } as CSSProperties}>
+      <section className="gardenHero">
         <div>
-          <p className="eyebrow">Read-only knowledge map</p>
+          <p className="eyebrow">Living knowledge map</p>
           <h1>Memory Garden</h1>
+          <p>Read-only clusters, resurfaced ideas, and memory links maintained through chat.</p>
         </div>
-        <div className="metrics" aria-label="Garden totals">
+        <div className="gardenStats">
           <span><strong>{bundle.topics.length}</strong> topics</span>
           <span><strong>{totalMemories}</strong> memories</span>
           <span><strong>{bundle.links.length}</strong> links</span>
         </div>
-      </header>
+      </section>
 
-      <section className="gardenGrid">
-        <aside className="topics" aria-label="Topics">
-          <div className="panelHeader">
-            <h2>Topic garden</h2>
-            <span>{bundle.topics.length}</span>
+      <section className="gardenMap" aria-label="Topic garden map">
+        <svg className="linkCanopy" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M18 30 C32 8 52 8 72 36" />
+          <path d="M30 66 C42 48 54 48 62 72" />
+          <path d="M46 18 C54 36 62 48 84 62" />
+        </svg>
+
+        {bundle.topics.map((topic, index) => {
+          const position = islandPositions[index % islandPositions.length];
+          return (
+            <button
+              className={topic.id === selectedTopic?.id ? "topicIsland active" : "topicIsland"}
+              key={topic.id}
+              onClick={() => setSelectedTopicId(topic.id)}
+              style={{
+                "--topic": topic.color,
+                "--size": `${118 + topic.memoryCount * 18}px`,
+                left: `${position.x}%`,
+                top: `${position.y}%`
+              } as CSSProperties}
+              type="button"
+            >
+              <span className="growthRing" />
+              <strong>{topic.name}</strong>
+              <em>{topic.memoryCount} memories</em>
+            </button>
+          );
+        })}
+
+        <aside className="sproutShelf" aria-label="Resurfaced memories">
+          <div className="sectionHead">
+            <h2>Resurfacing</h2>
+            <span>{bundle.resurfaced.length}</span>
           </div>
-          <div className="topicMap">
-            {bundle.topics.map((topic) => (
-              <button
-                className={topic.id === selectedTopic?.id ? "topic active" : "topic"}
-                key={topic.id}
-                onClick={() => setSelectedTopicId(topic.id)}
-                style={{ "--topic": topic.color, "--size": `${84 + topic.memoryCount * 18}px` } as CSSProperties}
-                type="button"
-              >
-                <strong>{topic.name}</strong>
-                <span>{topic.memoryCount} memories</span>
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        <section className="detail">
-          {selectedTopic ? (
-            <>
-              <div className="detailHead">
-                <div>
-                  <p className="eyebrow">Current cluster</p>
-                  <h2>{selectedTopic.name}</h2>
-                  <p>{selectedTopic.description}</p>
-                </div>
-                <span className="status">{formatDate(selectedTopic.latestActivity)}</span>
-              </div>
-
-              <div className="memoryList">
-                {bundle.memories.map((memory) => (
-                  <article className="memory" key={memory.id} style={{ borderColor: memory.topicColor }}>
-                    <div>
-                      <h3>{memory.title}</h3>
-                      <p>{memory.body}</p>
-                    </div>
-                    <footer>
-                      <span>{"●".repeat(memory.growth)}</span>
-                      <time>Seen {formatDate(memory.lastSeenAt)}</time>
-                    </footer>
-                  </article>
-                ))}
-                {bundle.memories.length === 0 ? <p className="empty">No memories in this cluster yet.</p> : null}
-              </div>
-            </>
-          ) : (
-            <p>No topics yet.</p>
-          )}
-        </section>
-
-        <aside className="sideStack">
-          <section className="panel resurfacePanel">
-            <div className="panelHeader">
-              <h2>Resurface</h2>
-              <span>{bundle.resurfaced.length}</span>
-            </div>
-            <div className="resurfaceList">
-              {bundle.resurfaced.map((memory) => (
-                <article key={memory.id}>
-                  <strong>{memory.title}</strong>
-                  <span>{memory.topicName} · {formatDate(memory.lastSeenAt)}</span>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="panel">
-            <div className="panelHeader">
-              <h2>Idea links</h2>
-              <span>{bundle.links.length}</span>
-            </div>
-            <div className="links">
-              {bundle.links.map((link) => (
-                <article key={link.id}>
-                  <strong>{link.sourceTitle}</strong>
-                  <span>{link.targetTitle}</span>
-                  {link.note ? <p>{link.note}</p> : null}
-                </article>
-              ))}
-            </div>
-          </section>
+          {bundle.resurfaced.map((memory) => (
+            <article key={memory.id}>
+              <i style={{ background: memory.topicColor }} />
+              <strong>{memory.title}</strong>
+              <span>{memory.topicName} / seen {formatDate(memory.lastSeenAt)}</span>
+            </article>
+          ))}
         </aside>
       </section>
+
+      <section className="clusterTray">
+        {selectedTopic ? (
+          <>
+            <div className="clusterIntro">
+              <p className="eyebrow">Current cluster</p>
+              <h2>{selectedTopic.name}</h2>
+              <p>{selectedTopic.description}</p>
+              <time>Latest growth {formatDate(selectedTopic.latestActivity)}</time>
+            </div>
+
+            <div className="memoryBloom">
+              {bundle.memories.map((memory) => (
+                <article className="memoryPetal" key={memory.id} style={{ "--petal": memory.topicColor } as CSSProperties}>
+                  <span>{"✦".repeat(memory.growth)}</span>
+                  <h3>{memory.title}</h3>
+                  <p>{memory.body}</p>
+                  <time>Seen {formatDate(memory.lastSeenAt)}</time>
+                </article>
+              ))}
+              {bundle.memories.length === 0 ? <p className="empty">No memories in this cluster yet.</p> : null}
+            </div>
+          </>
+        ) : (
+          <p className="empty">No topics yet.</p>
+        )}
+      </section>
+
+      <section className="linkLedger" aria-label="Idea links">
+        <div className="sectionHead">
+          <h2>Visible paths</h2>
+          <span>{bundle.links.length}</span>
+        </div>
+        <div className="linkCards">
+          {bundle.links.map((link) => (
+            <article key={link.id}>
+              <strong>{link.sourceTitle}</strong>
+              <span>{link.targetTitle}</span>
+              {link.note ? <p>{link.note}</p> : null}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <footer className="cohortFooter">built by the RaidGuild cohort</footer>
     </main>
   );
 }
