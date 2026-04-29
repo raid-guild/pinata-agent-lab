@@ -1,0 +1,9 @@
+{
+  "name": "Memory Garden",
+  "slug": "memory-garden",
+  "description": "A local-first knowledge garden for notes, topics, idea links, and resurfaced memories.",
+  "route": "/app",
+  "runtime": "nextjs",
+  "database": "sqlite",
+  "start": "npm run start"
+}

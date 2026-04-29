@@ -3,16 +3,16 @@
 State: in_progress
 
 Current project:
-- memory-garden
+- community-quest-board
 
 Queue:
-- memory-garden
 - community-quest-board
 
 Completed:
 - micro-crm
 - practice-coach
 - field-notes-research
+- memory-garden
 
 Blocked:
 - none
