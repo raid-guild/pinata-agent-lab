@@ -1,0 +1,9 @@
+{
+  "name": "Field Notes Research Agent",
+  "slug": "field-notes-research",
+  "description": "A research notebook for observations from calls, fieldwork, interviews, Discord chats, and community sessions.",
+  "entrypoint": "/app",
+  "runtime": "nextjs",
+  "features": ["notes", "sources", "tags", "quotes", "themes", "follow_up_questions", "summary_draft"],
+  "requiresSecrets": false
+}
