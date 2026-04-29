@@ -60,12 +60,18 @@ export default function Home() {
   const totals = useMemo(() => {
     const minutesLogged = bundle.sessions.reduce((sum, session) => sum + session.minutes, 0);
     const averageMinutes = bundle.sessions.length > 0 ? Math.round(minutesLogged / bundle.sessions.length) : 0;
+    const longestSession = bundle.sessions.reduce((max, session) => Math.max(max, session.minutes), 0);
     return {
       averageMinutes,
+      longestSession,
       minutesLogged,
       sessionCount: bundle.sessions.length
     };
   }, [bundle.sessions]);
+
+  const streakProgress = selectedGoal?.bestStreak
+    ? Math.min(100, Math.round((selectedGoal.currentStreak / selectedGoal.bestStreak) * 100))
+    : 0;
 
   async function loadBundle(goalId: number | null) {
     const suffix = goalId ? `?goalId=${goalId}` : "";
@@ -79,141 +85,168 @@ export default function Home() {
 
   return (
     <main className="shell">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">Read-only training status</p>
+      <section className="arenaHero">
+        <div className="heroCopy">
+          <p className="eyebrow">Training console</p>
           <h1>Practice Coach</h1>
+          <p>Read-only practice telemetry for the drills, streaks, and next reps your coach agent keeps current.</p>
         </div>
-        <div className="metrics" aria-label="Selected goal progress">
-          <span><strong>{selectedGoal?.currentStreak ?? 0}</strong> day streak</span>
-          <span><strong>{selectedGoal?.bestStreak ?? 0}</strong> best</span>
-          <span><strong>{totals.minutesLogged}</strong> min logged</span>
-          <span><strong>{totals.averageMinutes}</strong> avg min</span>
-        </div>
-      </header>
 
-      <section className="grid">
-        <aside className="panel goalList" aria-label="Practice goals">
-          <div className="panelHeader">
-            <h2>Goals</h2>
-            <span>{bundle.goals.length}</span>
+        <section className="trainingDial" aria-label="Selected goal streak">
+          <div className="dial" style={{ "--progress": `${streakProgress}%` } as React.CSSProperties}>
+            <div>
+              <strong>{selectedGoal?.currentStreak ?? 0}</strong>
+              <span>day streak</span>
+            </div>
           </div>
-          {bundle.goals.map((goal) => (
-            <button
-              className={goal.id === selectedGoal?.id ? "goal active" : "goal"}
-              key={goal.id}
-              onClick={() => setSelectedId(goal.id)}
-              type="button"
-            >
-              <span>
-                <strong>{goal.discipline}</strong>
-                <small>{goal.title}</small>
-              </span>
-              <em>{goal.currentStreak}d</em>
-            </button>
-          ))}
-        </aside>
+          <div className="dialMeta">
+            <span>Best streak {selectedGoal?.bestStreak ?? 0}</span>
+            <span>{totals.minutesLogged} minutes logged</span>
+            <span>{totals.averageMinutes} min average</span>
+          </div>
+        </section>
+      </section>
 
-        <section className="panel detail">
+      <section className="goalTrack" aria-label="Practice goals">
+        {bundle.goals.map((goal) => (
+          <button
+            className={goal.id === selectedGoal?.id ? "goalLane active" : "goalLane"}
+            key={goal.id}
+            onClick={() => setSelectedId(goal.id)}
+            type="button"
+          >
+            <span>{goal.discipline}</span>
+            <strong>{goal.title}</strong>
+            <em>{goal.currentStreak}d streak</em>
+          </button>
+        ))}
+      </section>
+
+      <section className="practiceGrid">
+        <section className="sessionArena">
           {selectedGoal ? (
             <>
-              <div className="detailHead">
+              <div className="arenaHeader">
                 <div>
                   <p className="eyebrow">{selectedGoal.cadence} practice</p>
                   <h2>{selectedGoal.title}</h2>
-                  <p>{selectedGoal.discipline} · {selectedGoal.focus}</p>
+                  <p>{selectedGoal.discipline} / {selectedGoal.focus}</p>
                 </div>
-                <span className="status">{selectedGoal.targetMinutes} min target</span>
+                <span>{selectedGoal.targetMinutes} min target</span>
               </div>
 
-              <div className="trainingGrid" aria-label="Selected goal status">
-                <div className="trainingMetric">
-                  <span>Target</span>
-                  <strong>{selectedGoal.targetMinutes} min</strong>
-                  <time>{selectedGoal.cadence}</time>
-                </div>
-                <div className="trainingMetric">
-                  <span>Streak</span>
-                  <strong>{selectedGoal.currentStreak} days</strong>
-                  <time>Best {selectedGoal.bestStreak}</time>
-                </div>
-                <div className="trainingMetric highlight">
-                  <span>Due practice</span>
-                  <strong>{selectedGoal.nextSessionDate || "Unscheduled"}</strong>
-                  <time>{selectedGoal.nextDrill || "No drill queued"}</time>
-                </div>
+              <div className="cueCard">
+                <span>Next drill</span>
+                <strong>{selectedGoal.nextDrill || "No drill queued"}</strong>
+                <time>{selectedGoal.nextSessionDate || "Unscheduled"}</time>
               </div>
 
-              <div className="timeline">
-                <div className="panelHeader">
-                  <h3>Recent sessions</h3>
-                  <span className="countTag">{totals.sessionCount}</span>
+              <div className="heatmap" aria-label="Recent practice intensity">
+                {buildHeatmap(bundle.sessions).map((day) => (
+                  <span
+                    className={`heatCell level-${day.level}`}
+                    key={day.label}
+                    title={`${day.label}: ${day.minutes} minutes`}
+                  >
+                    {day.short}
+                  </span>
+                ))}
+              </div>
+
+              <section className="intervals" aria-label="Recent sessions">
+                <div className="sectionHead">
+                  <h3>Recent reps</h3>
+                  <span>{totals.sessionCount} sessions</span>
                 </div>
                 {bundle.sessions.length > 0 ? (
-                  bundle.sessions.map((item) => (
-                    <article key={item.id}>
-                      <time>{formatDate(item.practicedOn)}</time>
-                      <strong>{item.minutes} min · {item.drill}</strong>
-                      <p>{item.reflection}</p>
-                    </article>
-                  ))
+                  bundle.sessions.map((item) => {
+                    const width = totals.longestSession ? Math.max(18, (item.minutes / totals.longestSession) * 100) : 18;
+                    return (
+                      <article key={item.id}>
+                        <div className="repTop">
+                          <time>{formatDate(item.practicedOn)}</time>
+                          <strong>{item.minutes} min</strong>
+                        </div>
+                        <div className="repBar"><span style={{ width: `${width}%` }} /></div>
+                        <h4>{item.drill}</h4>
+                        <p>{item.reflection}</p>
+                      </article>
+                    );
+                  })
                 ) : (
                   <p className="empty">No sessions logged for this goal.</p>
                 )}
-              </div>
+              </section>
             </>
           ) : (
-            <p>No practice goals yet.</p>
+            <p className="empty">No practice goals yet.</p>
           )}
         </section>
 
-        <aside className="sideStack">
-          <section className="panel">
-            <div className="panelHeader">
-              <h2>Due today</h2>
-              <span className="countTag">{bundle.dueGoals.length}</span>
+        <aside className="coachRail">
+          <section className="dueBlocks">
+            <div className="sectionHead">
+              <h2>Due blocks</h2>
+              <span>{bundle.dueGoals.length}</span>
             </div>
-            <div className="dueList">
-              {bundle.dueGoals.length > 0 ? (
-                bundle.dueGoals.map((goal) => (
-                  <button key={goal.id} onClick={() => setSelectedId(goal.id)} type="button">
-                    <strong>{goal.discipline}</strong>
-                    <span>{goal.nextDrill}</span>
-                    <time>{goal.nextSessionDate}</time>
-                  </button>
-                ))
-              ) : (
-                <p className="empty">No practice blocks are due today.</p>
-              )}
-            </div>
+            {bundle.dueGoals.length > 0 ? (
+              bundle.dueGoals.map((goal) => (
+                <button key={goal.id} onClick={() => setSelectedId(goal.id)} type="button">
+                  <strong>{goal.discipline}</strong>
+                  <span>{goal.nextDrill}</span>
+                  <time>{goal.nextSessionDate}</time>
+                </button>
+              ))
+            ) : (
+              <p className="empty">No practice blocks are due today.</p>
+            )}
           </section>
 
-          <section className="panel">
-            <div className="panelHeader">
-              <h2>Stored plans</h2>
-              <span className="countTag">{bundle.plans.length}</span>
+          <section className="planDeck">
+            <div className="sectionHead">
+              <h2>Cue sheets</h2>
+              <span>{bundle.plans.length}</span>
             </div>
-            <div className="plans">
-              {bundle.plans.length > 0 ? (
-                bundle.plans.map((item) => (
-                  <article key={item.id}>
-                    <div>
-                      <strong>{item.title}</strong>
-                      <span className="tag">{item.status}</span>
-                    </div>
-                    <p>{item.body}</p>
-                    <time>{formatDate(item.createdAt)}</time>
-                  </article>
-                ))
-              ) : (
-                <p className="empty">No next-session plans stored.</p>
-              )}
-            </div>
+            {bundle.plans.length > 0 ? (
+              bundle.plans.map((item) => (
+                <article key={item.id}>
+                  <span>{item.status}</span>
+                  <strong>{item.title}</strong>
+                  <p>{item.body}</p>
+                  <time>{formatDate(item.createdAt)}</time>
+                </article>
+              ))
+            ) : (
+              <p className="empty">No next-session plans stored.</p>
+            )}
           </section>
         </aside>
       </section>
+
+      <footer className="cohortFooter">built by the RaidGuild cohort</footer>
     </main>
   );
+}
+
+function buildHeatmap(sessions: Session[]) {
+  const now = new Date();
+  const byDate = new Map<string, number>();
+  for (const session of sessions) {
+    byDate.set(session.practicedOn, (byDate.get(session.practicedOn) ?? 0) + session.minutes);
+  }
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(now);
+    date.setDate(now.getDate() - (6 - index));
+    const key = date.toISOString().slice(0, 10);
+    const minutes = byDate.get(key) ?? 0;
+    return {
+      label: formatDate(key),
+      level: minutes >= 45 ? 3 : minutes >= 20 ? 2 : minutes > 0 ? 1 : 0,
+      minutes,
+      short: new Intl.DateTimeFormat("en", { weekday: "narrow" }).format(date)
+    };
+  });
 }
 
 function formatDate(value: string) {
