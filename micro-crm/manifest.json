@@ -1,47 +1,28 @@
 {
-  "$schema": "https://pinata.cloud/schemas/template-manifest.json",
-  "version": "0.1.0",
+  "$schema": "https://agents.pinata.cloud/schemas/manifest.v1.json",
+  "version": 1,
   "agent": {
     "name": "Micro CRM Agent",
-    "description": "Chat-first relationship operations agent that records notes, keeps next actions current, and stores follow-up drafts.",
-    "workspace": "workspace"
+    "description": "A chat-first relationship operations agent that records notes, keeps next actions current, and stores follow-up drafts.",
+    "emoji": "📇",
+    "vibe": "Calm relationship operator focused on follow-ups, context, and useful next actions"
   },
   "template": {
-    "name": "Micro CRM for Solo Operators",
     "slug": "micro-crm",
-    "description": "A read-only relationship portfolio backed by local SQLite and operated through chat/API writes.",
-    "runtime": "nextjs",
-    "database": "sqlite",
-    "features": ["contacts", "notes", "next_actions", "pipeline_counts", "follow_up_drafts"]
+    "category": "productivity",
+    "authorName": "Raid Guild",
+    "tags": ["raidguild", "pinata", "agent", "crm", "relationships", "nextjs", "sqlite"]
   },
-  "secrets": [
-    {
-      "name": "APP_PASSWORD",
-      "required": false,
-      "description": "Optional password for HTTP Basic Auth on /app and /app/api/*."
-    }
-  ],
+  "secrets": [],
   "scripts": {
-    "install": "npm install",
-    "dev": "npm run dev",
-    "build": "npm run build",
-    "start": "npm run start",
-    "typecheck": "npm run typecheck"
+    "build": "npm install && npm run build",
+    "start": "npm start"
   },
-  "routes": {
-    "app": "/app",
-    "health": "/app/api/health",
-    "api": [
-      {
-        "path": "/app/api/contacts",
-        "methods": ["GET", "POST"],
-        "description": "Read contact portfolio data or add a relationship note and next action."
-      },
-      {
-        "path": "/app/api/suggestions",
-        "methods": ["POST"],
-        "description": "Store a draft follow-up for a contact."
-      }
-    ]
-  }
+  "routes": [
+    {
+      "port": 3000,
+      "path": "/app",
+      "protected": false
+    }
+  ]
 }

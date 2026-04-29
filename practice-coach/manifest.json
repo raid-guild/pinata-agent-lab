@@ -1,47 +1,28 @@
 {
-  "$schema": "https://pinata.cloud/schemas/template-manifest.json",
-  "version": "0.1.0",
+  "$schema": "https://agents.pinata.cloud/schemas/manifest.v1.json",
+  "version": 1,
   "agent": {
     "name": "Practice Coach Agent",
-    "description": "Chat-first training agent that logs focused practice, keeps streak context current, and stores next-session plans.",
-    "workspace": "workspace"
+    "description": "A chat-first training agent that logs focused practice, keeps streak context current, and stores next-session plans.",
+    "emoji": "🎯",
+    "vibe": "Direct practice partner focused on small reps, honest reflection, and the next useful session"
   },
   "template": {
-    "name": "Personal Practice Coach",
     "slug": "practice-coach",
-    "description": "A read-only training status dashboard backed by local SQLite and operated through chat/API writes.",
-    "runtime": "nextjs",
-    "database": "sqlite",
-    "features": ["practice_goals", "sessions", "streaks", "due_practice", "next_session_plans"]
+    "category": "productivity",
+    "authorName": "Raid Guild",
+    "tags": ["raidguild", "pinata", "agent", "practice", "coach", "training", "nextjs", "sqlite"]
   },
-  "secrets": [
-    {
-      "name": "APP_PASSWORD",
-      "required": false,
-      "description": "Optional password for HTTP Basic Auth on /app and /app/api/*."
-    }
-  ],
+  "secrets": [],
   "scripts": {
-    "install": "npm install",
-    "dev": "npm run dev",
-    "build": "npm run build",
-    "start": "npm run start",
-    "typecheck": "npm run typecheck"
+    "build": "npm install && npm run build",
+    "start": "npm start"
   },
-  "routes": {
-    "app": "/app",
-    "health": "/app/api/health",
-    "api": [
-      {
-        "path": "/app/api/practice",
-        "methods": ["GET", "POST"],
-        "description": "Read practice status or log a completed practice session."
-      },
-      {
-        "path": "/app/api/plans",
-        "methods": ["POST"],
-        "description": "Store a next-session plan for a practice goal."
-      }
-    ]
-  }
+  "routes": [
+    {
+      "port": 3000,
+      "path": "/app",
+      "protected": false
+    }
+  ]
 }

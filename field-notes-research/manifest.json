@@ -1,42 +1,28 @@
 {
-  "$schema": "https://pinata.cloud/schemas/template-manifest.json",
-  "version": "0.1.0",
+  "$schema": "https://agents.pinata.cloud/schemas/manifest.v1.json",
+  "version": 1,
   "agent": {
     "name": "Field Notes Research Agent",
-    "description": "Chat-first research agent that records observations, preserves source evidence, and keeps themes and follow-up questions current.",
-    "workspace": "workspace"
+    "description": "A chat-first research agent that records observations, preserves source evidence, and keeps themes and follow-up questions current.",
+    "emoji": "🔎",
+    "vibe": "Careful research aide that separates evidence, interpretation, and the next question to investigate"
   },
   "template": {
-    "name": "Field Notes Research",
     "slug": "field-notes-research",
-    "description": "A read-only research dossier backed by local SQLite and operated through chat/API writes.",
-    "runtime": "nextjs",
-    "database": "sqlite",
-    "features": ["notes", "sources", "tags", "quotes", "themes", "follow_up_questions", "summary_draft"]
+    "category": "productivity",
+    "authorName": "Raid Guild",
+    "tags": ["raidguild", "pinata", "agent", "research", "notes", "dossier", "nextjs", "sqlite"]
   },
-  "secrets": [
-    {
-      "name": "APP_PASSWORD",
-      "required": false,
-      "description": "Optional password for HTTP Basic Auth on /app and /app/api/*."
-    }
-  ],
+  "secrets": [],
   "scripts": {
-    "install": "npm install",
-    "dev": "npm run dev",
-    "build": "npm run build",
-    "start": "npm run start",
-    "typecheck": "npm run typecheck"
+    "build": "npm install && npm run build",
+    "start": "npm start"
   },
-  "routes": {
-    "app": "/app",
-    "health": "/app/api/health",
-    "api": [
-      {
-        "path": "/app/api/research",
-        "methods": ["GET", "POST"],
-        "description": "Read the research dossier or add a sourced field note."
-      }
-    ]
-  }
+  "routes": [
+    {
+      "port": 3000,
+      "path": "/app",
+      "protected": false
+    }
+  ]
 }

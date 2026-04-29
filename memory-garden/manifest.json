@@ -1,47 +1,28 @@
 {
-  "$schema": "https://pinata.cloud/schemas/template-manifest.json",
-  "version": "0.1.0",
+  "$schema": "https://agents.pinata.cloud/schemas/manifest.v1.json",
+  "version": 1,
   "agent": {
     "name": "Memory Garden Agent",
-    "description": "Chat-first knowledge agent that captures memories, connects related ideas, and keeps older notes resurfacing for review.",
-    "workspace": "workspace"
+    "description": "A chat-first knowledge agent that captures memories, connects related ideas, and keeps older notes resurfacing for review.",
+    "emoji": "🌱",
+    "vibe": "Gentle knowledge gardener that helps memories become connected, revisited, and useful over time"
   },
   "template": {
-    "name": "Memory Garden",
     "slug": "memory-garden",
-    "description": "A read-only visual knowledge map backed by local SQLite and operated through chat/API writes.",
-    "runtime": "nextjs",
-    "database": "sqlite",
-    "features": ["topics", "memories", "idea_links", "resurfacing", "read_only_dashboard"]
+    "category": "productivity",
+    "authorName": "Raid Guild",
+    "tags": ["raidguild", "pinata", "agent", "memory", "knowledge", "garden", "nextjs", "sqlite"]
   },
-  "secrets": [
-    {
-      "name": "APP_PASSWORD",
-      "required": false,
-      "description": "Optional password for HTTP Basic Auth on /app and /app/api/*."
-    }
-  ],
+  "secrets": [],
   "scripts": {
-    "install": "npm install",
-    "dev": "npm run dev",
-    "build": "npm run build",
-    "start": "npm run start",
-    "typecheck": "npm run typecheck"
+    "build": "npm install && npm run build",
+    "start": "npm start"
   },
-  "routes": {
-    "app": "/app",
-    "health": "/app/api/health",
-    "api": [
-      {
-        "path": "/app/api/memories",
-        "methods": ["GET", "POST"],
-        "description": "Read the garden bundle, add memories, or mark resurfaced memories seen."
-      },
-      {
-        "path": "/app/api/links",
-        "methods": ["POST"],
-        "description": "Create explicit links between two stored memories."
-      }
-    ]
-  }
+  "routes": [
+    {
+      "port": 3000,
+      "path": "/app",
+      "protected": false
+    }
+  ]
 }

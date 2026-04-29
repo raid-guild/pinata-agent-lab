@@ -4,6 +4,7 @@
   "agent": {
     "name": "Community Quest Board Agent",
     "description": "Chat-first coordination steward that keeps quests, owners, progress updates, outcomes, and weekly recap context current.",
+    "emoji": "🗺️",
     "vibe": "Calm operational partner for turning community work into visible next actions and shipped outcomes"
   },
   "template": {
@@ -12,13 +13,7 @@
     "authorName": "Raid Guild",
     "tags": ["raidguild", "pinata", "agent", "coordination", "quests", "nextjs", "sqlite"]
   },
-  "secrets": [
-    {
-      "name": "APP_PASSWORD",
-      "required": false,
-      "description": "Optional password for HTTP Basic Auth on /app and /app/api/*."
-    }
-  ],
+  "secrets": [],
   "scripts": {
     "build": "npm install && npm run build",
     "start": "npm start"

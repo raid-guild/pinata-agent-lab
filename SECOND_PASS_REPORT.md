@@ -32,15 +32,14 @@ All five templates completed the second pass and have clean committed checkpoint
 
 ## Notes
 
-The final pass on Community Quest Board checked the actual `pinata-tamagotchi` manifest and found the live schema uses `https://agents.pinata.cloud/schemas/manifest.v1.json`, numeric `version: 1`, and array-based `routes`. Community Quest Board now uses that shape.
+The manifest pass checked the actual `pinata-tamagotchi`, `pinata-chef`, Pinata docs, and example-template pattern. All five lab templates now use `https://agents.pinata.cloud/schemas/manifest.v1.json`, numeric `version: 1`, agent `emoji`/`vibe`, `template.category`/`authorName`/`tags`, build/start scripts, and array-based `/app` routes.
 
-Earlier second-pass templates still use the intermediate object-style `routes` shape from the steering file. They build and run locally, but before publishing templates, normalize Micro CRM, Practice Coach, Field Notes Research, and Memory Garden to the same manifest shape as Community Quest Board and `pinata-tamagotchi`.
+`APP_PASSWORD` remains an optional runtime environment convention documented in each template. It is intentionally not listed as a manifest secret for this pass, matching the simpler working template examples and avoiding optional-secret schema drift during deploy validation.
 
 ## Next Polish
 
-1. Normalize all manifests to the actual `manifest.v1.json` shape.
-2. Add template-level smoke scripts that validate `manifest.json`, build, health, and auth behavior consistently.
-3. Do one visual QA pass in a browser for mobile and desktop layouts.
-4. Add chat playbooks with concrete first-session examples for each template.
-5. Decide whether `APP_PASSWORD` should be documented as a template secret or only an environment convention.
-6. Test one or two templates through real Pinata deployment to confirm the manifest, route, and middleware assumptions.
+1. Add template-level smoke scripts that validate `manifest.json`, build, health, and auth behavior consistently.
+2. Do one visual QA pass in a browser for mobile and desktop layouts.
+3. Add chat playbooks with concrete first-session examples for each template.
+4. Test one or two templates through real Pinata deployment to confirm the manifest, route, and middleware assumptions.
+5. Revisit `APP_PASSWORD` manifest secrets only if Pinata's deploy validator confirms optional secrets are accepted in the current schema.
