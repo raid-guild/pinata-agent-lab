@@ -1,0 +1,9 @@
+{
+  "name": "Micro CRM for Solo Operators",
+  "slug": "micro-crm",
+  "description": "A lightweight relationship and follow-up tracker for freelancers, consultants, and small teams.",
+  "entrypoint": "/app",
+  "runtime": "nextjs",
+  "features": ["contacts", "notes", "next_actions", "follow_up_drafts"],
+  "requiresSecrets": false
+}

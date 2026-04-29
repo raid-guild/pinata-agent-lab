@@ -3,17 +3,16 @@
 State: in_progress
 
 Current project:
-- micro-crm
+- practice-coach
 
 Queue:
-- micro-crm
 - practice-coach
 - field-notes-research
 - memory-garden
 - community-quest-board
 
 Completed:
-- none
+- micro-crm
 
 Blocked:
 - none
@@ -32,4 +31,3 @@ When a project reaches `State: blocked`, Codex should:
 
 - add it to Blocked with a short reason
 - leave `.queue/current` unchanged unless the blocker is intentionally skipped
-
