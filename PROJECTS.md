@@ -1,5 +1,27 @@
 # Project Briefs
 
+## RaidGuild Agent App Starter
+
+Folder: `raidguild-agent-app-starter`
+
+Build a generic Pinata agent app starter that a developer can launch from and reshape into any agent-operated app using the patterns from this lab.
+
+First slice:
+
+- read-only `/app` dashboard
+- SQLite todo CRUD example
+- optional `APP_PASSWORD` Basic Auth
+- optional `API_PASSWORD` OpenClaw responses/webhook proxy
+- Pinata v1 manifest
+- workspace docs for bootstrap, identity, operations, and tools
+
+Core UI:
+
+- starter feature overview
+- todo status dashboard
+- filterable todo cards
+- visible API route examples
+
 ## Micro CRM for Solo Operators
 
 Folder: `micro-crm`
@@ -107,4 +129,3 @@ Core UI:
 - quest detail
 - update form
 - recap panel
-

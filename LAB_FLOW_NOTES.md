@@ -2,8 +2,9 @@
 
 Date: 2026-04-29
 
-These notes summarize the flow used to create and iterate on the five Pinata template lab examples:
+These notes summarize the flow used to create and iterate on the Pinata template lab examples:
 
+- RaidGuild Agent App Starter
 - Micro CRM for Solo Operators
 - Personal Practice Coach
 - Field Notes Research Agent
@@ -206,7 +207,7 @@ This is worth remembering for future loops: if typecheck complains about missing
 
 ## Current Status
 
-All five examples have completed:
+The five themed examples have completed:
 
 - scaffold pass
 - second pass
@@ -214,4 +215,6 @@ All five examples have completed:
 - optional OpenClaw proxy pass
 - design pass
 
-Each app builds and typechecks locally. The next useful step is real Pinata deployment testing on one or two templates to confirm the manifest, route, auth, proxy, and `openclaw.json` assumptions in the hosted environment.
+The RaidGuild Agent App Starter now captures the generic deployable pattern as a simpler template: read-only `/app`, SQLite CRUD, optional `APP_PASSWORD`, optional `API_PASSWORD` OpenClaw proxy routes, Pinata v1 manifest, and workspace handoff docs.
+
+Each app builds and typechecks locally. The next useful step is real Pinata deployment testing on the starter and one themed example to confirm the manifest, route, auth, proxy, and `openclaw.json` assumptions in the hosted environment.

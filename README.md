@@ -1,6 +1,6 @@
 # Pinata Template Lab
 
-Batch workspace for building five Pinata agent template scaffolds one at a time with Codex.
+Batch workspace for building Pinata agent template scaffolds one at a time with Codex.
 
 ## Projects
 
@@ -9,6 +9,7 @@ Batch workspace for building five Pinata agent template scaffolds one at a time 
 - `field-notes-research` - Field Notes Research Agent
 - `memory-garden` - Memory Garden
 - `community-quest-board` - Community Quest Board
+- `raidguild-agent-app-starter` - generic Next.js + SQLite starter pattern
 
 ## Process
 
@@ -51,4 +52,3 @@ Only use cron after manual runs work. The single-pass script has a global lock, 
 - It defaults to `gpt-5.5`.
 - It uses Codex yolo mode via `--dangerously-bypass-approvals-and-sandbox`.
 - It stops when the current project is marked `State: complete` or `State: blocked`.
-

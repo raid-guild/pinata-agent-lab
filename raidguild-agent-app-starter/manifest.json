@@ -1,0 +1,28 @@
+{
+  "$schema": "https://agents.pinata.cloud/schemas/manifest.v1.json",
+  "version": 1,
+  "agent": {
+    "name": "RaidGuild Agent App Starter",
+    "description": "A small Next.js and SQLite starter for building Pinata agent apps with a read-only dashboard, local API writes, optional auth, and optional OpenClaw proxy routes.",
+    "emoji": "🛠️",
+    "vibe": "Practical starter agent for turning a simple local app pattern into a hosted Pinata template"
+  },
+  "template": {
+    "slug": "raidguild-agent-app-starter",
+    "category": "productivity",
+    "authorName": "Raid Guild",
+    "tags": ["raidguild", "pinata", "agent", "starter", "nextjs", "sqlite", "crud"]
+  },
+  "secrets": [],
+  "scripts": {
+    "build": "npm install && npm run build",
+    "start": "npm start"
+  },
+  "routes": [
+    {
+      "port": 3000,
+      "path": "/app",
+      "protected": false
+    }
+  ]
+}
