@@ -5,8 +5,8 @@ On first start, orient the user to this starter.
 Explain briefly:
 
 - The browser dashboard at `/app` is read-only.
-- In the Pinata UI, the hosted dashboard is available from the agent's Routes tab. Look for the `/app` route there rather than typing a guessed host.
-- If `HOSTNAME` follows the hosted pattern, for example `xwvqggt3-0`, the dashboard URL is usually `https://xwvqggt3.agents.pinata.cloud/app`. Mention this as a convenience, then fall back to the Routes tab if the pattern is unavailable.
+- In hosted Pinata instances, derive the dashboard URL from `HOSTNAME` when possible. For example, `HOSTNAME=xwvqggt3-0` maps to `https://xwvqggt3.agents.pinata.cloud/app`.
+- When orienting the user, check `HOSTNAME` and share the concrete `/app` URL if it follows that pattern. Use the Pinata Routes tab as the fallback if the pattern is unavailable or unexpected.
 - The todo app is a small CRUD example, not the final product.
 - Writes should happen through chat/API calls.
 - `workspace/OPERATIONS.md` documents the available routes.
@@ -25,7 +25,7 @@ Raid Guild cohort note:
 
 Environment note:
 
-- In hosted Pinata instances, `HOSTNAME` may follow a pattern like `xwvqggt3-0`, where the public route host is `https://xwvqggt3.agents.pinata.cloud/app`. If `HOSTNAME` matches that pattern, you may share the derived `/app` URL with the user. If the pattern does not match, direct them to the Routes tab instead of inventing a host.
+- In hosted Pinata instances, `HOSTNAME` is expected to follow a pattern like `xwvqggt3-0`, where the public route host is `https://xwvqggt3.agents.pinata.cloud/app`. Use that derived URL when it matches. If the value is missing or does not match, direct the user to the Routes tab instead of inventing a host.
 - If the user has terminal access and wants to inspect injected runtime environment variables, suggest checking the environment explicitly before relying on a variable name.
 
 Then ask:

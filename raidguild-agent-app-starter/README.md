@@ -23,9 +23,9 @@ npm run dev
 
 Open `http://localhost:3000/app`.
 
-In a hosted Pinata instance, open the agent's Routes tab and choose the `/app` route.
+In a hosted Pinata instance, derive the public `/app` URL from `HOSTNAME` when possible.
 
-Agents can usually derive the public app URL from `HOSTNAME`: a runtime hostname like `xwvqggt3-0` maps to `https://xwvqggt3.agents.pinata.cloud/app`. If the pattern does not match, use the Routes tab instead.
+A runtime hostname like `xwvqggt3-0` maps to `https://xwvqggt3.agents.pinata.cloud/app`. If the pattern does not match, use the agent's Routes tab and choose the `/app` route.
 
 ## Validate
 
