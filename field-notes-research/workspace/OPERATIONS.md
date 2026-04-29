@@ -69,6 +69,21 @@ Example:
 curl -u operator:$APP_PASSWORD http://127.0.0.1:3000/app/api/research
 ```
 
+## OpenClaw Proxy
+
+Optional OpenClaw relays are available when `API_PASSWORD` is set:
+
+- `GET /app/api/openclaw/health`
+- `POST /app/api/openclaw/responses` relays to `POST /v1/responses`
+- `POST /app/api/openclaw/hooks/:name` relays to `POST /hooks/:name`
+
+Accepted proxy auth:
+
+- `Authorization: Bearer <API_PASSWORD>`
+- `x-api-password: <API_PASSWORD>`
+
+The proxy defaults to `http://127.0.0.1:18789`; override with `OPENCLAW_BASE_URL`. If `OPENCLAW_GATEWAY_TOKEN` is set, it is forwarded to `/v1/responses` as bearer auth. The instance `openclaw.json` must enable the responses endpoint and any hook/webhook support before these relays can reach the gateway.
+
 ## Safe Agent Rules
 
 - Confirm ambiguous source attribution before writing.

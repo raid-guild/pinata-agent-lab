@@ -8,7 +8,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (!isProtectedRoute(request.nextUrl.pathname)) {
+  const pathname = request.nextUrl.pathname;
+  if (isOpenClawProxyRoute(pathname)) {
+    return NextResponse.next();
+  }
+
+  if (!isProtectedRoute(pathname)) {
     return NextResponse.next();
   }
 
@@ -36,6 +41,10 @@ export function middleware(request: NextRequest) {
 
 function isProtectedRoute(pathname: string) {
   return pathname === "/app" || pathname.startsWith("/app/") || pathname === "/" || pathname.startsWith("/api/");
+}
+
+function isOpenClawProxyRoute(pathname: string) {
+  return pathname.startsWith("/api/openclaw/") || pathname.startsWith("/app/api/openclaw/");
 }
 
 function unauthorized() {

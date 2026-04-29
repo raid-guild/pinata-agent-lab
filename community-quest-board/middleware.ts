@@ -7,6 +7,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (isOpenClawProxyRoute(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
   const authorization = request.headers.get("authorization");
   const credentials = parseBasicAuth(authorization);
 
@@ -42,6 +46,10 @@ function parseBasicAuth(header: string | null) {
   } catch {
     return null;
   }
+}
+
+function isOpenClawProxyRoute(pathname: string) {
+  return pathname.startsWith("/api/openclaw/") || pathname.startsWith("/app/api/openclaw/");
 }
 
 export const config = {
