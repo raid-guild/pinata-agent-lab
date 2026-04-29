@@ -106,6 +106,59 @@ Good first changes:
 5. Update `workspace/OPERATIONS.md` so the agent knows how to call your APIs.
 6. Keep the manifest minimal until Pinata deploy validation confirms extra fields are supported.
 
+## Prompting a Build Agent
+
+When using an agent or coding assistant to turn this starter into a new template, give it the official Pinata template docs and tell it to keep this repo as the working example pattern.
+
+Useful references:
+
+- Template overview: `https://docs.pinata.cloud/agents/templates/overview`
+- Creating templates: `https://docs.pinata.cloud/agents/templates/creating`
+
+Suggested build prompt:
+
+```text
+You are converting the RaidGuild Agent App Starter into a new Pinata agent template.
+
+Use these docs as the source of truth:
+- https://docs.pinata.cloud/agents/templates/overview
+- https://docs.pinata.cloud/agents/templates/creating
+
+Use this starter as the implementation pattern:
+- Next.js App Router served at /app
+- local SQLite persistence through better-sqlite3
+- read-only browser dashboard
+- API routes for agent/chat writes
+- optional APP_PASSWORD Basic Auth
+- optional API_PASSWORD OpenClaw proxy routes
+- conservative Pinata manifest.v1.json shape
+- workspace docs for BOOTSTRAP, IDENTITY, OPERATIONS, TOOLS, USER, SOUL, AGENTS, and HEARTBEAT
+
+Build the new template by first defining the domain model, then updating the database, API routes, dashboard, workspace docs, README, and manifest. Keep the default template runnable without required external secrets. Run npm run build and npm run typecheck before calling the pass complete.
+```
+
+## Publishing
+
+Before publishing, deploy from your template repo and test the hosted app route, API routes, auth behavior, and any OpenClaw proxy assumptions.
+
+UI flow:
+
+1. Go to `https://agents.pinata.cloud/templates/submit`.
+2. Enter the public repository URL.
+3. Click Validate.
+4. Review the parsed manifest and workspace files.
+5. Submit for review.
+
+CLI flow:
+
+```bash
+pinata agents templates validate https://github.com/user/my-template
+pinata agents templates submit https://github.com/user/my-template
+pinata agents templates submit https://github.com/user/my-template --branch develop
+```
+
+Published templates can later be managed from My Templates or with the template CLI commands.
+
 ## First Agent Prompt
 
 ```text

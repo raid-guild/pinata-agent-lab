@@ -19,6 +19,18 @@ Useful app routes:
 - `/app/api/openclaw/responses`
 - `/app/api/openclaw/hooks/:name`
 
+Pinata template docs:
+
+- `https://docs.pinata.cloud/agents/templates/overview`
+- `https://docs.pinata.cloud/agents/templates/creating`
+
+Marketplace validation and submission:
+
+```bash
+pinata agents templates validate https://github.com/user/my-template
+pinata agents templates submit https://github.com/user/my-template
+```
+
 Database:
 
 - SQLite database path: `data/starter.sqlite`
