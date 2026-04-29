@@ -44,6 +44,8 @@ const emptyBundle: Bundle = {
   followUps: []
 };
 
+const statusOrder = ["active", "proposal", "lead"];
+
 export default function Home() {
   const [bundle, setBundle] = useState<Bundle>(emptyBundle);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -60,6 +62,15 @@ export default function Home() {
     }, {});
   }, [bundle.contacts]);
 
+  const orderedStatuses = useMemo(() => {
+    const seen = new Set(Object.keys(pipelineCounts));
+    const ordered = statusOrder.filter((status) => seen.has(status));
+    for (const status of seen) {
+      if (!ordered.includes(status)) ordered.push(status);
+    }
+    return ordered;
+  }, [pipelineCounts]);
+
   async function loadBundle(contactId: number | null) {
     const suffix = contactId ? `?contactId=${contactId}` : "";
     const response = await fetch(`/app/api/contacts${suffix}`, { cache: "no-store" });
@@ -70,138 +81,207 @@ export default function Home() {
     }
   }
 
+  const selectedDue = selectedContact ? getDaysUntil(selectedContact.nextActionDate) : null;
+
   return (
     <main className="shell">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">Read-only relationship portfolio</p>
+      <section className="radarHero">
+        <div className="heroCopy">
+          <p className="eyebrow">Relationship radar</p>
           <h1>Micro CRM</h1>
+          <p>
+            A read-only command center for warm relationships, next actions, and draft follow-ups kept current
+            through chat.
+          </p>
         </div>
-        <div className="metrics" aria-label="Pipeline counts">
-          {Object.entries(pipelineCounts).map(([status, count]) => (
-            <span key={status}>
-              <strong>{count}</strong> {status}
-            </span>
-          ))}
-        </div>
-      </header>
 
-      <section className="grid">
-        <aside className="panel contactList" aria-label="Contacts">
-          <div className="panelHeader">
-            <h2>Contacts</h2>
-            <span className="countTag">{bundle.contacts.length}</span>
+        <div className="heroPanel" aria-label="Pipeline overview">
+          <div className="panelLabel">
+            <span>Pipeline signal</span>
+            <strong>{bundle.contacts.length} contacts</strong>
           </div>
-          {bundle.contacts.map((contact) => (
-            <button
-              className={contact.id === selectedContact?.id ? "contact active" : "contact"}
-              key={contact.id}
-              onClick={() => setSelectedId(contact.id)}
-              type="button"
-            >
-              <span>
-                <strong>{contact.name}</strong>
-                <small>{contact.company}</small>
+          <div className="pipelineRail">
+            {orderedStatuses.map((status) => {
+              const count = pipelineCounts[status] ?? 0;
+              const width = bundle.contacts.length ? Math.max(12, (count / bundle.contacts.length) * 100) : 0;
+              return (
+                <span
+                  className={`pipelineSegment ${statusClass(status)}`}
+                  key={status}
+                  style={{ width: `${width}%` }}
+                  title={`${count} ${status}`}
+                />
+              );
+            })}
+          </div>
+          <div className="pipelineLegend">
+            {orderedStatuses.map((status) => (
+              <span key={status}>
+                <i className={statusClass(status)} /> {pipelineCounts[status]} {status}
               </span>
-              <em className="tag">{contact.status}</em>
-            </button>
-          ))}
-        </aside>
+            ))}
+          </div>
+        </div>
+      </section>
 
-        <section className="panel detail">
+      <section className="signalStrip" aria-label="Due follow-ups">
+        <div>
+          <p className="eyebrow">Due now</p>
+          <strong>{bundle.followUps.length} follow-ups need attention</strong>
+        </div>
+        <div className="followupRail">
+          {bundle.followUps.length > 0 ? (
+            bundle.followUps.map((contact) => (
+              <button
+                className={contact.id === selectedContact?.id ? "followupChip active" : "followupChip"}
+                key={contact.id}
+                onClick={() => setSelectedId(contact.id)}
+                type="button"
+              >
+                <span>{contact.name}</span>
+                <strong>{contact.nextAction}</strong>
+                <time>{formatDate(contact.nextActionDate)}</time>
+              </button>
+            ))
+          ) : (
+            <span className="quiet">No urgent follow-ups.</span>
+          )}
+        </div>
+      </section>
+
+      <section className="radarGrid">
+        <section className="accountMatrix" aria-label="Relationship accounts">
+          <div className="sectionHead">
+            <div>
+              <p className="eyebrow">Accounts</p>
+              <h2>Relationship matrix</h2>
+            </div>
+            <span>{bundle.contacts.length} tracked</span>
+          </div>
+
+          <div className="accountTiles">
+            {bundle.contacts.map((contact) => {
+              const daysUntil = getDaysUntil(contact.nextActionDate);
+              return (
+                <button
+                  className={contact.id === selectedContact?.id ? "accountTile active" : "accountTile"}
+                  key={contact.id}
+                  onClick={() => setSelectedId(contact.id)}
+                  type="button"
+                >
+                  <span className={`statusDot ${statusClass(contact.status)}`} />
+                  <span className="accountTop">
+                    <strong>{contact.name}</strong>
+                    <em>{contact.status}</em>
+                  </span>
+                  <span className="company">{contact.company}</span>
+                  <span className="actionLine">{contact.nextAction || "No next action"}</span>
+                  <span className={daysUntil <= 0 ? "dueBadge urgent" : "dueBadge"}>
+                    {formatUrgency(daysUntil)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="dossier" aria-label="Selected contact dossier">
           {selectedContact ? (
             <>
-              <div className="detailHead">
+              <div className="dossierHeader">
                 <div>
                   <p className="eyebrow">{selectedContact.role}</p>
                   <h2>{selectedContact.name}</h2>
-                  <p>{selectedContact.company} · {selectedContact.email}</p>
+                  <p>{selectedContact.company}</p>
                 </div>
-                <span className="status">{selectedContact.status}</span>
+                <span className={`dossierStatus ${statusClass(selectedContact.status)}`}>{selectedContact.status}</span>
               </div>
 
-              <div className="summaryGrid" aria-label="Selected contact status">
-                <div className="summaryItem">
-                  <span>Next action</span>
+              <div className="contactVitals">
+                <article>
+                  <span>Next move</span>
                   <strong>{selectedContact.nextAction || "No action set"}</strong>
                   <time>{selectedContact.nextActionDate || "Unscheduled"}</time>
-                </div>
-                <div className="summaryItem">
-                  <span>Last contacted</span>
-                  <strong>{selectedContact.lastContacted || "No date recorded"}</strong>
-                  <time>{selectedContact.email}</time>
-                </div>
+                </article>
+                <article>
+                  <span>Cadence risk</span>
+                  <strong>{selectedDue === null ? "Unknown" : formatUrgency(selectedDue)}</strong>
+                  <time>Last touch {selectedContact.lastContacted || "not recorded"}</time>
+                </article>
+                <article>
+                  <span>Contact</span>
+                  <strong>{selectedContact.email}</strong>
+                  <time>{selectedContact.role}</time>
+                </article>
               </div>
 
-              <div className="timeline">
-                <div className="panelHeader">
-                  <h3>Timeline</h3>
-                  <span className="countTag">{bundle.notes.length}</span>
-                </div>
-                {bundle.notes.length > 0 ? (
-                  bundle.notes.map((item) => (
-                    <article key={item.id}>
-                      <time>{formatDate(item.createdAt)}</time>
-                      <p>{item.body}</p>
-                    </article>
-                  ))
-                ) : (
-                  <p className="empty">No notes stored for this contact.</p>
-                )}
+              <div className="dossierBody">
+                <section className="timeline">
+                  <div className="sectionHead compact">
+                    <h3>Timeline ticks</h3>
+                    <span>{bundle.notes.length}</span>
+                  </div>
+                  {bundle.notes.length > 0 ? (
+                    bundle.notes.map((item) => (
+                      <article key={item.id}>
+                        <time>{formatDate(item.createdAt)}</time>
+                        <p>{item.body}</p>
+                      </article>
+                    ))
+                  ) : (
+                    <p className="empty">No notes stored for this contact.</p>
+                  )}
+                </section>
+
+                <section className="draftStack">
+                  <div className="sectionHead compact">
+                    <h3>Draft queue</h3>
+                    <span>{bundle.drafts.length}</span>
+                  </div>
+                  {bundle.drafts.length > 0 ? (
+                    bundle.drafts.map((item) => (
+                      <article key={item.id}>
+                        <span>{item.status}</span>
+                        <strong>{item.subject}</strong>
+                        <p>{item.body}</p>
+                        <time>{formatDate(item.createdAt)}</time>
+                      </article>
+                    ))
+                  ) : (
+                    <p className="empty">No follow-up drafts stored.</p>
+                  )}
+                </section>
               </div>
             </>
           ) : (
-            <p>No contacts yet.</p>
+            <p className="empty">No contacts yet.</p>
           )}
         </section>
-
-        <aside className="sideStack">
-          <section className="panel">
-            <div className="panelHeader">
-              <h2>Due Follow-ups</h2>
-              <span className="countTag">{bundle.followUps.length}</span>
-            </div>
-            <div className="followups">
-              {bundle.followUps.length > 0 ? (
-                bundle.followUps.map((contact) => (
-                  <button key={contact.id} onClick={() => setSelectedId(contact.id)} type="button">
-                    <strong>{contact.nextAction}</strong>
-                    <span>{contact.name}</span>
-                    <time>{contact.nextActionDate}</time>
-                  </button>
-                ))
-              ) : (
-                <p className="empty">No follow-ups are due.</p>
-              )}
-            </div>
-          </section>
-
-          <section className="panel">
-            <div className="panelHeader">
-              <h2>Stored Drafts</h2>
-              <span className="countTag">{bundle.drafts.length}</span>
-            </div>
-            <div className="drafts">
-              {bundle.drafts.length > 0 ? (
-                bundle.drafts.map((item) => (
-                  <article key={item.id}>
-                    <div>
-                      <strong>{item.subject}</strong>
-                      <span className="tag">{item.status}</span>
-                    </div>
-                    <p>{item.body}</p>
-                    <time>{formatDate(item.createdAt)}</time>
-                  </article>
-                ))
-              ) : (
-                <p className="empty">No follow-up drafts stored.</p>
-              )}
-            </div>
-          </section>
-        </aside>
       </section>
+
+      <footer className="cohortFooter">built by the RaidGuild cohort</footer>
     </main>
   );
+}
+
+function statusClass(status: string) {
+  return `status-${status.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
+
+function getDaysUntil(value: string) {
+  if (!value) return 999;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(value);
+  due.setHours(0, 0, 0, 0);
+  return Math.round((due.getTime() - today.getTime()) / 86_400_000);
+}
+
+function formatUrgency(daysUntil: number) {
+  if (daysUntil <= 0) return "due now";
+  if (daysUntil === 1) return "tomorrow";
+  if (daysUntil >= 999) return "unscheduled";
+  return `${daysUntil} days`;
 }
 
 function formatDate(value: string) {
