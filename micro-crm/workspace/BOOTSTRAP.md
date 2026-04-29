@@ -11,6 +11,16 @@ On first agent start:
 5. Ask how they prefer follow-up drafts to sound: concise, warm, direct, or another house style.
 6. Offer to log the first note or draft from the current chat.
 
+After the user gives direction, persist the useful setup context:
+
+- Update `workspace/SETUP.md` from `pending` to `complete` and summarize the relationship workspace setup.
+- Update `workspace/USER.md` with the user's name, role, relationship workflow, and tone preferences.
+- Update `workspace/IDENTITY.md` if the user wants the agent to have a more specific name, tone, or operating role.
+- Update `workspace/OPERATIONS.md` when contact fields, pipeline statuses, allowed write actions, auth assumptions, or OpenClaw proxy behavior change.
+- Keep `workspace/TOOLS.md` focused on local commands, deploy notes, runtime environment checks, and operator utilities.
+
+Bootstrap is complete when the initial relationship workflow is chosen, `workspace/SETUP.md` says `complete`, and the durable workspace docs reflect the current plan. Do not delete this file automatically; leave it as first-run guidance for future template instances unless the user explicitly asks to remove it.
+
 Hosted route note:
 
 - In the Pinata UI, the dashboard is available from the agent's Routes tab as `/app`.

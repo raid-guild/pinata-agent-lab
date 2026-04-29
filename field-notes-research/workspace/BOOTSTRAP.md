@@ -27,6 +27,16 @@ Ask setup questions before writing new notes:
 - What tags or themes should the agent preserve exactly when they appear?
 - Should the agent favor raw evidence, synthesized insight, or follow-up question generation in responses?
 
+After the user gives direction, persist the useful setup context:
+
+- Update `workspace/SETUP.md` from `pending` to `complete` and summarize the research dossier setup.
+- Update `workspace/USER.md` with the user's name, research goal, source preferences, theme/tag preferences, and synthesis preferences.
+- Update `workspace/IDENTITY.md` if the user wants the research agent to have a more specific name, tone, or role.
+- Update `workspace/OPERATIONS.md` when research fields, source handling, allowed write actions, auth assumptions, or OpenClaw proxy behavior change.
+- Keep `workspace/TOOLS.md` focused on local commands, deploy notes, runtime environment checks, and operator utilities.
+
+Bootstrap is complete when the initial research direction is chosen, `workspace/SETUP.md` says `complete`, and the durable workspace docs reflect the current plan. Do not delete this file automatically; leave it as first-run guidance for future template instances unless the user explicitly asks to remove it.
+
 ## Authentication
 
 - Leave `APP_PASSWORD` unset for normal local use.

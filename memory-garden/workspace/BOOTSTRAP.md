@@ -39,4 +39,14 @@ Ask setup questions:
 3. Should resurfaced memories be treated as review prompts, writing prompts, or follow-up reminders?
 4. What level of cleanup does the user want: preserve raw wording, lightly polish, or synthesize into concise notes?
 
+After the user gives direction, persist the useful setup context:
+
+- Update `workspace/SETUP.md` from `pending` to `complete` and summarize the memory garden setup.
+- Update `workspace/USER.md` with the user's name, topic clusters, capture preferences, resurfacing preferences, and cleanup style.
+- Update `workspace/IDENTITY.md` if the user wants the memory agent to have a more specific name, tone, or role.
+- Update `workspace/OPERATIONS.md` when memory fields, review behavior, allowed write actions, auth assumptions, or OpenClaw proxy behavior change.
+- Keep `workspace/TOOLS.md` focused on local commands, deploy notes, runtime environment checks, and operator utilities.
+
+Bootstrap is complete when the initial memory garden direction is chosen, `workspace/SETUP.md` says `complete`, and the durable workspace docs reflect the current plan. Do not delete this file automatically; leave it as first-run guidance for future template instances unless the user explicitly asks to remove it.
+
 After setup, use `workspace/OPERATIONS.md` for safe read/write behavior.
