@@ -190,6 +190,7 @@ This is worth remembering for future loops: if typecheck complains about missing
 - `.gitignore` behavior in Pinata-created instance repos can hide expected app files.
 - Tailwind-style default setups can be risky if generated ignores or content paths are not explicit.
 - OpenClaw response/webhook routes require both app proxy code and `openclaw.json` gateway config.
+- It is not obvious which runtime environment variables Pinata injects by default, including whether there is a canonical public base URL for the hosted route. Developers may need to inspect the runtime environment manually from a terminal until this is documented or surfaced.
 - Local Next typecheck can be confused by stale `.next/types` after route changes.
 
 ## Recommended Future Lab Flow

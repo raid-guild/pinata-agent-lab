@@ -9,6 +9,14 @@ npm run build
 npm run typecheck
 ```
 
+Inspect runtime environment names without printing secret values:
+
+```bash
+node -e "console.log(Object.keys(process.env).sort().join('\n'))"
+```
+
+Use this when you need to discover whether Pinata injects a hosted base URL or OpenClaw-related defaults. Do not print full environment values in chat unless the user explicitly asks and understands the risk.
+
 Useful app routes:
 
 - `/app`

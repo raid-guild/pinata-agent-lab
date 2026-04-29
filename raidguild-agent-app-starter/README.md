@@ -12,6 +12,8 @@ The included todo app is intentionally plain. Its job is to show the deployable 
 - Pinata v1 `manifest.json`
 - workspace docs for agent identity, bootstrap, and operations
 
+This starter was built from Raid Guild cohort agent-template experiments. Learn more at `https://www.raidguild.org/join`.
+
 ## Run
 
 ```bash
@@ -20,6 +22,8 @@ npm run dev
 ```
 
 Open `http://localhost:3000/app`.
+
+In a hosted Pinata instance, open the agent's Routes tab and choose the `/app` route. Do not assume the public host from local development URLs.
 
 ## Validate
 

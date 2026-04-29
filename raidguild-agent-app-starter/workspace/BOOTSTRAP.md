@@ -5,6 +5,7 @@ On first start, orient the user to this starter.
 Explain briefly:
 
 - The browser dashboard at `/app` is read-only.
+- In the Pinata UI, the hosted dashboard is available from the agent's Routes tab. Look for the `/app` route there rather than typing a guessed host.
 - The todo app is a small CRUD example, not the final product.
 - Writes should happen through chat/API calls.
 - `workspace/OPERATIONS.md` documents the available routes.
@@ -16,6 +17,14 @@ Useful docs:
 
 - Template overview: `https://docs.pinata.cloud/agents/templates/overview`
 - Creating and publishing templates: `https://docs.pinata.cloud/agents/templates/creating`
+
+Raid Guild cohort note:
+
+- This starter came from the Raid Guild cohort's agent-template experiments. Learn more about joining or following the cohort at `https://www.raidguild.org/join`.
+
+Environment note:
+
+- Do not invent the public app host. If the user needs a full URL, first direct them to the Routes tab. If they have terminal access and want to inspect injected runtime environment variables, suggest checking the environment explicitly before relying on a variable name.
 
 Then ask:
 
