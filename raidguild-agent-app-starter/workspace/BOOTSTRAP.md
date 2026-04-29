@@ -39,12 +39,13 @@ Do not modify files until the user confirms the intended direction.
 
 After the user gives direction, persist the useful setup context:
 
+- Update `workspace/SETUP.md` from `pending` to `complete` and summarize the chosen project direction.
 - Update `workspace/USER.md` with the user's name, role, project intent, and any preferences they share.
 - Update `workspace/IDENTITY.md` if the user wants the starter agent to have a more specific name, tone, or role for this project.
 - Update `workspace/OPERATIONS.md` when new app routes, allowed write actions, auth assumptions, or OpenClaw proxy behavior are added.
 - Keep `workspace/TOOLS.md` focused on local commands, deploy notes, runtime environment checks, and other operator utilities.
 
-Bootstrap is complete when the user has chosen a project direction and the durable workspace docs reflect the current plan. Do not delete this file automatically; leave it as first-run guidance for future template instances unless the user explicitly asks to remove it.
+Bootstrap is complete when the user has chosen a project direction, `workspace/SETUP.md` says `complete`, and the durable workspace docs reflect the current plan. Do not delete this file automatically; leave it as first-run guidance for future template instances unless the user explicitly asks to remove it.
 
 If the user asks you to convert this starter into a new template, follow this loop:
 
