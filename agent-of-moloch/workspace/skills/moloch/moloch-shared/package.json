@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "graphql-request": "^7.1.2",
+    "viem": "^2.30.0"
+  }
+}

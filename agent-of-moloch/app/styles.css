@@ -1,0 +1,475 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f1ea;
+  --panel: #fffdf7;
+  --ink: #191713;
+  --muted: #746d63;
+  --line: #d9d0bf;
+  --ember: #b63b25;
+  --gold: #b4872d;
+  --moss: #426f54;
+  --blue: #355f88;
+  --violet: #6c4a85;
+  --shadow: 0 20px 54px rgba(25, 23, 19, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(135deg, rgba(182, 59, 37, 0.12), transparent 34%),
+    linear-gradient(315deg, rgba(66, 111, 84, 0.12), transparent 32%),
+    var(--bg);
+  color: var(--ink);
+  font-family: Inter, Aptos, "Segoe UI", Arial, sans-serif;
+}
+
+button,
+time,
+code {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+h1,
+h2,
+p,
+blockquote {
+  margin-top: 0;
+}
+
+.shell {
+  display: grid;
+  gap: 22px;
+  margin: 0 auto;
+  max-width: 1440px;
+  min-height: 100vh;
+  padding: 30px;
+}
+
+.hero {
+  align-items: end;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    #17130f;
+  background-size: 34px 34px, 34px 34px, auto;
+  border: 1px solid #2d251f;
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  color: #fff8e8;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  overflow: hidden;
+  padding: 34px;
+  position: relative;
+}
+
+.hero::after {
+  background: radial-gradient(circle at 78% 20%, rgba(255, 194, 86, 0.22), transparent 28%);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.eyebrow {
+  color: #f0b852;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+h1 {
+  font-size: clamp(3.3rem, 7vw, 7.6rem);
+  line-height: 0.86;
+  margin-bottom: 18px;
+}
+
+.hero p {
+  color: #e3d8c8;
+  font-size: 1.05rem;
+  line-height: 1.58;
+  max-width: 720px;
+}
+
+.maskPanel {
+  background: rgba(255, 253, 247, 0.08);
+  border: 1px solid rgba(255, 248, 232, 0.18);
+  border-radius: 16px;
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+}
+
+.mask {
+  aspect-ratio: 1.5;
+  background:
+    linear-gradient(135deg, transparent 18%, #f0b852 18% 28%, transparent 28%),
+    linear-gradient(225deg, transparent 18%, #b63b25 18% 28%, transparent 28%),
+    #241d17;
+  border: 1px solid rgba(255, 248, 232, 0.18);
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 28px;
+}
+
+.mask span {
+  align-self: center;
+  background: #fff8e8;
+  border-radius: 999px;
+  display: block;
+  height: 18px;
+  justify-self: center;
+  width: 18px;
+}
+
+.maskPanel strong {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.maskPanel em {
+  color: #f0b852;
+  font-style: normal;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.maskPanel p {
+  color: #d8c8b0;
+  font-size: 0.92rem;
+  margin-bottom: 0;
+}
+
+.featureGrid,
+.lowerGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.featureGrid article,
+.controlPanel,
+.proposalCard,
+.daoLedger,
+.taskQueue {
+  background: rgba(255, 253, 247, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 16px 42px rgba(25, 23, 19, 0.08);
+}
+
+.featureGrid article {
+  display: grid;
+  gap: 8px;
+  min-height: 150px;
+  padding: 16px;
+}
+
+.featureGrid span,
+.cardTop span,
+.task span {
+  color: var(--ember);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.featureGrid p,
+.proposalCard p,
+.proposalCard footer,
+.daoLedger p,
+.task p,
+.empty {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.workspace {
+  align-items: start;
+  display: grid;
+  gap: 22px;
+  grid-template-columns: 300px minmax(0, 1fr);
+}
+
+.controlPanel,
+.daoLedger,
+.taskQueue {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.sectionHead {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.sectionHead h2 {
+  margin-bottom: 0;
+}
+
+.sectionHead span,
+.statStack span {
+  background: #f7edd9;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ember);
+  font-size: 0.82rem;
+  font-weight: 900;
+  padding: 6px 9px;
+  white-space: nowrap;
+}
+
+.filterStack,
+.statStack {
+  display: grid;
+  gap: 10px;
+}
+
+.filterStack {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.filterStack button {
+  background: #fffaf0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font-weight: 800;
+  padding: 10px;
+  text-transform: capitalize;
+}
+
+.filterStack button.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #ffffff;
+}
+
+.statStack span {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.proposalBoard {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(285px, 1fr));
+}
+
+.proposalCard {
+  border-top: 6px solid var(--blue);
+  display: grid;
+  gap: 10px;
+  min-height: 260px;
+  padding: 16px;
+}
+
+.proposalCard.stance-support {
+  border-top-color: var(--moss);
+}
+
+.proposalCard.stance-oppose {
+  border-top-color: var(--ember);
+}
+
+.proposalCard.stance-abstain {
+  border-top-color: var(--gold);
+}
+
+.cardTop {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.cardTop em {
+  background: #eaf0f6;
+  border-radius: 999px;
+  color: var(--blue);
+  font-size: 0.74rem;
+  font-style: normal;
+  font-weight: 900;
+  padding: 5px 8px;
+  text-transform: uppercase;
+}
+
+.proposalCard h2 {
+  font-size: 1.35rem;
+  line-height: 1.16;
+  margin-bottom: 0;
+}
+
+.voteLine {
+  align-items: center;
+  background: #f8f1e4;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.voteLine strong {
+  color: var(--ember);
+  font-size: 1.2rem;
+  text-transform: uppercase;
+}
+
+.voteLine span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.proposalCard footer {
+  align-self: end;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.lowerGrid {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+}
+
+.daoLedger article,
+.task {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.daoLedger article div {
+  align-items: baseline;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.daoLedger article div span,
+.task small {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.daoLedger blockquote {
+  border-left: 4px solid var(--gold);
+  color: var(--ink);
+  line-height: 1.45;
+  margin-bottom: 0;
+  padding-left: 12px;
+}
+
+.task.priority-urgent {
+  border-top-color: var(--ember);
+}
+
+.task.priority-high {
+  border-top-color: var(--gold);
+}
+
+.apiStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.apiStrip code {
+  background: #17130f;
+  border-radius: 999px;
+  color: #ffe8b3;
+  font-size: 0.84rem;
+  padding: 8px 11px;
+}
+
+.cohortFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 2px 0;
+}
+
+.cohortFooter a {
+  align-items: center;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: 0.84rem;
+  font-weight: 900;
+  gap: 8px;
+  letter-spacing: 0;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.cohortFooter a:hover {
+  color: var(--ink);
+}
+
+.cohortFooter img {
+  display: block;
+  height: 18px;
+  opacity: 0.72;
+  width: 18px;
+}
+
+@media (max-width: 1020px) {
+  .hero,
+  .workspace,
+  .lowerGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .featureGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .shell {
+    padding: 16px;
+  }
+
+  .hero {
+    border-radius: 18px;
+    padding: 22px;
+  }
+
+  .featureGrid,
+  .filterStack {
+    grid-template-columns: 1fr;
+  }
+
+  .daoLedger article div,
+  .voteLine {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cohortFooter {
+    justify-content: flex-start;
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "daoName": "Meta Clawtel",
+  "tokenName": "Meta Clawtel",
+  "tokenSymbol": "CLAW",
+  "lootTokenName": "Meta Clawtel Loot",
+  "lootTokenSymbol": "CLAWLOOT",
+  "votingTransferable": false,
+  "nvTransferable": true,
+  "memberAddresses": [
+    "0xFOUNDER_1_ADDRESS",
+    "0xFOUNDER_2_ADDRESS",
+    "0xFOUNDER_3_ADDRESS"
+  ],
+  "memberShares": [
+    "10000000000000000000000",
+    "10000000000000000000000",
+    "10000000000000000000000"
+  ],
+  "memberLoot": [
+    "0",
+    "0",
+    "0"
+  ],
+  "votingPeriodInSeconds": 14400,
+  "gracePeriodInSeconds": 14400,
+  "newOffering": "10000000000000000",
+  "quorum": "50",
+  "sponsorThreshold": "10000000000000000000000",
+  "minRetention": "67",
+  "shamanAddresses": [],
+  "shamanPermissions": []
+}

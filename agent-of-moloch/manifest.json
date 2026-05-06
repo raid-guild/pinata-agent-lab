@@ -1,0 +1,30 @@
+{
+  "$schema": "https://agents.pinata.cloud/schemas/manifest.v1.json",
+  "version": 1,
+  "agent": {
+    "name": "Agent of Moloch",
+    "description": "A characterful Moloch/Baal DAO governance agent that stores DAO charters, conviction platforms, proposal records, voting rationale, and suggested governance tasks.",
+    "emoji": "🔥",
+    "vibe": "Ritual governance steward with a cautious transaction hand and a public voter platform"
+  },
+  "template": {
+    "slug": "agent-of-moloch",
+    "category": "governance",
+    "authorName": "Raid Guild",
+    "authorUrl": "https://www.raidguild.org/join",
+    "authorLogoUrl": "https://www.brand.raidguild.org/assets/logos/symbol-m500.svg",
+    "tags": ["raidguild", "pinata", "agent", "moloch", "daohaus", "baal", "governance", "sqlite"]
+  },
+  "secrets": [],
+  "scripts": {
+    "build": "npm install && npm run build",
+    "start": "npm start"
+  },
+  "routes": [
+    {
+      "port": 3000,
+      "path": "/app",
+      "protected": false
+    }
+  ]
+}

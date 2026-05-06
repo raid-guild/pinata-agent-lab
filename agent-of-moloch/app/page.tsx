@@ -1,0 +1,240 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+type Dao = {
+  id: number;
+  name: string;
+  daoAddress: string;
+  chainId: string;
+  charter: string;
+  thesis: string;
+  conviction: string;
+  platform: string;
+  votingPower: string;
+  status: string;
+};
+
+type Proposal = {
+  id: number;
+  daoName: string;
+  proposalId: string;
+  title: string;
+  summary: string;
+  proposalType: string;
+  status: string;
+  agentStance: string;
+  confidence: string;
+  recommendedVote: string;
+  rationale: string;
+  dueDate: string;
+  updatedAt: string;
+};
+
+type GovernanceTask = {
+  id: number;
+  daoName: string | null;
+  proposalTitle: string | null;
+  title: string;
+  body: string;
+  actionType: string;
+  status: string;
+  priority: string;
+  dueDate: string;
+};
+
+type Bundle = {
+  daos: Dao[];
+  proposals: Proposal[];
+  tasks: GovernanceTask[];
+  stats: {
+    daoCount: number;
+    activeDaos: number;
+    openProposals: number;
+    readyToVote: number;
+    openTasks: number;
+    urgentTasks: number;
+  };
+};
+
+const emptyBundle: Bundle = {
+  daos: [],
+  proposals: [],
+  tasks: [],
+  stats: {
+    daoCount: 0,
+    activeDaos: 0,
+    openProposals: 0,
+    readyToVote: 0,
+    openTasks: 0,
+    urgentTasks: 0
+  }
+};
+
+const filters = ["all", "submitted", "voting", "ready", "processed"];
+
+export default function Home() {
+  const [bundle, setBundle] = useState<Bundle>(emptyBundle);
+  const [filter, setFilter] = useState("all");
+
+  useEffect(() => {
+    loadBundle(filter);
+  }, [filter]);
+
+  const conviction = useMemo(() => {
+    const scored = bundle.proposals.filter((proposal) => proposal.recommendedVote !== "defer").length;
+    return bundle.proposals.length ? Math.round((scored / bundle.proposals.length) * 100) : 0;
+  }, [bundle.proposals]);
+
+  async function loadBundle(nextFilter: string) {
+    const suffix = nextFilter === "all" ? "" : `?status=${nextFilter}`;
+    const response = await fetch(`/app/api/governance${suffix}`, { cache: "no-store" });
+    setBundle((await response.json()) as Bundle);
+  }
+
+  return (
+    <main className="shell">
+      <section className="hero">
+        <div>
+          <p className="eyebrow">Moloch watches the queue</p>
+          <h1>Agent of Moloch</h1>
+          <p>
+            A characterful governance agent for Baal DAOs: it remembers each DAO's charter, states its voter
+            platform, weighs proposals against conviction, and queues cautious tasks before any onchain move.
+          </p>
+        </div>
+
+        <div className="maskPanel" aria-label="Agent character">
+          <div className="mask" aria-hidden="true">
+            <span />
+            <span />
+          </div>
+          <strong>{conviction}%</strong>
+          <em>conviction scored</em>
+          <p>Build the unsigned rite first. Broadcast only when the human says the word.</p>
+        </div>
+      </section>
+
+      <section className="featureGrid" aria-label="Agent vows">
+        <article>
+          <span>Charter</span>
+          <strong>DAO memory</strong>
+          <p>Stores the thesis, charter, address, route, voting power, and operating context for each DAO.</p>
+        </article>
+        <article>
+          <span>Conviction</span>
+          <strong>Voter platform</strong>
+          <p>Turns broad values into a stable voting posture for yes, no, abstain, or defer decisions.</p>
+        </article>
+        <article>
+          <span>Augury</span>
+          <strong>Proposal record</strong>
+          <p>Tracks proposal state, stance, rationale, due dates, and the next review needed before voting.</p>
+        </article>
+        <article>
+          <span>Rite</span>
+          <strong>Task queue</strong>
+          <p>Suggests Moloch skill actions: read DAO state, check proposals, sponsor, vote, process, or record.</p>
+        </article>
+      </section>
+
+      <section className="workspace">
+        <aside className="controlPanel">
+          <div className="sectionHead">
+            <h2>Proposal lens</h2>
+            <span>{bundle.stats.openProposals} open</span>
+          </div>
+
+          <div className="filterStack" aria-label="Proposal filters">
+            {filters.map((item) => (
+              <button className={filter === item ? "active" : ""} key={item} onClick={() => setFilter(item)} type="button">
+                {item}
+              </button>
+            ))}
+          </div>
+
+          <div className="statStack">
+            <span><strong>{bundle.stats.daoCount}</strong> DAOs held</span>
+            <span><strong>{bundle.stats.readyToVote}</strong> ready votes</span>
+            <span><strong>{bundle.stats.urgentTasks}</strong> urgent rites</span>
+          </div>
+        </aside>
+
+        <section className="proposalBoard" aria-label="Read-only proposal dashboard">
+          {bundle.proposals.map((proposal) => (
+            <article className={`proposalCard stance-${proposal.agentStance}`} key={proposal.id}>
+              <div className="cardTop">
+                <span>{proposal.daoName}</span>
+                <em>{proposal.status}</em>
+              </div>
+              <h2>#{proposal.proposalId} {proposal.title}</h2>
+              <p>{proposal.summary}</p>
+              <div className="voteLine">
+                <strong>{proposal.recommendedVote}</strong>
+                <span>{proposal.agentStance} / {proposal.confidence}</span>
+              </div>
+              <footer>
+                <small>{proposal.rationale}</small>
+                <time>Due {proposal.dueDate || "unscheduled"} / Updated {formatDate(proposal.updatedAt)}</time>
+              </footer>
+            </article>
+          ))}
+          {bundle.proposals.length === 0 ? <p className="empty">No proposals match this filter.</p> : null}
+        </section>
+      </section>
+
+      <section className="lowerGrid">
+        <section className="daoLedger" aria-label="DAO conviction ledger">
+          <div className="sectionHead">
+            <h2>Conviction ledger</h2>
+            <span>{bundle.stats.activeDaos} active</span>
+          </div>
+          {bundle.daos.map((dao) => (
+            <article key={dao.id}>
+              <div>
+                <strong>{dao.name}</strong>
+                <span>{dao.status} / chain {dao.chainId}</span>
+              </div>
+              <p>{dao.thesis}</p>
+              <blockquote>{dao.platform}</blockquote>
+            </article>
+          ))}
+        </section>
+
+        <section className="taskQueue" aria-label="Suggested governance tasks">
+          <div className="sectionHead">
+            <h2>Next rites</h2>
+            <span>{bundle.stats.openTasks} open</span>
+          </div>
+          {bundle.tasks.map((task) => (
+            <article className={`task priority-${task.priority}`} key={task.id}>
+              <span>{task.actionType}</span>
+              <strong>{task.title}</strong>
+              <p>{task.body}</p>
+              <small>{task.daoName || "No DAO"} / {task.status} / due {task.dueDate || "unscheduled"}</small>
+            </article>
+          ))}
+        </section>
+      </section>
+
+      <section className="apiStrip" aria-label="Useful API routes">
+        <code>GET /app/api/governance</code>
+        <code>POST /app/api/daos</code>
+        <code>POST /app/api/proposals</code>
+        <code>POST /app/api/tasks</code>
+        <code>POST /app/api/openclaw/responses</code>
+      </section>
+
+      <footer className="cohortFooter">
+        <a href="https://www.raidguild.org/join" rel="noreferrer" target="_blank">
+          <img alt="" src="https://www.brand.raidguild.org/assets/logos/symbol-m500.svg" />
+          <span>built by the RaidGuild cohort</span>
+        </a>
+      </footer>
+    </main>
+  );
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(value));
+}
