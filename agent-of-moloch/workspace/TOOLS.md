@@ -57,6 +57,12 @@ Snapshot artifacts written by `task-snapshot`:
 - `process-queue.json`
 - `checkpoint.json`
 
+Processing note:
+
+- Use `process-queue --first 100` or larger for watcher tasks.
+- Process the first queue item only, then rerun the queue before processing another proposal.
+- With `RPC_URL` configured, direct `state(id) == Ready` is the processability source of truth.
+
 Required env for chain reads:
 
 ```bash

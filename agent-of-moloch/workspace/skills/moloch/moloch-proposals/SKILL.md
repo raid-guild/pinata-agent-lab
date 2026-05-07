@@ -52,6 +52,8 @@ Daohaus expects details JSON with `title`, `description`, optional `contentURI`,
 
 ## Signal Proposal
 
+When RPC is configured, proposal commands estimate and include `baalGas` automatically through the DAO Safe/module execution path with a default `1.2x` buffer. Keep this on for autonomous agents. If estimation fails, the builder falls back to `0` and reports `baalGasEstimateError`; use `--baal-gas-buffer`, `--baal-gas`, or `--require-baal-gas-estimate` for explicit policy.
+
 ```bash
 node ../moloch-shared/scripts/moloch.mjs signal \
   --dao 0xDAO \

@@ -120,6 +120,8 @@ Bundled skills:
 
 Use `task-snapshot` artifacts for routine review and token-efficient scheduled work. Use direct reads immediately before any write action. Use Graph reads for proposal metadata and original `proposalData`. If the two disagree, prefer direct contract state for timing and permission checks.
 
+For processing, use `process-queue --first 100` or larger. Process only the first item in the queue, then rerun `process-queue` before processing another proposal. When `RPC_URL` is configured, direct `state(id) == Ready` is the source of truth for processability.
+
 ## App Auth
 
 If `APP_PASSWORD` is unset, the app and API work without authentication.

@@ -24,12 +24,14 @@ const BASE_CHAIN_ID = 8453;
 const SUMMONER = '0x97Aaa5be8B38795245f1c38A883B44cccdfB3E11';
 const POSTER = '0x000000000000cd17345801aa8147b8D3950260FF';
 const TRIBUTE_MINION = '0x00768B047f73D88b6e9c14bcA97221d6E179d468';
+const GNOSIS_MULTISEND = '0x998739BFdAAdde7C933B942a68053933098f9EDa';
 const DAOHAUS_BASE_SUBGRAPH_ID = '7yh4eHJ4qpHEiLPAk9BXhL5YgYrTrRE6gWy8x4oHyAqW';
 const THE_GRAPH_GATEWAY = 'https://gateway.thegraph.com/api';
 const POSTER_TAG_DAO_DB = 'daohaus.proposal.database';
 const POSTER_TAG_SUMMONER = 'daohaus.summoner.daoProfile';
 const POSTER_TAG_DAO_PROFILE_UPDATE = 'daohaus.shares.daoProfile';
 const POSTER_POST_SELECTOR = toFunctionSelector('post(string,string)');
+const ACTION_GAS_LIMIT_ADDITION = 150000n;
 
 const BAAL_ABI = [
   { type: 'function', name: 'submitProposal', stateMutability: 'payable', inputs: [{ name: 'proposalData', type: 'bytes' }, { name: 'expiration', type: 'uint32' }, { name: 'baalGas', type: 'uint256' }, { name: 'details', type: 'string' }], outputs: [] },
@@ -47,6 +49,8 @@ const BAAL_ABI = [
   { type: 'function', name: 'latestSponsoredProposalId', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint32' }] },
   { type: 'function', name: 'getProposalStatus', stateMutability: 'view', inputs: [{ name: 'id', type: 'uint32' }], outputs: [{ type: 'bool[4]' }] },
   { type: 'function', name: 'state', stateMutability: 'view', inputs: [{ name: 'id', type: 'uint32' }], outputs: [{ type: 'uint8' }] },
+  { type: 'function', name: 'avatar', stateMutability: 'view', inputs: [], outputs: [{ type: 'address' }] },
+  { type: 'function', name: 'target', stateMutability: 'view', inputs: [], outputs: [{ type: 'address' }] },
   { type: 'function', name: 'memberVoted', stateMutability: 'view', inputs: [{ type: 'address' }, { type: 'uint32' }], outputs: [{ type: 'bool' }] },
   { type: 'function', name: 'proposals', stateMutability: 'view', inputs: [{ type: 'uint256' }], outputs: [{ name: 'id', type: 'uint32' }, { name: 'prevProposalId', type: 'uint32' }, { name: 'votingStarts', type: 'uint32' }, { name: 'votingEnds', type: 'uint32' }, { name: 'graceEnds', type: 'uint32' }, { name: 'expiration', type: 'uint32' }, { name: 'baalGas', type: 'uint256' }, { name: 'yesVotes', type: 'uint256' }, { name: 'noVotes', type: 'uint256' }, { name: 'maxTotalSharesAndLootAtVote', type: 'uint256' }, { name: 'maxTotalSharesAtSponsor', type: 'uint256' }, { name: 'sponsor', type: 'address' }, { name: 'proposalDataHash', type: 'bytes32' }] },
 ];
@@ -67,6 +71,10 @@ const MULTISEND_ABI = [
   { type: 'function', name: 'multiSend', stateMutability: 'payable', inputs: [{ name: 'transactions', type: 'bytes' }], outputs: [] },
 ];
 
+const GNOSIS_MODULE_ABI = [
+  { type: 'function', name: 'execTransactionFromModule', stateMutability: 'nonpayable', inputs: [{ name: 'to', type: 'address' }, { name: 'value', type: 'uint256' }, { name: 'data', type: 'bytes' }, { name: 'operation', type: 'uint8' }], outputs: [{ type: 'bool' }] },
+];
+
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
   return i === -1 ? fallback : process.argv[i + 1];
@@ -82,6 +90,17 @@ function boolArg(name, fallback = false) {
   return value === 'true' || value === '1' || value === 'yes';
 }
 
+function decimalArg(name, fallback) {
+  const value = arg(name, fallback);
+  const normalized = String(value).trim();
+  if (!/^\d+(\.\d+)?$/.test(normalized)) throw new Error(`${name} must be a positive decimal number.`);
+  const [whole, frac = ''] = normalized.split('.');
+  const scale = 1000n;
+  const scaled = BigInt(whole) * scale + BigInt((frac + '000').slice(0, 3));
+  if (scaled < 0n) throw new Error(`${name} must be positive.`);
+  return scaled;
+}
+
 function jsonFile(path) {
   return JSON.parse(fs.readFileSync(path, 'utf8'));
 }
@@ -95,7 +114,7 @@ function tx(to, data, value = 0n) {
 }
 
 function withSummary(unsigned, summary) {
-  return { summary: { chainId: unsigned.chainId, to: unsigned.to, value: unsigned.value, ...summary }, ...unsigned };
+  return { summary: { chainId: unsigned.chainId, to: unsigned.to, value: unsigned.value, baalGas: unsigned.baalGas, estimatedBaalGas: unsigned.estimatedBaalGas, baalGasRawEstimate: unsigned.baalGasRawEstimate, baalGasBuffer: unsigned.baalGasBuffer, baalGasEstimateError: unsigned.baalGasEstimateError, ...summary }, ...unsigned };
 }
 
 function compact(value) {
@@ -397,26 +416,32 @@ function hasQuorum(proposal) {
 
 function deriveProposalLifecycle(proposal, now = Math.floor(Date.now() / 1000), chain = {}) {
   const sponsored = Boolean(proposal.sponsored);
-  const cancelled = Boolean(proposal.cancelled);
-  const processed = Boolean(proposal.processed);
-  const passed = Boolean(proposal.passed);
-  const actionFailed = Boolean(proposal.actionFailed);
+  const chainStatus = chain.namedStatus || {};
+  const hasChainStatus = Array.isArray(chainStatus.raw);
+  const cancelled = hasChainStatus ? Boolean(chainStatus.cancelled) : Boolean(proposal.cancelled);
+  const processed = hasChainStatus ? Boolean(chainStatus.processed) : Boolean(proposal.processed);
+  const passed = hasChainStatus ? Boolean(chainStatus.passed) : Boolean(proposal.passed);
+  const actionFailed = hasChainStatus ? Boolean(chainStatus.actionFailed) : Boolean(proposal.actionFailed);
   const votingStarts = Number(proposal.votingStarts || 0);
   const votingEnds = Number(proposal.votingEnds || 0);
   const graceEnds = Number(proposal.graceEnds || 0);
   const yes = BigInt(proposal.yesBalance || proposal.yesVotes || '0');
   const no = BigInt(proposal.noBalance || proposal.noVotes || '0');
   const quorum = hasQuorum(proposal);
+  const afterGrace = sponsored && !cancelled && !processed && now > graceEnds;
   const needsSponsor = !sponsored && !cancelled;
   const inVoting = sponsored && !cancelled && !processed && votingStarts < now && votingEnds > now;
   const inGrace = sponsored && !cancelled && !processed && votingEnds < now && graceEnds > now;
-  const graphReady = !processed && sponsored && !cancelled && now > graceEnds && yes > no && quorum;
-  const failedQuorum = sponsored && !cancelled && !processed && now > graceEnds && !quorum;
-  const failedVote = sponsored && !cancelled && !processed && now > graceEnds && yes <= no;
+  const graphReady = afterGrace && yes > no && quorum;
   const prevStateEligible = chain.prevState == null ? undefined : PREV_PROCESS_ELIGIBLE.has(Number(chain.prevState));
-  const chainStateName = chain.state == null ? undefined : STATE_NAMES[Number(chain.state)] || `unknown-${chain.state}`;
+  const chainState = chain.state == null ? undefined : Number(chain.state);
+  const chainStateName = chainState == null ? undefined : STATE_NAMES[chainState] || `unknown-${chain.state}`;
   const prevStateName = chain.prevState == null ? undefined : STATE_NAMES[Number(chain.prevState)] || `unknown-${chain.prevState}`;
-  const processableNow = graphReady && proposal.proposalData && prevStateEligible !== false;
+  const stateReady = chainState == null ? undefined : chainState === 5;
+  const stateDefeated = chainState == null ? undefined : chainState === 7;
+  const failedQuorum = afterGrace && chainState == null && !quorum;
+  const failedVote = afterGrace && (stateDefeated == null ? yes <= no : stateDefeated);
+  const processableNow = Boolean((stateReady == null ? graphReady : stateReady) && proposal.proposalData && prevStateEligible !== false);
 
   let status = 'unknown';
   if (needsSponsor) status = 'unsponsored';
@@ -426,8 +451,8 @@ function deriveProposalLifecycle(proposal, now = Math.floor(Date.now() / 1000), 
   else if (processed && !passed) status = 'processedFailed';
   else if (inVoting) status = 'voting';
   else if (inGrace) status = 'grace';
-  else if (graphReady) status = 'needsProcessing';
-  else if (failedQuorum || failedVote) status = 'failed';
+  else if (processableNow) status = 'needsProcessing';
+  else if (stateDefeated || failedQuorum || failedVote) status = 'failed';
 
   return {
     proposalId: String(proposal.proposalId ?? ''),
@@ -437,7 +462,8 @@ function deriveProposalLifecycle(proposal, now = Math.floor(Date.now() / 1000), 
     inVoting,
     inGrace,
     graphReady,
-    processableNow: Boolean(processableNow),
+    chainReady: stateReady,
+    processableNow,
     failedQuorum,
     failedVote,
     processed,
@@ -474,19 +500,52 @@ async function lifecycleForProposal(dao, proposalId) {
   return { proposal: { id: proposal.id, proposalId: proposal.proposalId, title: proposal.title, proposalType: proposal.proposalType }, lifecycle, chain };
 }
 
-function processQueueFromProposals(proposals) {
+function processingCandidatesFromProposals(proposals, now = Math.floor(Date.now() / 1000)) {
   return proposals
     .map((proposal) => ({ proposal, lifecycle: deriveProposalLifecycle(proposal) }))
-    .filter((item) => item.lifecycle.graphReady && item.proposal.proposalData)
+    .filter((item) => (
+      item.proposal.proposalId != null &&
+      Number(item.proposal.graceEnds || 0) < now &&
+      Boolean(item.proposal.proposalData)
+    ));
+}
+
+function queueItem(item) {
+  return {
+    proposalId: item.proposal.proposalId,
+    title: item.proposal.title,
+    proposalType: item.proposal.proposalType,
+    prevProposalId: item.proposal.prevProposalId,
+    status: item.lifecycle.status,
+    hasProposalData: item.lifecycle.hasProposalData,
+    chainReady: item.lifecycle.chainReady,
+    processableNow: item.lifecycle.processableNow,
+    previousProposalProcessed: item.lifecycle.prevStateEligible,
+    indexedPassed: Boolean(item.proposal.passed),
+    indexedProcessed: Boolean(item.proposal.processed),
+    indexedCancelled: Boolean(item.proposal.cancelled),
+  };
+}
+
+async function processQueueFromProposals(dao, proposals) {
+  const candidates = processingCandidatesFromProposals(proposals);
+  if (!(process.env.RPC_URL || arg('rpc'))) {
+    return candidates
+      .sort((a, b) => Number(a.proposal.proposalId) - Number(b.proposal.proposalId))
+      .map((item, index) => ({ ...queueItem(item), queueIndex: index, processFirst: index === 0, status: 'needsChainPreflight', note: 'Set RPC_URL or pass --rpc to verify direct chain processability.' }));
+  }
+  const checked = await Promise.all(candidates.map(async (item) => {
+    try {
+      const chain = await chainProposalContext(dao, item.proposal);
+      return { proposal: item.proposal, lifecycle: deriveProposalLifecycle(item.proposal, Math.floor(Date.now() / 1000), chain), chain };
+    } catch (error) {
+      return { proposal: item.proposal, lifecycle: { ...item.lifecycle, status: 'chainPreflightError', processableNow: false, error: error.shortMessage || error.message } };
+    }
+  }));
+  return checked
+    .filter((item) => item.lifecycle.processableNow)
     .sort((a, b) => Number(a.proposal.proposalId) - Number(b.proposal.proposalId))
-    .map((item) => ({
-      proposalId: item.proposal.proposalId,
-      title: item.proposal.title,
-      proposalType: item.proposal.proposalType,
-      prevProposalId: item.proposal.prevProposalId,
-      status: item.lifecycle.status,
-      hasProposalData: item.lifecycle.hasProposalData,
-    }));
+    .map((item, index) => ({ ...queueItem(item), queueIndex: index, processFirst: index === 0 }));
 }
 
 function summarizeProposals(proposals) {
@@ -556,7 +615,7 @@ async function taskSnapshot(dao) {
   const members = membersResult.members || [];
   const summary = summarizeProposals(proposals);
   const membershipSummary = summarizeMembers(members);
-  const processQueue = processQueueFromProposals(proposals);
+  const processQueue = await processQueueFromProposals(dao, proposals);
   const checkpointFile = path.join(outDir, 'checkpoint.json');
   let previousCheckpoint = {};
   if (fs.existsSync(checkpointFile)) {
@@ -573,7 +632,7 @@ async function taskSnapshot(dao) {
     lastGraphProposalIdSeen: proposals.reduce((max, p) => Math.max(max, Number(p.proposalId || 0)), Number(previousCheckpoint.lastGraphProposalIdSeen || 0)),
     lastPassedProposalIdIncorporated: previousCheckpoint.lastPassedProposalIdIncorporated || null,
     votingCount: summary.votingCount,
-    needsProcessingCount: summary.needsProcessingCount,
+    needsProcessingCount: processQueue.length,
   };
   const files = {
     directState: path.join(outDir, 'direct-state.json'),
@@ -617,7 +676,7 @@ async function taskSnapshot(dao) {
       proposalCount: summary.count,
       votingCount: summary.votingCount,
       openProposalThrottleBlocked: summary.votingCount >= Number(arg('max-voting', 3)),
-      needsProcessingCount: summary.needsProcessingCount,
+      needsProcessingCount: processQueue.length,
       oldestProcessableProposalId: processQueue[0]?.proposalId || null,
     },
   };
@@ -646,14 +705,72 @@ function summonProfile(p) {
   }).filter(([, value]) => value !== undefined && value !== null && value !== ''));
 }
 
-function proposalTx({ dao, actions, title, description, link, proposalType, expiration = 0, baalGas = 0, value = 0n }) {
+async function safeAddressForDao(dao) {
+  const explicit = arg('safe') || arg('safe-address') || process.env.SAFE_ADDRESS;
+  if (explicit) return explicit;
+  if (process.env.RPC_URL || arg('rpc')) {
+    try {
+      return await client().readContract({ address: dao, abi: BAAL_ABI, functionName: 'avatar' });
+    } catch {}
+  }
+  if (!(process.env.GRAPH_URL || process.env.GRAPH_API_KEY || arg('graph-url') || arg('graph-key'))) return null;
+  try {
+    const { dao: indexedDao } = await graphDao(dao);
+    return indexedDao?.safeAddress || null;
+  } catch {
+    return null;
+  }
+}
+
+async function estimateBaalGas(dao, actions, proposalData) {
+  const safeAddress = await safeAddressForDao(dao);
+  if (!safeAddress) throw new Error('Missing DAO Safe address for DAOhaus-style baalGas estimation. Pass --safe 0xSAFE or configure Graph.');
+  const c = client();
+  const moduleData = encodeFunctionData({
+    abi: GNOSIS_MODULE_ABI,
+    functionName: 'execTransactionFromModule',
+    args: [GNOSIS_MULTISEND, 0n, proposalData, 1],
+  });
+  const estimate = await c.estimateGas({
+    account: dao,
+    to: safeAddress,
+    value: 0n,
+    data: moduleData,
+  });
+  return BigInt(estimate || 0) + BigInt(actions.length) * ACTION_GAS_LIMIT_ADDITION;
+}
+
+function applyGasBuffer(gas, bufferScale) {
+  return (gas * bufferScale + 999n) / 1000n;
+}
+
+async function proposalTx({ dao, actions, title, description, link, proposalType, expiration = 0, baalGas, value = 0n }) {
   const proposalData = encodeMultiAction(actions);
+  let resolvedBaalGas = baalGas == null ? 0n : BigInt(baalGas);
+  let estimatedBaalGas = false;
+  let baalGasRawEstimate;
+  let baalGasBuffer;
+  let baalGasEstimateError;
+  if (baalGas == null && (process.env.RPC_URL || arg('rpc')) && !has('no-estimate-baal-gas')) {
+    try {
+      const bufferScale = decimalArg('baal-gas-buffer', 1.2);
+      const rawEstimate = await estimateBaalGas(dao, actions, proposalData);
+      resolvedBaalGas = applyGasBuffer(rawEstimate, bufferScale);
+      baalGasRawEstimate = rawEstimate.toString();
+      baalGasBuffer = (Number(bufferScale) / 1000).toString();
+      estimatedBaalGas = true;
+    } catch (error) {
+      baalGasEstimateError = error.shortMessage || error.message;
+      if (has('require-baal-gas-estimate')) throw error;
+      resolvedBaalGas = 0n;
+    }
+  }
   const data = encodeFunctionData({
     abi: BAAL_ABI,
     functionName: 'submitProposal',
-    args: [proposalData, Number(expiration), BigInt(baalGas), details({ title, description, link, proposalType })],
+    args: [proposalData, Number(expiration), resolvedBaalGas, details({ title, description, link, proposalType })],
   });
-  return { ...tx(dao, data, value), proposalData };
+  return { ...tx(dao, data, value), proposalData, baalGas: resolvedBaalGas.toString(), estimatedBaalGas, baalGasRawEstimate, baalGasBuffer, baalGasEstimateError };
 }
 
 function requireDao() {
@@ -736,6 +853,10 @@ async function main() {
 
 Options:
   --compact            Hide large calldata/proposalData in output
+  --no-estimate-baal-gas  Keep Baal submitProposal baalGas at 0 unless --baal-gas is provided
+  --baal-gas-buffer <n>  Multiplier for estimated baalGas; default 1.2
+  --require-baal-gas-estimate  Error if baalGas cannot be estimated
+  --safe 0xSAFE        DAO Safe address for DAOhaus-style baalGas estimation
   --send               Broadcast a write tx
   --wait               Wait for receipt after send
   --vault-provider 1password --vault-item <item> [--vault-field private_key]
@@ -856,8 +977,9 @@ Options:
   }
 
   if (command === 'process-queue') {
-    const { proposals } = await graphProposals(requireDao());
-    console.log(stringify({ queue: processQueueFromProposals(proposals || []) }));
+    const dao = requireDao();
+    const { proposals } = await graphProposals(dao);
+    console.log(stringify({ queue: await processQueueFromProposals(dao, proposals || []) }));
     return;
   }
 
@@ -871,11 +993,12 @@ Options:
     const dao = requireDao();
     const id = Number(arg('proposal'));
     const c = client();
-    const [raw, status] = await Promise.all([
+    const [raw, status, state] = await Promise.all([
       c.readContract({ address: dao, abi: BAAL_ABI, functionName: 'proposals', args: [BigInt(id)] }),
       c.readContract({ address: dao, abi: BAAL_ABI, functionName: 'getProposalStatus', args: [id] }),
+      c.readContract({ address: dao, abi: BAAL_ABI, functionName: 'state', args: [id] }),
     ]);
-    console.log(stringify({ dao, proposal: id, raw, status: namedProposalStatus(status) }));
+    console.log(stringify({ dao, proposal: id, raw, status: namedProposalStatus(status), state, stateName: STATE_NAMES[Number(state)] || `unknown-${state}` }));
     return;
   }
 
@@ -888,7 +1011,7 @@ Options:
     if (!title) throw new Error('Missing --title');
     ensureSignalIntent({ title, description });
     const postData = encodeFunctionData({ abi: POSTER_ABI, functionName: 'post', args: [JSON.stringify({ daoId: dao, table: 'signal', queryType: 'list', title, description, link }), POSTER_TAG_DAO_DB] });
-    out = withSummary(proposalTx({ dao, title, description, link, proposalType: 'SIGNAL', expiration: Number(arg('expiration', 0)), baalGas: BigInt(arg('baal-gas', 0)), value: BigInt(arg('value', 0)), actions: [{ to: POSTER, value: 0, data: postData, operation: 0 }] }), { action: 'submitProposal', proposalKind: 'SIGNAL', submissionTarget: 'BAAL', dao });
+    out = withSummary(await proposalTx({ dao, title, description, link, proposalType: 'SIGNAL', expiration: Number(arg('expiration', 0)), baalGas: arg('baal-gas') == null ? undefined : BigInt(arg('baal-gas')), value: BigInt(arg('value', 0)), actions: [{ to: POSTER, value: 0, data: postData, operation: 0 }] }), { action: 'submitProposal', proposalKind: 'SIGNAL', submissionTarget: 'BAAL', dao });
   } else if (command === 'dao-meta') {
     const dao = requireDao();
     const p = arg('params') ? jsonFile(arg('params')) : {};
@@ -896,7 +1019,7 @@ Options:
     const description = arg('description', p.proposalDescription || p.description || '');
     const content = daoProfileContent(dao, { ...p, name: arg('name', p.name), description: arg('dao-description', p.description), charterURI: arg('charter-uri', p.charterURI), joinRulesURI: arg('join-rules-uri', p.joinRulesURI), goalsURI: arg('goals-uri', p.goalsURI), manifestoURI: arg('manifesto-uri', p.manifestoURI), web: arg('web', p.web) });
     const postData = encodeFunctionData({ abi: POSTER_ABI, functionName: 'post', args: [JSON.stringify(content), POSTER_TAG_DAO_PROFILE_UPDATE] });
-    out = withSummary(proposalTx({ dao, title, description, link: arg('link', p.link || ''), proposalType: 'UPDATE_METADATA_SETTINGS', expiration: Number(arg('expiration', p.expiration || 0)), baalGas: BigInt(arg('baal-gas', p.baalGas || 0)), value: BigInt(arg('value', p.value || 0)), actions: [{ to: POSTER, value: 0, data: postData, operation: 0 }] }), { action: 'submitProposal', proposalKind: 'UPDATE_METADATA_SETTINGS', submissionTarget: 'BAAL', dao, recordTable: 'daoProfile' });
+    out = withSummary(await proposalTx({ dao, title, description, link: arg('link', p.link || ''), proposalType: 'UPDATE_METADATA_SETTINGS', expiration: Number(arg('expiration', p.expiration || 0)), baalGas: arg('baal-gas') == null && p.baalGas == null ? undefined : BigInt(arg('baal-gas', p.baalGas)), value: BigInt(arg('value', p.value || 0)), actions: [{ to: POSTER, value: 0, data: postData, operation: 0 }] }), { action: 'submitProposal', proposalKind: 'UPDATE_METADATA_SETTINGS', submissionTarget: 'BAAL', dao, recordTable: 'daoProfile' });
   } else if (command === 'dao-record') {
     const dao = requireDao();
     const table = arg('table');
@@ -908,7 +1031,7 @@ Options:
     const title = arg('title', p.title || `Update ${table} record`);
     const description = arg('description', p.proposalDescription || `Post latest ${table} record for DAO agents and members.`);
     const postData = encodeFunctionData({ abi: POSTER_ABI, functionName: 'post', args: [JSON.stringify(record), POSTER_TAG_DAO_PROFILE_UPDATE] });
-    out = withSummary(proposalTx({ dao, title, description, link: arg('link', p.link || content.uri || content.contentURI || ''), proposalType: 'UPDATE_METADATA_SETTINGS', expiration: Number(arg('expiration', p.expiration || 0)), baalGas: BigInt(arg('baal-gas', p.baalGas || 0)), value: BigInt(arg('value', p.value || 0)), actions: [{ to: POSTER, value: 0, data: postData, operation: 0 }] }), { action: 'submitProposal', proposalKind: 'UPDATE_METADATA_SETTINGS', submissionTarget: 'BAAL', dao, recordTable: table });
+    out = withSummary(await proposalTx({ dao, title, description, link: arg('link', p.link || content.uri || content.contentURI || ''), proposalType: 'UPDATE_METADATA_SETTINGS', expiration: Number(arg('expiration', p.expiration || 0)), baalGas: arg('baal-gas') == null && p.baalGas == null ? undefined : BigInt(arg('baal-gas', p.baalGas)), value: BigInt(arg('value', p.value || 0)), actions: [{ to: POSTER, value: 0, data: postData, operation: 0 }] }), { action: 'submitProposal', proposalKind: 'UPDATE_METADATA_SETTINGS', submissionTarget: 'BAAL', dao, recordTable: table });
   } else if (command === 'tribute' || command === 'join-dao') {
     const dao = requireDao();
     const title = arg('title', 'Tribute for DAO tokens');
@@ -930,13 +1053,13 @@ Options:
     const p = jsonFile(arg('params'));
     const inner = encodeValues(['uint32', 'uint32', 'uint256', 'uint256', 'uint256', 'uint256'], [p.votingPeriodInSeconds, p.gracePeriodInSeconds, BigInt(p.newOffering), rawPercent('quorum', p.quorum), BigInt(p.sponsorThreshold), rawPercent('minRetention', p.minRetention)]);
     const action = encodeFunctionData({ abi: BAAL_ABI, functionName: 'setGovernanceConfig', args: [inner] });
-    out = withSummary(proposalTx({ dao, title: p.title, description: p.description || '', link: p.link || '', proposalType: 'UPDATE_GOV_SETTINGS', expiration: p.expiration || 0, baalGas: BigInt(p.baalGas || 0), value: BigInt(p.value || 0), actions: [{ to: dao, value: 0, data: action, operation: 0 }] }), { action: 'submitProposal', proposalKind: 'UPDATE_GOV_SETTINGS', submissionTarget: 'BAAL', dao });
+    out = withSummary(await proposalTx({ dao, title: p.title, description: p.description || '', link: p.link || '', proposalType: 'UPDATE_GOV_SETTINGS', expiration: p.expiration || 0, baalGas: arg('baal-gas') == null && p.baalGas == null ? undefined : BigInt(arg('baal-gas', p.baalGas)), value: BigInt(p.value || 0), actions: [{ to: dao, value: 0, data: action, operation: 0 }] }), { action: 'submitProposal', proposalKind: 'UPDATE_GOV_SETTINGS', submissionTarget: 'BAAL', dao });
   } else if (command === 'token-settings') {
     const dao = requireDao();
     const title = arg('title', 'Update token settings');
     const description = arg('description', '');
     const action = encodeFunctionData({ abi: BAAL_ABI, functionName: 'setAdminConfig', args: [boolArg('pause-shares'), boolArg('pause-loot')] });
-    out = withSummary(proposalTx({ dao, title, description, link: arg('link', ''), proposalType: 'TOKEN_SETTINGS', expiration: Number(arg('expiration', 0)), baalGas: BigInt(arg('baal-gas', 0)), value: BigInt(arg('value', 0)), actions: [{ to: dao, value: 0, data: action, operation: 0 }] }), { action: 'submitProposal', proposalKind: 'TOKEN_SETTINGS', submissionTarget: 'BAAL', dao });
+    out = withSummary(await proposalTx({ dao, title, description, link: arg('link', ''), proposalType: 'TOKEN_SETTINGS', expiration: Number(arg('expiration', 0)), baalGas: arg('baal-gas') == null ? undefined : BigInt(arg('baal-gas')), value: BigInt(arg('value', 0)), actions: [{ to: dao, value: 0, data: action, operation: 0 }] }), { action: 'submitProposal', proposalKind: 'TOKEN_SETTINGS', submissionTarget: 'BAAL', dao });
   } else if (['sponsor', 'vote', 'process', 'cancel'].includes(command)) {
     const dao = requireDao();
     const id = Number(arg('proposal'));

@@ -80,6 +80,8 @@ node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs proposal-lifecycle
 
 Use `workspace/skills/moloch/moloch-agent-conviction` and `workspace/skills/moloch/VOTE_DECISION_FLOW.md` before making vote recommendations.
 
+For processing, use `process-queue --first 100` or larger, process only the first queue item, then rerun the queue before processing another proposal.
+
 Required for chain reads:
 
 ```bash
