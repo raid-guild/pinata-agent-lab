@@ -95,6 +95,8 @@ export PRIVATE_KEY="0x..."
 
 `ACCOUNT_ADDRESS` is the managed voter/account identity used in mandate profiles and audit records. `PRIVATE_KEY` signs authorized onchain actions. Keep both in the Pinata secrets vault; do not commit them to files.
 
+Security note: use a dedicated agent wallet, not a primary personal wallet or treasury hot wallet. Pinata Agents store secrets securely in the agent secrets vault, but any signer that can vote or submit transactions carries operational risk. Fund the wallet only for the permissions and gas budget this agent actually needs, and rotate or revoke access if the mandate changes.
+
 Do not commit `.env` files, private keys, mnemonics, or raw signer credentials.
 
 ## Optional App Auth
