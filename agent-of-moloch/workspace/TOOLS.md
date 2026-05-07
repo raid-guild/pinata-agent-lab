@@ -63,6 +63,12 @@ Processing note:
 - Process the first queue item only, then rerun the queue before processing another proposal.
 - With `RPC_URL` configured, direct `state(id) == Ready` is the processability source of truth.
 
+Membership proposal path check:
+
+- Tribute Minion path: decoded actions include `releaseEscrow` on `0x00768B047f73D88b6e9c14bcA97221d6E179d468`.
+- Direct Baal mint path: decoded actions include `mintShares(address[],uint256[])` on the DAO address with no Minion escrow.
+- Decode known successful membership proposals for the DAO before drafting or processing a new membership proposal.
+
 Required env for chain reads:
 
 ```bash

@@ -82,6 +82,8 @@ Use `workspace/skills/moloch/moloch-agent-conviction` and `workspace/skills/molo
 
 For processing, use `process-queue --first 100` or larger, process only the first queue item, then rerun the queue before processing another proposal.
 
+Membership proposal note: Moloch/Baal DAOs may admit members through different executable paths. A Tribute Minion membership proposal includes a Minion `releaseEscrow` action before shares or loot are minted. A direct membership proposal may call the Baal DAO directly with `mintShares(address[],uint256[])` and no Minion escrow action. Before drafting or processing membership proposals, check the DAO's join rules and decode a known successful membership proposal from that DAO. Do not force `join-dao` / Tribute Minion when the DAO expects direct `mintShares`.
+
 Required for chain reads:
 
 ```bash

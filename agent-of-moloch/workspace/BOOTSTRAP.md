@@ -11,6 +11,7 @@ Explain briefly:
 - The bundled Moloch skills are aligned with `https://github.com/HausDAO/moloch-skills` and live under `workspace/skills/moloch`.
 - Use `moloch-agent-conviction` for the governance mandate, `task-snapshot` for checkpoint artifacts, and `VOTE_DECISION_FLOW.md` before vote recommendations.
 - Required template secrets are `ACCOUNT_ADDRESS` and `PRIVATE_KEY`.
+- Membership proposals can be Tribute Minion escrow flows or direct Baal `mintShares` flows; infer the expected path from DAO join rules and known successful proposals.
 - `APP_PASSWORD` can protect the app when set.
 - `API_PASSWORD` can enable OpenClaw proxy routes when set.
 

@@ -122,6 +122,13 @@ Use `task-snapshot` artifacts for routine review and token-efficient scheduled w
 
 For processing, use `process-queue --first 100` or larger. Process only the first item in the queue, then rerun `process-queue` before processing another proposal. When `RPC_URL` is configured, direct `state(id) == Ready` is the source of truth for processability.
 
+Membership proposals require extra intent checks:
+
+- Tribute Minion membership uses `releaseEscrow` on `0x00768B047f73D88b6e9c14bcA97221d6E179d468`, then mints shares or loot.
+- Direct membership minting calls the Baal DAO with `mintShares(address[],uint256[])` and has no Minion escrow action.
+- Before drafting or processing membership proposals, inspect the DAO's join rules and decode a known successful membership proposal from that DAO.
+- Do not assume zero-tribute membership should use Tribute Minion. If the DAO expects direct `mintShares`, build or review a direct Baal proposal instead.
+
 ## App Auth
 
 If `APP_PASSWORD` is unset, the app and API work without authentication.
