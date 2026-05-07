@@ -9,6 +9,7 @@ Validation targets:
 - local `/app`
 - `GET /app/api/health`
 - `GET /app/api/governance`
+- `GET /app/api/artifacts`
 - `GET /app/api/daos`
 - `GET /app/api/proposals`
 - `GET /app/api/tasks`
@@ -17,13 +18,11 @@ Notes:
 
 - The dashboard is read-only.
 - Governance writes are available through API routes.
-- The Moloch skill bundle is copied into `workspace/skills/moloch`.
+- The Moloch skill bundle is aligned with `HausDAO/moloch-skills` commit `1fc68b755e55ecc10c3c1fa3b20fdfed6174da9a`.
 - `APP_PASSWORD` is optional.
 - `API_PASSWORD` is optional and enables OpenClaw proxy routes.
 
-Validation completed locally on 2026-05-06:
+Validation completed locally on 2026-05-07:
 
 - `npm run typecheck`
 - `npm run build`
-- `GET /app/api/health`
-- `GET /app/api/governance`

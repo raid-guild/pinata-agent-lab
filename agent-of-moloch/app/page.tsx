@@ -43,10 +43,27 @@ type GovernanceTask = {
   dueDate: string;
 };
 
+type SnapshotArtifact = {
+  id: number;
+  daoName: string;
+  artifactDir: string;
+  checkpointPath: string;
+  operatingContextPath: string;
+  proposalSummaryPath: string;
+  processQueuePath: string;
+  updatedAt: string;
+  lastGraphProposalIdSeen: number;
+  votingCount: number;
+  needsProcessingCount: number;
+  pendingActionCount: number;
+  status: string;
+};
+
 type Bundle = {
   daos: Dao[];
   proposals: Proposal[];
   tasks: GovernanceTask[];
+  artifacts: SnapshotArtifact[];
   stats: {
     daoCount: number;
     activeDaos: number;
@@ -54,6 +71,8 @@ type Bundle = {
     readyToVote: number;
     openTasks: number;
     urgentTasks: number;
+    freshArtifacts: number;
+    pendingArtifactActions: number;
   };
 };
 
@@ -61,13 +80,16 @@ const emptyBundle: Bundle = {
   daos: [],
   proposals: [],
   tasks: [],
+  artifacts: [],
   stats: {
     daoCount: 0,
     activeDaos: 0,
     openProposals: 0,
     readyToVote: 0,
     openTasks: 0,
-    urgentTasks: 0
+    urgentTasks: 0,
+    freshArtifacts: 0,
+    pendingArtifactActions: 0
   }
 };
 
@@ -100,7 +122,7 @@ export default function Home() {
           <h1>Agent of Moloch</h1>
           <p>
             A characterful governance agent for Baal DAOs: it remembers each DAO's charter, states its voter
-            platform, weighs proposals against conviction, and queues cautious tasks before any onchain move.
+            platform, reads checkpoint artifacts, and queues cautious tasks before any onchain move.
           </p>
         </div>
 
@@ -110,8 +132,8 @@ export default function Home() {
             <span />
           </div>
           <strong>{conviction}%</strong>
-          <em>conviction scored</em>
-          <p>Build the unsigned rite first. Broadcast only when the human says the word.</p>
+          <em>mandate scored</em>
+          <p>Checkpoint first. Preflight live. Send only when mandate and harness policy permit it.</p>
         </div>
       </section>
 
@@ -123,18 +145,18 @@ export default function Home() {
         </article>
         <article>
           <span>Conviction</span>
-          <strong>Voter platform</strong>
-          <p>Turns broad values into a stable voting posture for yes, no, abstain, or defer decisions.</p>
+          <strong>Governance mandate</strong>
+          <p>Turns values, hard-no rules, abstain rules, and escalation policy into a durable voting policy.</p>
         </article>
         <article>
           <span>Augury</span>
           <strong>Proposal record</strong>
-          <p>Tracks proposal state, stance, rationale, due dates, and the next review needed before voting.</p>
+          <p>Tracks lifecycle state, vote memos, rationale, due dates, and the next review needed before voting.</p>
         </article>
         <article>
-          <span>Rite</span>
-          <strong>Task queue</strong>
-          <p>Suggests Moloch skill actions: read DAO state, check proposals, sponsor, vote, process, or record.</p>
+          <span>Checkpoint</span>
+          <strong>Artifact watch</strong>
+          <p>Surfaces task-snapshot outputs: operating context, proposal summary, process queue, and checkpoint.</p>
         </article>
       </section>
 
@@ -157,6 +179,7 @@ export default function Home() {
             <span><strong>{bundle.stats.daoCount}</strong> DAOs held</span>
             <span><strong>{bundle.stats.readyToVote}</strong> ready votes</span>
             <span><strong>{bundle.stats.urgentTasks}</strong> urgent rites</span>
+            <span><strong>{bundle.stats.pendingArtifactActions}</strong> artifact actions</span>
           </div>
         </aside>
 
@@ -184,9 +207,9 @@ export default function Home() {
       </section>
 
       <section className="lowerGrid">
-        <section className="daoLedger" aria-label="DAO conviction ledger">
+        <section className="daoLedger" aria-label="DAO mandate ledger">
           <div className="sectionHead">
-            <h2>Conviction ledger</h2>
+            <h2>Mandate ledger</h2>
             <span>{bundle.stats.activeDaos} active</span>
           </div>
           {bundle.daos.map((dao) => (
@@ -217,8 +240,38 @@ export default function Home() {
         </section>
       </section>
 
+      <section className="artifactGrid" aria-label="Snapshot artifact checkpoints">
+        <div className="sectionHead">
+          <h2>Checkpoint artifacts</h2>
+          <span>{bundle.stats.freshArtifacts} fresh</span>
+        </div>
+        <div className="artifactBoard">
+          {bundle.artifacts.map((artifact) => (
+            <article className={`artifact status-${artifact.status}`} key={artifact.id}>
+              <div className="cardTop">
+                <span>{artifact.daoName}</span>
+                <em>{artifact.status}</em>
+              </div>
+              <strong>{artifact.artifactDir}</strong>
+              <div className="artifactStats">
+                <span><b>{artifact.votingCount}</b> voting</span>
+                <span><b>{artifact.needsProcessingCount}</b> process</span>
+                <span><b>{artifact.lastGraphProposalIdSeen}</b> last seen</span>
+              </div>
+              <p>{artifact.pendingActionCount} pending actions from checkpoint and process queue.</p>
+              <code>{artifact.checkpointPath}</code>
+              <code>{artifact.operatingContextPath}</code>
+              <code>{artifact.proposalSummaryPath}</code>
+              <time>Updated {formatDate(artifact.updatedAt)}</time>
+            </article>
+          ))}
+          {bundle.artifacts.length === 0 ? <p className="empty">No task-snapshot artifacts recorded yet.</p> : null}
+        </div>
+      </section>
+
       <section className="apiStrip" aria-label="Useful API routes">
         <code>GET /app/api/governance</code>
+        <code>POST /app/api/artifacts</code>
         <code>POST /app/api/daos</code>
         <code>POST /app/api/proposals</code>
         <code>POST /app/api/tasks</code>

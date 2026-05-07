@@ -168,7 +168,9 @@ h1 {
 .controlPanel,
 .proposalCard,
 .daoLedger,
-.taskQueue {
+.taskQueue,
+.artifactGrid,
+.artifact {
   background: rgba(255, 253, 247, 0.92);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -196,6 +198,7 @@ h1 {
 .proposalCard footer,
 .daoLedger p,
 .task p,
+.artifact p,
 .empty {
   color: var(--muted);
   line-height: 1.5;
@@ -210,7 +213,8 @@ h1 {
 
 .controlPanel,
 .daoLedger,
-.taskQueue {
+.taskQueue,
+.artifactGrid {
   display: grid;
   gap: 16px;
   padding: 18px;
@@ -393,6 +397,69 @@ h1 {
   border-top-color: var(--gold);
 }
 
+.artifactBoard {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.artifact {
+  border-top: 6px solid var(--violet);
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.artifact.status-fresh {
+  border-top-color: var(--moss);
+}
+
+.artifact.status-stale,
+.artifact.status-missing {
+  border-top-color: var(--ember);
+}
+
+.artifact > strong,
+.artifact code {
+  overflow-wrap: anywhere;
+}
+
+.artifact code {
+  background: #f7edd9;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #4b3820;
+  font-size: 0.82rem;
+  padding: 8px;
+}
+
+.artifactStats {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.artifactStats span {
+  background: #fffaf0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 8px;
+}
+
+.artifactStats b {
+  color: var(--ink);
+  font-size: 1.35rem;
+}
+
+.artifact time {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 .apiStrip {
   display: flex;
   flex-wrap: wrap;
@@ -459,7 +526,8 @@ h1 {
   }
 
   .featureGrid,
-  .filterStack {
+  .filterStack,
+  .artifactStats {
     grid-template-columns: 1fr;
   }
 

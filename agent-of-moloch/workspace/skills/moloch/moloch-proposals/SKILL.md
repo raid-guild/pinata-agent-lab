@@ -7,16 +7,34 @@ description: Build and submit Moloch V3/Baal proposals on Base. Use for DAOhaus 
 
 Use this skill to build or submit Baal proposals on Base.
 
+Default to high-level commands and concise summaries. Do not expose ABI fragments, raw calldata, or full JSON shapes unless the user asks for a technical review.
+
 ## Workflow
 
 1. Use `../moloch-shared` for RPC, wallet, and transaction script setup.
-2. Read DAO state first:
+2. Run proposal intent preflight before choosing a command.
+3. Read DAO state first:
    `node ../moloch-shared/scripts/moloch.mjs read-dao --dao 0xDAO`
-3. Optionally read indexed DAO/proposal context with `graph-dao` or `graph-proposals`.
-4. Include `proposalOffering` as tx value for `submitProposal` unless the DAO uses zero offering.
-5. Build the proposal tx and review the JSON.
-6. Decode the full calldata with `decode-submit-proposal` when reviewing complex proposals.
-7. Send only when explicitly requested by adding `--send`.
+4. Optionally read indexed DAO/proposal context with `graph-dao` or `graph-proposals`.
+5. Include `proposalOffering` as tx value for `submitProposal` unless the DAO uses zero offering.
+6. Build the proposal tx and review the compact summary.
+7. Decode the full calldata with `decode-submit-proposal` only when reviewing complex proposals or when asked.
+8. For autonomous proposal tasks, broadcast with `--send` when the proposal is inside mandate/harness policy and live preflight passes. Omit `--send` only for dry-run, review, or draft mode.
+
+## Proposal Intent Preflight
+
+Choose the proposal path by operator intent:
+
+| Operator asks for | Use |
+| --- | --- |
+| signal, temperature check, text-only governance intent | `signal` |
+| join DAO, membership, admission, shares, loot, tribute | `tribute` / `join-dao` |
+| update DAO profile, charter URI, join rules URI, manifesto/docs links | `dao-meta` / `dao-record` |
+| change voting period, grace period, offering, quorum, retention | `gov-settings` |
+| change share/loot pause or transferability setting | `token-settings` |
+| arbitrary contract execution | custom proposal path |
+
+If the operator asks for shares, loot, membership, admission, or a join request, do not use `signal`. A signal can express support for admission, but it does not create a real tokens-for-shares proposal. The CLI will warn and stop if `signal` appears to be used for this by mistake; add `--force-signal` only when text-only signaling is intentional.
 
 ## Details JSON
 
@@ -40,10 +58,93 @@ node ../moloch-shared/scripts/moloch.mjs signal \
   --title "Signal title" \
   --description "Signal body" \
   --link "https://..." \
-  --value 0
+  --value 0 \
+  --send
 ```
 
 Signal proposals encode a Poster `post` action inside `submitProposal`.
+They do not issue shares, issue loot, transfer funds, or admit members.
+
+If DAOhaus Admin shows a Poster decoding error such as `Encoded function signature "0x..." not found on ABI`, treat it as a malformed action until proven otherwise. A valid Poster signal action uses `post(string,string)` with selector `0x0ae1b13d`. Run `decode-submit-proposal` or `decode-proposal-data`; the decoder annotates Poster actions and flags unknown selectors.
+
+## Tribute / Join DAO Proposal
+
+Use this for tokens-for-shares or tokens-for-loot requests through the DAOhaus Tribute Minion.
+This is the first-class membership/admission path.
+
+Native ETH tribute:
+
+```bash
+node ../moloch-shared/scripts/moloch.mjs tribute \
+  --dao 0xDAO \
+  --token ETH \
+  --amount 1000000000000000 \
+  --shares 0 \
+  --loot 1000000000000000000000 \
+  --title "Join the DAO" \
+  --send
+```
+
+ERC-20 tribute:
+
+```bash
+node ../moloch-shared/scripts/moloch.mjs tribute \
+  --dao 0xDAO \
+  --token 0xTOKEN \
+  --amount 1000000 \
+  --shares 1000000000000000000 \
+  --loot 0 \
+  --send
+```
+
+For ERC-20 tribute, check and approve Tribute Minion allowance before broadcasting. For ETH tribute, tx `value` equals `amount`.
+
+## DAO Metadata / Charter / Join Rules Proposal
+
+Use this for DAOhaus-readable metadata and agent-readable rules.
+
+Profile links:
+
+```bash
+node ../moloch-shared/scripts/moloch.mjs dao-meta \
+  --dao 0xDAO \
+  --name "DAO Name" \
+  --charter-uri ipfs://... \
+  --join-rules-uri ipfs://... \
+  --goals-uri ipfs://... \
+  --send
+```
+
+Custom records:
+
+```bash
+node ../moloch-shared/scripts/moloch.mjs dao-record \
+  --dao 0xDAO \
+  --table charter \
+  --content-file charter-record.json \
+  --send
+
+node ../moloch-shared/scripts/moloch.mjs dao-record \
+  --dao 0xDAO \
+  --table joinRules \
+  --content-file join-rules-record.json \
+  --send
+```
+
+These build a proposal that posts a Poster record if passed. Use IPFS/Pinata CIDs for larger charter, manifesto, join rules, or hosted docs content.
+
+Zero-tribute membership request example:
+
+```bash
+node ../moloch-shared/scripts/moloch.mjs join-dao \
+  --dao 0xDAO \
+  --token ETH \
+  --amount 0 \
+  --shares 10000000000000000000000 \
+  --loot 0 \
+  --title "Admit Charter Steward" \
+  --send
+```
 
 ## Governance Settings Proposal
 
@@ -68,7 +169,7 @@ Create `params.json`:
 Build:
 
 ```bash
-node ../moloch-shared/scripts/moloch.mjs gov-settings --dao 0xDAO --params params.json
+node ../moloch-shared/scripts/moloch.mjs gov-settings --dao 0xDAO --params params.json --send
 ```
 
 ## Token/Admin Settings Proposal
@@ -80,7 +181,8 @@ node ../moloch-shared/scripts/moloch.mjs token-settings \
   --dao 0xDAO \
   --pause-shares false \
   --pause-loot false \
-  --title "Update token transfer settings"
+  --title "Update token transfer settings" \
+  --send
 ```
 
 ## Custom Proposal

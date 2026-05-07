@@ -54,9 +54,31 @@ export type GovernanceTask = {
   updatedAt: string;
 };
 
+export type SnapshotArtifact = {
+  id: number;
+  daoId: number;
+  daoName: string;
+  daoAddress: string;
+  artifactDir: string;
+  checkpointPath: string;
+  operatingContextPath: string;
+  proposalSummaryPath: string;
+  processQueuePath: string;
+  directStatePath: string;
+  updatedAt: string;
+  lastGraphProposalIdSeen: number;
+  lastPassedProposalIdIncorporated: string;
+  votingCount: number;
+  needsProcessingCount: number;
+  pendingActionCount: number;
+  status: string;
+  createdAt: string;
+};
+
 type DaoInput = Partial<Pick<Dao, "name" | "daoAddress" | "chainId" | "daohausUrl" | "charter" | "thesis" | "conviction" | "platform" | "votingPower" | "status">>;
 type ProposalInput = Partial<Pick<Proposal, "daoId" | "proposalId" | "title" | "summary" | "proposalType" | "status" | "agentStance" | "confidence" | "recommendedVote" | "rationale" | "dueDate" | "txHash">>;
 type TaskInput = Partial<Pick<GovernanceTask, "daoId" | "proposalRecordId" | "title" | "body" | "actionType" | "status" | "priority" | "dueDate">>;
+type SnapshotInput = Partial<Pick<SnapshotArtifact, "daoId" | "artifactDir" | "checkpointPath" | "operatingContextPath" | "proposalSummaryPath" | "processQueuePath" | "directStatePath" | "lastGraphProposalIdSeen" | "lastPassedProposalIdIncorporated" | "votingCount" | "needsProcessingCount" | "pendingActionCount" | "status">>;
 
 const dataDir = path.join(process.cwd(), "data");
 const dbPath = path.join(dataDir, "agent-of-moloch.sqlite");
@@ -67,6 +89,7 @@ const votes = new Set(["yes", "no", "abstain", "defer"]);
 const taskStatuses = new Set(["open", "doing", "done"]);
 const priorities = new Set(["low", "normal", "high", "urgent"]);
 const actionTypes = new Set(["read-dao", "check-proposal", "vote", "sponsor", "process", "record"]);
+const artifactStatuses = new Set(["fresh", "stale", "missing", "manual"]);
 
 let db: Database.Database | undefined;
 
@@ -137,6 +160,26 @@ function migrate(database: Database.Database) {
       FOREIGN KEY (dao_id) REFERENCES daos(id) ON DELETE SET NULL,
       FOREIGN KEY (proposal_record_id) REFERENCES proposals(id) ON DELETE SET NULL
     );
+
+    CREATE TABLE IF NOT EXISTS snapshot_artifacts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      dao_id INTEGER NOT NULL,
+      artifact_dir TEXT NOT NULL DEFAULT '',
+      checkpoint_path TEXT NOT NULL DEFAULT '',
+      operating_context_path TEXT NOT NULL DEFAULT '',
+      proposal_summary_path TEXT NOT NULL DEFAULT '',
+      process_queue_path TEXT NOT NULL DEFAULT '',
+      direct_state_path TEXT NOT NULL DEFAULT '',
+      last_graph_proposal_id_seen INTEGER NOT NULL DEFAULT 0,
+      last_passed_proposal_id_incorporated TEXT NOT NULL DEFAULT '',
+      voting_count INTEGER NOT NULL DEFAULT 0,
+      needs_processing_count INTEGER NOT NULL DEFAULT 0,
+      pending_action_count INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'missing',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (dao_id) REFERENCES daos(id) ON DELETE CASCADE
+    );
   `);
 }
 
@@ -158,13 +201,25 @@ function seed(database: Database.Database) {
     INSERT INTO governance_tasks (dao_id, proposal_record_id, title, body, action_type, status, priority, due_date)
     VALUES (@daoId, @proposalRecordId, @title, @body, @actionType, @status, @priority, @dueDate)
   `);
+  const snapshotInsert = database.prepare(`
+    INSERT INTO snapshot_artifacts (
+      dao_id, artifact_dir, checkpoint_path, operating_context_path, proposal_summary_path, process_queue_path,
+      direct_state_path, last_graph_proposal_id_seen, last_passed_proposal_id_incorporated, voting_count,
+      needs_processing_count, pending_action_count, status
+    )
+    VALUES (
+      @daoId, @artifactDir, @checkpointPath, @operatingContextPath, @proposalSummaryPath, @processQueuePath,
+      @directStatePath, @lastGraphProposalIdSeen, @lastPassedProposalIdIncorporated, @votingCount,
+      @needsProcessingCount, @pendingActionCount, @status
+    )
+  `);
 
   const transaction = database.transaction(() => {
     const raidGuild = Number(daoInsert.run({
       name: "RaidGuild Moloch",
       daoAddress: "0x0000000000000000000000000000000000000000",
       chainId: "8453",
-      daohausUrl: "https://admin.daohaus.fun/#/molochv3/0x2105/0xDAO",
+      daohausUrl: "https://admin.daohaus.club/#/molochv3/0x2105/0xDAO",
       charter: "Coordinate builders, operators, and capital toward useful onchain work.",
       thesis: "Fund work that increases the guild's reputation, treasury resilience, and member opportunity.",
       conviction: "Vote for clear scopes, accountable stewards, transparent budgets, and work that improves the commons.",
@@ -177,7 +232,7 @@ function seed(database: Database.Database) {
       name: "Meta Clawtel",
       daoAddress: "0x0000000000000000000000000000000000000000",
       chainId: "8453",
-      daohausUrl: "https://admin.daohaus.fun/#/molochv3/0x2105/0xDAO",
+      daohausUrl: "https://admin.daohaus.club/#/molochv3/0x2105/0xDAO",
       charter: "Prototype agent-friendly DAO operations and Moloch governance workflows.",
       thesis: "Use lightweight proposals and explicit voter platforms to make agent governance legible.",
       conviction: "Prefer reversible experiments, documented permissions, and small treasury movements until patterns are proven.",
@@ -210,15 +265,26 @@ function seed(database: Database.Database) {
       agentStance: "watch",
       confidence: "medium",
       recommendedVote: "defer",
-      rationale: "Needs a fresh read of DAO state, vote history, and any discussion links before conviction is credible.",
+      rationale: "Needs a fresh checkpoint, DAO state, vote history, and any discussion links before mandate alignment is credible.",
       dueDate: todayOffset(3)
     });
 
     taskInsert.run({
       daoId: metaClawtel,
       proposalRecordId: proposal,
-      title: "Read proposal 1 direct state and indexed metadata",
-      body: "Run read-proposal and graph-proposal from the Moloch skills before preparing the vote transaction.",
+      title: "Refresh task-snapshot artifacts",
+      body: "Run task-snapshot so the agent has checkpoint, operating context, proposal summary, and process queue files before deciding.",
+      actionType: "read-dao",
+      status: "open",
+      priority: "urgent",
+      dueDate: todayOffset(0)
+    });
+
+    taskInsert.run({
+      daoId: metaClawtel,
+      proposalRecordId: proposal,
+      title: "Write vote memo from mandate and lifecycle",
+      body: "Use moloch-agent-conviction and VOTE_DECISION_FLOW.md to compare proposal state against the governance mandate.",
       actionType: "check-proposal",
       status: "open",
       priority: "urgent",
@@ -246,6 +312,22 @@ function seed(database: Database.Database) {
       priority: "high",
       dueDate: todayOffset(0)
     });
+
+    snapshotInsert.run({
+      daoId: metaClawtel,
+      artifactDir: "workspace/runtime/moloch-artifacts/0xDAO",
+      checkpointPath: "workspace/runtime/moloch-artifacts/0xDAO/checkpoint.json",
+      operatingContextPath: "workspace/runtime/moloch-artifacts/0xDAO/operating-context.json",
+      proposalSummaryPath: "workspace/runtime/moloch-artifacts/0xDAO/proposal-summary.json",
+      processQueuePath: "workspace/runtime/moloch-artifacts/0xDAO/process-queue.json",
+      directStatePath: "workspace/runtime/moloch-artifacts/0xDAO/direct-state.json",
+      lastGraphProposalIdSeen: 1,
+      lastPassedProposalIdIncorporated: "",
+      votingCount: 1,
+      needsProcessingCount: 0,
+      pendingActionCount: 2,
+      status: "manual"
+    });
   });
 
   transaction();
@@ -256,18 +338,22 @@ export function getGovernanceBundle(status?: string) {
   const proposals = listProposals(status);
   const allProposals = listProposals();
   const tasks = listTasks();
+  const artifacts = listSnapshotArtifacts();
 
   return {
     daos,
     proposals,
     tasks,
+    artifacts,
     stats: {
       daoCount: daos.length,
       activeDaos: daos.filter((dao) => dao.status === "active").length,
       openProposals: allProposals.filter((proposal) => ["submitted", "voting", "grace", "ready"].includes(proposal.status)).length,
       readyToVote: allProposals.filter((proposal) => proposal.status === "voting" && proposal.recommendedVote !== "defer").length,
       openTasks: tasks.filter((task) => task.status !== "done").length,
-      urgentTasks: tasks.filter((task) => task.status !== "done" && task.priority === "urgent").length
+      urgentTasks: tasks.filter((task) => task.status !== "done" && task.priority === "urgent").length,
+      freshArtifacts: artifacts.filter((artifact) => artifact.status === "fresh").length,
+      pendingArtifactActions: artifacts.reduce((sum, artifact) => sum + artifact.pendingActionCount, 0)
     }
   };
 }
@@ -355,6 +441,99 @@ export function listTasks(status?: string) {
   `;
 
   return (cleanStatus ? getDb().prepare(query).all(cleanStatus) : getDb().prepare(query).all()) as GovernanceTask[];
+}
+
+export function listSnapshotArtifacts() {
+  return getDb().prepare(`
+    SELECT
+      snapshot_artifacts.id,
+      snapshot_artifacts.dao_id as daoId,
+      daos.name as daoName,
+      daos.dao_address as daoAddress,
+      snapshot_artifacts.artifact_dir as artifactDir,
+      snapshot_artifacts.checkpoint_path as checkpointPath,
+      snapshot_artifacts.operating_context_path as operatingContextPath,
+      snapshot_artifacts.proposal_summary_path as proposalSummaryPath,
+      snapshot_artifacts.process_queue_path as processQueuePath,
+      snapshot_artifacts.direct_state_path as directStatePath,
+      snapshot_artifacts.updated_at as updatedAt,
+      snapshot_artifacts.last_graph_proposal_id_seen as lastGraphProposalIdSeen,
+      snapshot_artifacts.last_passed_proposal_id_incorporated as lastPassedProposalIdIncorporated,
+      snapshot_artifacts.voting_count as votingCount,
+      snapshot_artifacts.needs_processing_count as needsProcessingCount,
+      snapshot_artifacts.pending_action_count as pendingActionCount,
+      snapshot_artifacts.status,
+      snapshot_artifacts.created_at as createdAt
+    FROM snapshot_artifacts
+    JOIN daos ON daos.id = snapshot_artifacts.dao_id
+    ORDER BY snapshot_artifacts.updated_at DESC
+  `).all() as SnapshotArtifact[];
+}
+
+export function upsertSnapshotArtifact(input: SnapshotInput) {
+  const daoId = Number(input.daoId);
+  if (!Number.isInteger(daoId) || !getDao(daoId)) {
+    throw new Error("valid daoId is required");
+  }
+
+  const existing = listSnapshotArtifacts().find((artifact) => artifact.daoId === daoId);
+  const artifactDir = input.artifactDir?.trim() || existing?.artifactDir || `workspace/runtime/moloch-artifacts/${getDaoOrThrow(daoId).daoAddress || "0xDAO"}`;
+  const checkpointPath = input.checkpointPath?.trim() || existing?.checkpointPath || `${artifactDir}/checkpoint.json`;
+  const operatingContextPath = input.operatingContextPath?.trim() || existing?.operatingContextPath || `${artifactDir}/operating-context.json`;
+  const proposalSummaryPath = input.proposalSummaryPath?.trim() || existing?.proposalSummaryPath || `${artifactDir}/proposal-summary.json`;
+  const processQueuePath = input.processQueuePath?.trim() || existing?.processQueuePath || `${artifactDir}/process-queue.json`;
+  const directStatePath = input.directStatePath?.trim() || existing?.directStatePath || `${artifactDir}/direct-state.json`;
+
+  if (existing) {
+    getDb().prepare(`
+      UPDATE snapshot_artifacts
+      SET artifact_dir = ?, checkpoint_path = ?, operating_context_path = ?, proposal_summary_path = ?,
+        process_queue_path = ?, direct_state_path = ?, last_graph_proposal_id_seen = ?,
+        last_passed_proposal_id_incorporated = ?, voting_count = ?, needs_processing_count = ?,
+        pending_action_count = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(
+      artifactDir,
+      checkpointPath,
+      operatingContextPath,
+      proposalSummaryPath,
+      processQueuePath,
+      directStatePath,
+      numberValue(input.lastGraphProposalIdSeen, existing.lastGraphProposalIdSeen),
+      value(input.lastPassedProposalIdIncorporated, existing.lastPassedProposalIdIncorporated),
+      numberValue(input.votingCount, existing.votingCount),
+      numberValue(input.needsProcessingCount, existing.needsProcessingCount),
+      numberValue(input.pendingActionCount, existing.pendingActionCount),
+      normalize(input.status ?? existing.status, artifactStatuses, "manual"),
+      existing.id
+    );
+    return listSnapshotArtifacts().find((artifact) => artifact.id === existing.id);
+  }
+
+  const result = getDb().prepare(`
+    INSERT INTO snapshot_artifacts (
+      dao_id, artifact_dir, checkpoint_path, operating_context_path, proposal_summary_path, process_queue_path,
+      direct_state_path, last_graph_proposal_id_seen, last_passed_proposal_id_incorporated, voting_count,
+      needs_processing_count, pending_action_count, status
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    daoId,
+    artifactDir,
+    checkpointPath,
+    operatingContextPath,
+    proposalSummaryPath,
+    processQueuePath,
+    directStatePath,
+    numberValue(input.lastGraphProposalIdSeen, 0),
+    input.lastPassedProposalIdIncorporated?.trim() ?? "",
+    numberValue(input.votingCount, 0),
+    numberValue(input.needsProcessingCount, 0),
+    numberValue(input.pendingActionCount, 0),
+    normalize(input.status, artifactStatuses, "manual")
+  );
+
+  return listSnapshotArtifacts().find((artifact) => artifact.id === Number(result.lastInsertRowid));
 }
 
 export function createDao(input: DaoInput) {
@@ -564,6 +743,15 @@ function required(value: string | undefined, field: string) {
 
 function value(next: string | undefined, current: string) {
   return next === undefined ? current : next.trim();
+}
+
+function numberValue(next: number | undefined, current: number) {
+  if (next === undefined) {
+    return current;
+  }
+
+  const clean = Number(next);
+  return Number.isFinite(clean) && clean >= 0 ? clean : current;
 }
 
 function normalize(value: string | undefined, allowed: Set<string>, fallback: string) {

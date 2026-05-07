@@ -14,6 +14,7 @@ Useful app routes:
 - `/app`
 - `/app/api/health`
 - `/app/api/governance`
+- `/app/api/artifacts`
 - `/app/api/daos`
 - `/app/api/proposals`
 - `/app/api/tasks`
@@ -40,7 +41,21 @@ Common Moloch reads:
 node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs read-dao --dao 0xDAO
 node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs graph-proposals --dao 0xDAO --first 20
 node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs read-proposal --dao 0xDAO --proposal 1
+node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs task-snapshot --dao 0xDAO --first 100 --out-dir workspace/runtime/moloch-artifacts/0xDAO
+node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs proposal-lifecycle --dao 0xDAO --proposal 1
+node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs process-queue --dao 0xDAO --first 100
 ```
+
+Snapshot artifacts written by `task-snapshot`:
+
+- `direct-state.json`
+- `graph-history.json`
+- `proposal-summary.json`
+- `membership-summary.json`
+- `dao-records.json`
+- `operating-context.json`
+- `process-queue.json`
+- `checkpoint.json`
 
 Required env for chain reads:
 
@@ -48,11 +63,20 @@ Required env for chain reads:
 export RPC_URL="https://mainnet.base.org"
 ```
 
-Required env for broadcasting:
+Required env for DAOhaus Graph reads:
 
 ```bash
+export GRAPH_URL="https://gateway.thegraph.com/api/YOUR_GRAPH_KEY/subgraphs/id/7yh4eHJ4qpHEiLPAk9BXhL5YgYrTrRE6gWy8x4oHyAqW"
+```
+
+Required template secrets:
+
+```bash
+export ACCOUNT_ADDRESS="0x..."
 export PRIVATE_KEY="0x..."
 ```
+
+`ACCOUNT_ADDRESS` is used for voter identity, mandate profiles, and audit records. `PRIVATE_KEY` is used only for authorized `--send` actions.
 
 Do not commit `.env`, private keys, mnemonics, or raw signer credentials.
 

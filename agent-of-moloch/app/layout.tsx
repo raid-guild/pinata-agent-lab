@@ -3,7 +3,7 @@ import "./styles.css";
 
 export const metadata: Metadata = {
   title: "Agent of Moloch",
-  description: "A Pinata agent template for Moloch/Baal DAO conviction, proposals, voting records, and suggested governance tasks."
+  description: "A Pinata agent template for Moloch/Baal DAO mandates, proposal checkpoints, voting records, and suggested governance tasks."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -27,6 +27,10 @@ Use this skill to build or send a Base Moloch V3 DAO summon transaction.
   "tokenSymbol": "EXV",
   "lootTokenName": "Example Loot",
   "lootTokenSymbol": "EXL",
+  "description": "Short public DAO description",
+  "goalsURI": "ipfs://...",
+  "charterURI": "ipfs://...",
+  "joinRulesURI": "ipfs://...",
   "votingTransferable": false,
   "nvTransferable": true,
   "memberAddresses": ["0x..."],
@@ -48,6 +52,7 @@ Use this skill to build or send a Base Moloch V3 DAO summon transaction.
 
 - Daohaus summon uses `summonBaalFromReferrer(safe, forwarder, saltNonce, mintParams, tokenParams, initActions)`.
 - Init actions include `setGovernanceConfig`, `setShamans`, and a Poster metadata post executed as Baal.
+- Initial metadata can include `description`, `goalsURI`, `charterURI`, `joinRulesURI`, `rulesURI`, and image/link fields. Use IPFS/Pinata URIs for longer documents.
 - If no Safe exists yet, leave `safeAddress` unset or zero.
 - Use Base first. Do not switch chains unless the user asks.
 - `quorum` and `minRetention` are raw whole-number percentages from `0` to `100`, not 18-decimal fixed-point values.

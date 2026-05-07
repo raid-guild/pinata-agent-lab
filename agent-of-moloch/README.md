@@ -2,14 +2,15 @@
 
 A Pinata-ready governance template for Moloch V3/Baal DAOs.
 
-The app gives the agent a characterful surface: DAO memory, conviction ledger, proposal augury, and next rites. Under the flavor, it stays strict about governance operations: read state first, store rationale, build unsigned transactions, and only broadcast after explicit human approval.
+The app gives the agent a characterful surface: DAO memory, mandate ledger, proposal augury, checkpoint watch, and next rites. Under the flavor, it stays strict about governance operations: read snapshot artifacts, write vote memos, run live preflight, and broadcast only when mandate and harness policy allow it.
 
 ## What It Stores
 
-- DAOs with Baal address, chain id, DAOhaus route, charter, thesis, voting power, conviction, and voter platform
+- DAOs with Baal address, chain id, DAOhaus route, charter, thesis, voting power, conviction, and governance mandate
 - Proposal records with proposal id, status, stance, confidence, recommended vote, rationale, due date, and tx hash
 - Suggested tasks for reading DAO state, checking proposals, voting, sponsoring, processing, and record keeping
-- Bundled Moloch skills copied from `Projects/raidguild/skills/moloch` into `workspace/skills/moloch`
+- Snapshot artifact records for `task-snapshot` checkpoint outputs
+- Bundled Moloch skills aligned with `https://github.com/HausDAO/moloch-skills` in `workspace/skills/moloch`
 
 ## Run
 
@@ -33,6 +34,8 @@ npm run typecheck
 
 - `GET /app/api/governance`
 - `GET /app/api/governance?status=voting`
+- `GET /app/api/artifacts`
+- `POST /app/api/artifacts`
 - `GET /app/api/daos`
 - `POST /app/api/daos`
 - `PATCH /app/api/daos/:id`
@@ -63,7 +66,19 @@ Useful reads:
 node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs read-dao --dao 0xDAO
 node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs graph-proposals --dao 0xDAO --first 20
 node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs read-proposal --dao 0xDAO --proposal 1
+node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs task-snapshot --dao 0xDAO --first 100 --out-dir workspace/runtime/moloch-artifacts/0xDAO
+node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs proposal-lifecycle --dao 0xDAO --proposal 1
 ```
+
+`task-snapshot` writes the artifacts shown on the dashboard:
+
+- `direct-state.json`
+- `proposal-summary.json`
+- `operating-context.json`
+- `process-queue.json`
+- `checkpoint.json`
+
+Use `workspace/skills/moloch/moloch-agent-conviction` and `workspace/skills/moloch/VOTE_DECISION_FLOW.md` before making vote recommendations.
 
 Required for chain reads:
 
@@ -71,11 +86,14 @@ Required for chain reads:
 export RPC_URL="https://mainnet.base.org"
 ```
 
-Required only for sending:
+Required template secrets:
 
 ```bash
+export ACCOUNT_ADDRESS="0x..."
 export PRIVATE_KEY="0x..."
 ```
+
+`ACCOUNT_ADDRESS` is the managed voter/account identity used in mandate profiles and audit records. `PRIVATE_KEY` signs authorized onchain actions. Keep both in the Pinata secrets vault; do not commit them to files.
 
 Do not commit `.env` files, private keys, mnemonics, or raw signer credentials.
 
@@ -94,5 +112,5 @@ Optional relays are available when `API_PASSWORD` is set:
 ## First Agent Prompt
 
 ```text
-You are Agent of Moloch. Read workspace/BOOTSTRAP.md, workspace/IDENTITY.md, workspace/OPERATIONS.md, workspace/TOOLS.md, and the Moloch skills under workspace/skills/moloch. Ask me which DAOs you are in, what each DAO's charter/thesis is, and what voter conviction/platform you should hold before checking proposals or preparing votes.
+You are Agent of Moloch. Read workspace/BOOTSTRAP.md, workspace/IDENTITY.md, workspace/OPERATIONS.md, workspace/TOOLS.md, workspace/skills/moloch/AGENT_TASKS.md, workspace/skills/moloch/VOTE_DECISION_FLOW.md, and the Moloch skills under workspace/skills/moloch. Ask me which DAOs you are in, what each DAO's charter/thesis is, what governance mandate you should hold, and where task-snapshot artifacts should be written before checking proposals or preparing votes.
 ```

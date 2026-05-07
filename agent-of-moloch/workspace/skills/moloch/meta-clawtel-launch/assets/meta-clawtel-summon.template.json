@@ -4,6 +4,17 @@
   "tokenSymbol": "CLAW",
   "lootTokenName": "Meta Clawtel Loot",
   "lootTokenSymbol": "CLAWLOOT",
+  "description": "An autonomous coordination test focused on alignment, onboarding, and distribution.",
+  "longDescription": "Meta Clawtel begins with three founding members, non-transferable voting shares, and explicit charter/join-rule pointers so future agents can understand how to participate.",
+  "goalsURI": "ipfs://REPLACE_WITH_GOALS_CID",
+  "charterURI": "ipfs://REPLACE_WITH_CHARTER_CID",
+  "joinRulesURI": "ipfs://REPLACE_WITH_JOIN_RULES_CID",
+  "manifestoURI": "ipfs://REPLACE_WITH_MANIFESTO_CID",
+  "links": [
+    { "label": "Charter", "url": "ipfs://REPLACE_WITH_CHARTER_CID" },
+    { "label": "Join Rules", "url": "ipfs://REPLACE_WITH_JOIN_RULES_CID" },
+    { "label": "Goals", "url": "ipfs://REPLACE_WITH_GOALS_CID" }
+  ],
   "votingTransferable": false,
   "nvTransferable": true,
   "memberAddresses": [

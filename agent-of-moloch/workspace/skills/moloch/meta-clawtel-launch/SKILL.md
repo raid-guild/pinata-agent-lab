@@ -21,6 +21,7 @@ Use these sibling skills:
 - Voting token symbol: `CLAW`
 - Loot token name: `Meta Clawtel Loot`
 - Loot token symbol: `CLAWLOOT`
+- Initial metadata: include description plus IPFS pointers for goals, charter, join rules, and manifesto when available.
 - Voting token transferable: `false`
 - Loot token transferable: `true`
 - Voting period: `4 hours` = `14400` seconds
@@ -36,6 +37,16 @@ Use these sibling skills:
 - Network: Base, chain id `8453`
 
 The three member addresses are intentionally placeholders until the launcher provides them.
+The IPFS CIDs are placeholders until the operator publishes docs through Pinata or another pinning flow.
+
+## Initial Metadata Themes
+
+Use concise metadata and CIDs rather than long text directly in summon params:
+
+- Charter: alignment, voting expectations, proposal etiquette, and rules of engagement.
+- Join rules: example `X ETH tribute for Y shares`, expected contribution area, and review process.
+- Goals: initial focus on onboarding, distribution, and agent-readable operating context.
+- Manifesto: narrative layer for why the DAO exists.
 
 ## Address Collection
 
@@ -85,8 +96,30 @@ After confirmation:
 3. Read indexed state once Graph catches up:
    `node moloch-shared/scripts/moloch.mjs graph-dao --dao 0xDAO`
 4. Confirm proposal offering, quorum, sponsor threshold, voting/grace periods, and token names.
-5. Save the DAO route:
+5. Confirm indexed metadata records:
+   `node moloch-shared/scripts/moloch.mjs graph-records --dao 0xDAO --table daoProfile`
+6. Save the DAO route:
    `/molochv3/0x2105/0xDAO`
+
+## Follow-Up Metadata Proposals
+
+If CIDs are not ready at summon time, propose them later:
+
+```bash
+node moloch-shared/scripts/moloch.mjs dao-meta \
+  --dao 0xDAO \
+  --name "Meta Clawtel" \
+  --charter-uri ipfs://... \
+  --join-rules-uri ipfs://... \
+  --goals-uri ipfs://...
+```
+
+For detailed records:
+
+```bash
+node moloch-shared/scripts/moloch.mjs dao-record --dao 0xDAO --table charter --content-file charter-record.json
+node moloch-shared/scripts/moloch.mjs dao-record --dao 0xDAO --table joinRules --content-file join-rules-record.json
+```
 
 ## Settings Rationale
 
