@@ -131,7 +131,8 @@ Process when:
 - `proposal-lifecycle` shows `processableNow: true`
 - exact indexed `proposalData` is available
 - direct chain state confirms the previous-proposal gate
-- no human-review rule applies
+
+Processing a passed proposal is mechanical settlement of completed governance, not a fresh vote or mandate decision. Do not block processing because of proposal category, value, membership, shares, loot, payments, settings, or agent preference. The DAO can deadlock if ready proposals are not processed.
 
 ## Examples
 
@@ -181,4 +182,3 @@ Do not dump full calldata in vote memos. Report:
 - reason
 - tx hash if sent
 - post-action state after reread
-

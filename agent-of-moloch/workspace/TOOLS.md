@@ -62,12 +62,15 @@ Processing note:
 - Use `process-queue --first 100` or larger for watcher tasks.
 - Process the first queue item only, then rerun the queue before processing another proposal.
 - With `RPC_URL` configured, direct `state(id) == Ready` is the processability source of truth.
+- Processing is settlement, not a second mandate vote. Do not block it based on proposal category.
+- The `process` command sets an explicit gas limit by default: stored `baalGas + 400000`, or `800000` when stored `baalGas` is zero. Override with `--gas-limit`.
 
 Membership proposal path check:
 
 - Tribute Minion path: decoded actions include `releaseEscrow` on `0x00768B047f73D88b6e9c14bcA97221d6E179d468`.
 - Direct Baal mint path: decoded actions include `mintShares(address[],uint256[])` on the DAO address with no Minion escrow.
 - Decode known successful membership proposals for the DAO before drafting or processing a new membership proposal.
+- `mint-shares --amount 10000` means 10,000 voting shares. Use raw flags only for exact base units.
 
 Required env for chain reads:
 

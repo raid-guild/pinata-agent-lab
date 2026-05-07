@@ -41,6 +41,10 @@ Process:
 node ../moloch-shared/scripts/moloch.mjs process --dao 0xDAO --proposal 1 --proposal-data 0x... --send
 ```
 
+Processing is required contract maintenance after governance is complete. It is not a second vote. If `process-queue` marks a proposal as the first chain-ready item, process it unless chain preflight fails, exact indexed `proposalData` is unavailable or mismatched, signer/gas is unavailable, or the operator/harness has explicitly paused all transaction sending.
+
+Use an explicit process gas limit. Wallet/RPC estimation can undercount inner proposal actions and still produce a successful outer transaction with `actionFailed: true`. The CLI sets one automatically: stored `baalGas + 400000`, or `800000` when stored `baalGas` is `0`. Override with `--gas-limit` only when needed.
+
 For processing, get `proposalData` from `graph-proposal`. Decode it before sending if there is any ambiguity:
 
 ```bash

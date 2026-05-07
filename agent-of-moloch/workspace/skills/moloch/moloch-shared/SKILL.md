@@ -67,7 +67,8 @@ node scripts/moloch.mjs decode-submit-proposal --data 0x...
 node scripts/moloch.mjs signal --dao 0xDAO --title "..." --description "..."
 node scripts/moloch.mjs dao-meta --dao 0xDAO --name "DAO Name" --charter-uri ipfs://... --join-rules-uri ipfs://...
 node scripts/moloch.mjs dao-record --dao 0xDAO --table charter --content-file charter-record.json
-node scripts/moloch.mjs tribute --dao 0xDAO --token ETH --amount 1000000000000000 --shares 0 --loot 1000000000000000000000
+node scripts/moloch.mjs tribute --dao 0xDAO --token ETH --amount 1000000000000000 --shares 0 --loot 1000
+node scripts/moloch.mjs mint-shares --dao 0xDAO --to 0xMEMBER --amount 10000
 node scripts/moloch.mjs gov-settings --dao 0xDAO --params params.json
 node scripts/moloch.mjs token-settings --dao 0xDAO --pause-shares false --pause-loot false
 node scripts/moloch.mjs sponsor --dao 0xDAO --proposal 1
@@ -78,7 +79,16 @@ node scripts/moloch.mjs summon --params summon.json
 
 For autonomous action skills, add `--send` after live preflight confirms the managed wallet has permission and funds. Omit `--send` only for dry-run/review/draft tasks or when policy blocks broadcast.
 
-When `RPC_URL` or `--rpc` is configured, proposal builders estimate `baalGas` through the DAO Safe/module path, add `150000` gas per inner action, then apply a default `1.2x` buffer. If estimation fails, the builder falls back to `0` and reports `baalGasEstimateError`; use `--baal-gas-buffer`, `--baal-gas`, or `--require-baal-gas-estimate` for explicit policy.
+Proposal builders default `submitProposal` `baalGas` to `0`. Baal ignores zero, while a low nonzero value can make processing fail with an out-of-gas style action failure. Use `--baal-gas` only when you know the required inner action gas. Use `--estimate-baal-gas` to opt in to DAOhaus-style estimation with a default `1.2x` buffer.
+
+For `process`, the CLI sets a transaction gas limit because wallet/RPC estimation can undercount inner proposal actions. Default is the larger of `800000` or stored `baalGas + 400000`. Override with `--gas-limit`.
+
+For Baal shares and loot, the CLI accepts human 18-decimal token units by default:
+
+- `mint-shares --amount 10000` means 10,000 voting shares.
+- `tribute --shares 1 --loot 1000` means 1 share and 1,000 loot.
+- Use `--amount-raw`, `--shares-raw`, or `--loot-raw` only for exact base units.
+- Tribute token `--amount` remains raw token units because ETH/ERC-20 decimals vary.
 
 Lifecycle reference fixtures live in `fixtures/proposal-lifecycle.fixture.json`.
 
@@ -100,6 +110,8 @@ Moloch V3 proposals call `submitProposal(bytes proposalData, uint32 expiration, 
 
 - `proposalData` is usually a Gnosis MultiSend `multiSend(bytes)` call encoded against the MultiSend ABI.
 - Signal proposals post metadata through Poster.
+- Direct membership grants encode `mintShares(address[],uint256[])` against the Baal DAO.
+- Baal shares and loot have 18 decimals. Proposal command summaries include both the original human input and the encoded raw amount where relevant.
 - Governance settings encode `setGovernanceConfig(bytes)` where the inner bytes are:
   `uint32 votingPeriodInSeconds, uint32 gracePeriodInSeconds, uint256 newOffering, uint256 quorum, uint256 sponsorThreshold, uint256 minRetention`.
 - `quorum` and `minRetention` are raw whole-number percentages from `0` to `100`, not 18-decimal fixed-point values. Use `30` for 30%, `50` for 50%, and `67` for an approximate 66.6% retention guard.

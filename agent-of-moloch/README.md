@@ -80,9 +80,9 @@ node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs proposal-lifecycle
 
 Use `workspace/skills/moloch/moloch-agent-conviction` and `workspace/skills/moloch/VOTE_DECISION_FLOW.md` before making vote recommendations.
 
-For processing, use `process-queue --first 100` or larger, process only the first queue item, then rerun the queue before processing another proposal.
+For processing, use `process-queue --first 100` or larger, process only the first queue item, then rerun the queue before processing another proposal. Processing is settlement after governance has passed; do not block it because the proposal touches membership, shares, loot, payments, settings, or another sensitive category. The updated skill sets an explicit process transaction gas limit by default: stored `baalGas + 400000`, or `800000` when stored `baalGas` is zero. Override with `--gas-limit` only when needed.
 
-Membership proposal note: Moloch/Baal DAOs may admit members through different executable paths. A Tribute Minion membership proposal includes a Minion `releaseEscrow` action before shares or loot are minted. A direct membership proposal may call the Baal DAO directly with `mintShares(address[],uint256[])` and no Minion escrow action. Before drafting or processing membership proposals, check the DAO's join rules and decode a known successful membership proposal from that DAO. Do not force `join-dao` / Tribute Minion when the DAO expects direct `mintShares`.
+Membership proposal note: Moloch/Baal DAOs may admit members through different executable paths. A Tribute Minion membership proposal includes a Minion `releaseEscrow` action before shares or loot are minted. A direct membership proposal may call the Baal DAO directly with `mintShares(address[],uint256[])` and no Minion escrow action. Before drafting or processing membership proposals, check the DAO's join rules and decode a known successful membership proposal from that DAO. Use `mint-shares --amount 10000` for 10,000 human voting shares; use `--amount-raw`, `--shares-raw`, or `--loot-raw` only for exact base units.
 
 Required for chain reads:
 

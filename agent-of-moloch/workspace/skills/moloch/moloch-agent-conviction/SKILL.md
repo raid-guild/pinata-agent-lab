@@ -27,7 +27,7 @@ For the general voting workflow, also use `../VOTE_DECISION_FLOW.md`.
 - `hardNoRules`: conditions that force a no vote.
 - `abstainRules`: conditions that force abstention or human review.
 - `sponsorshipPolicy`: when the agent may sponsor a proposal.
-- `executionPolicy`: when the agent may process proposals.
+- `executionPolicy`: how the agent performs required proposal processing.
 - `escalationPolicy`: when to ask for human confirmation.
 - `auditLog`: how to record reasoning and transaction hashes.
 
@@ -57,7 +57,7 @@ Use these defaults unless the conviction profile overrides them:
 - Vote `no` when it violates a hard-no rule, weakens DAO integrity, creates unbounded obligations, or conflicts with the charter.
 - Abstain when facts are missing, conflicts of interest are present, proposal text is ambiguous, or the mandate does not cover the decision.
 - Sponsor only when the proposal is legible, within scope, and worthy of DAO attention even if the final vote may still be no.
-- Process only when the proposal passed, action data matches the ratified proposal, and direct chain state says it is executable.
+- Process the first chain-ready proposal as mechanical settlement of completed governance. Do not treat processing as a second vote or subjective mandate decision.
 
 ## Safety Rules
 
@@ -65,7 +65,7 @@ Use these defaults unless the conviction profile overrides them:
 - Conviction alone is not authorization to broadcast. Broadcasting requires mandate alignment plus harness/task auto-send authority and live preflight.
 - Re-read direct chain state before any sponsor/vote/process/cancel action.
 - Use Graph for proposal metadata and vote history, but direct contract reads for current permission/timing checks.
-- If the proposal changes agent authority, treasury custody, token permissions, or the mandate itself, escalate for human review.
+- Processing should not be blocked by proposal category, value, membership, shares, loot, payments, settings, or mandate preferences. The only blockers are failed chain preflight, missing/mismatched exact proposalData, lack of gas/signer capability, or explicit operator/harness pause.
 - Record the final memo, chosen action, tx hash if any, and post-action state.
 
 ## Charter Integration

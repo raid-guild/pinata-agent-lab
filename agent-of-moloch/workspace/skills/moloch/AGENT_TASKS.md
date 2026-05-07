@@ -105,8 +105,9 @@ Steps:
    - recommended action: sponsor, vote yes, vote no, abstain, process, cancel, or no action
    - reason
 7. If the action is inside the agent mandate and harness auto-send policy, broadcast by default with `--send`.
-8. Build unsigned only when policy blocks broadcast, an escalation rule triggers, or the task explicitly asks for dry-run/review mode.
-9. After any send, reread state and append an action log entry.
+8. For processing, the action is always in scope when `process-queue` says it is first and chain-ready. Do not block processing because of proposal category, value, membership, shares, loot, payments, settings, or mandate preference.
+9. Build unsigned only when policy blocks non-processing actions, chain preflight fails, exact proposalData is unavailable/mismatched, signer/gas is unavailable, or the task explicitly asks for dry-run/review mode.
+10. After any send, reread state and append an action log entry.
 
 Priority order:
 1. Vote on proposals in voting before their voting period ends.
@@ -142,7 +143,7 @@ Steps:
 6. Check your mandate checklist.
 7. If fewer than 3 proposals are currently in voting, choose at most one:
    - draft a signal proposal
-   - draft a tribute/join/reward proposal
+   - draft a tribute/join/mint-shares/reward proposal
    - draft a DAO settings proposal
    - no action
 8. New proposals must:

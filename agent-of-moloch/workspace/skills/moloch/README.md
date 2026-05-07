@@ -35,7 +35,7 @@ Check local capabilities and commit:
 node scripts/moloch.mjs capabilities
 ```
 
-If `tribute` / `join-dao` is missing from help or capabilities, the local bundle is stale.
+If `tribute` / `join-dao` / `mint-shares` is missing from help or capabilities, the local bundle is stale.
 
 ## Environment
 
@@ -178,7 +178,8 @@ node moloch-shared/scripts/moloch.mjs signal --dao 0xDAO --title "Signal" --desc
 node moloch-shared/scripts/moloch.mjs dao-meta --dao 0xDAO --name "DAO Name" --charter-uri ipfs://... --join-rules-uri ipfs://...
 node moloch-shared/scripts/moloch.mjs dao-record --dao 0xDAO --table charter --content-file charter-record.json
 node moloch-shared/scripts/moloch.mjs dao-record --dao 0xDAO --table joinRules --content-file join-rules-record.json
-node moloch-shared/scripts/moloch.mjs tribute --dao 0xDAO --token ETH --amount 1000000000000000 --shares 0 --loot 1000000000000000000000
+node moloch-shared/scripts/moloch.mjs tribute --dao 0xDAO --token ETH --amount 1000000000000000 --shares 0 --loot 1000
+node moloch-shared/scripts/moloch.mjs mint-shares --dao 0xDAO --to 0xMEMBER --amount 10000
 node moloch-shared/scripts/moloch.mjs gov-settings --dao 0xDAO --params params.json
 node moloch-shared/scripts/moloch.mjs token-settings --dao 0xDAO --pause-shares false --pause-loot false
 node moloch-shared/scripts/moloch.mjs sponsor --dao 0xDAO --proposal 1
@@ -188,6 +189,8 @@ node moloch-shared/scripts/moloch.mjs summon --params summon.json
 ```
 
 Append `--send` for authorized autonomous broadcasts. Omit it for dry-run/review/draft mode.
+
+For Baal shares and loot, CLI quantities are human 18-decimal token units by default. `mint-shares --amount 10000` encodes `10000000000000000000000`. `tribute --shares 1 --loot 1000` encodes one share and one thousand loot. Use `--amount-raw`, `--shares-raw`, or `--loot-raw` only when intentionally passing exact base units. Tribute token `--amount` remains raw token units because ETH/ERC-20 decimals vary.
 
 Autonomous action example:
 
@@ -229,7 +232,7 @@ Raw JSON/calldata should be saved to a file or shown only on request.
 
 ## Proposal Intent Guardrail
 
-Use `signal` only for text-only governance intent. If the operator asks to join, request shares, request loot, create a membership proposal, or make a tribute proposal, use `tribute` / `join-dao`. A signal about shares does not issue shares.
+Use `signal` only for text-only governance intent. If the operator asks to join, request shares, request loot, create a membership proposal, or make a tribute proposal, use an executable membership path. Use `tribute` / `join-dao` for token tribute. Use `mint-shares` for direct voting-share grants with no tribute transfer. A signal about shares does not issue shares.
 
 Use `dao-meta` or `dao-record` for DAO profile, charter, manifesto, hosted docs, and join-rule pointers.
 
@@ -294,7 +297,8 @@ Example join-rules record:
   "version": "0.1.0",
   "token": "ETH",
   "tributeAmount": "1000000000000000",
-  "sharesRequested": "1000000000000000000000",
+  "sharesRequested": "1000",
+  "shareUnitMode": "human-18-decimal",
   "expectations": ["align with charter", "contribute to onboarding or distribution", "participate in votes"]
 }
 ```
@@ -314,7 +318,9 @@ node moloch-shared/scripts/moloch.mjs graph-member --dao 0xDAO --member 0xMEMBER
 
 - Autonomous agents should send by default for authorized actions after preflight. Leave transactions unsigned only when the task/operator asks for dry-run, review, or draft mode.
 - The CLI requires `--send` to broadcast; this is a mechanical execution flag, not a human-confirmation requirement for authorized agent tasks.
-- Proposal builders estimate `baalGas` when `RPC_URL` or `--rpc` is configured. The estimator uses the DAO Safe/module path, adds `150000` gas per inner action, then applies a default `1.2x` buffer. If estimation fails, the builder falls back to `0` and reports `baalGasEstimateError`; use `--baal-gas-buffer`, `--baal-gas`, or `--require-baal-gas-estimate` for explicit policy.
+- Proposal builders default `submitProposal` `baalGas` to `0`. Baal ignores zero, while a low nonzero value can make processing fail with an out-of-gas style action failure. Use `--baal-gas` only when you know the required inner action gas. Use `--estimate-baal-gas` to opt in to DAOhaus-style estimation with a default `1.2x` buffer.
+- `process` uses an explicit transaction gas limit because wallet estimation can miss inner proposal action gas. Default is the larger of `800000` or stored `baalGas + 400000`. Override with `--gas-limit`.
+- Baal shares and loot have 18 decimals. Proposal commands use human units for share/loot quantities and expose raw overrides for low-level calls. This avoids accidental proposals that mint `10000` base units instead of `10000` full voting shares.
 - Read direct contract state immediately before sending. Graph data can lag.
 - Use Graph data for proposal metadata, votes, and the original indexed `proposalData`.
 - Use Graph member data for membership, shares, loot, delegation, and vote history context.

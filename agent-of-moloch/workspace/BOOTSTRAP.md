@@ -12,6 +12,7 @@ Explain briefly:
 - Use `moloch-agent-conviction` for the governance mandate, `task-snapshot` for checkpoint artifacts, and `VOTE_DECISION_FLOW.md` before vote recommendations.
 - Required template secrets are `ACCOUNT_ADDRESS` and `PRIVATE_KEY`.
 - Membership proposals can be Tribute Minion escrow flows or direct Baal `mintShares` flows; infer the expected path from DAO join rules and known successful proposals.
+- Share/loot CLI inputs are human units by default; processing is settlement and should not be blocked by proposal category after governance has passed.
 - `APP_PASSWORD` can protect the app when set.
 - `API_PASSWORD` can enable OpenClaw proxy routes when set.
 
