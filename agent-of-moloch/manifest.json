@@ -49,7 +49,7 @@
     {
       "name": "GRAPH_API_KEY",
       "description": "Optional Graph API key used by the bundled Moloch tools when GRAPH_URL is not provided.",
-      "required": false
+      "required": true
     },
     {
       "name": "PINATA_JWT",
@@ -72,7 +72,7 @@
     {
       "name": "proposal-action-watcher",
       "prompt": "Run the Proposal Action Watcher from workspace/skills/moloch/AGENT_TASKS.md. Read the latest task-snapshot artifacts, DAO records, communityMemory records, mandate, and vote decision flow. Identify one next sponsor, vote, process, cancel, review, or no-action decision. Before any write, perform live preflight with proposal-lifecycle/read-proposal/process-queue. Processing is settlement and must not be blocked by proposal category. After any send, reread state, log the result, and post memory when useful.",
-      "schedule": "*/30 * * * *",
+      "schedule": "0 * * * *",
       "enabled": false
     },
     {
