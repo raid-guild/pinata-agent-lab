@@ -104,6 +104,8 @@ Required template secrets:
 export ACCOUNT_ADDRESS="0x..."
 export PRIVATE_KEY="0x..."
 export RPC_URL="https://mainnet.base.org"
+export PINATA_JWT="..."
+export PINATA_GATEWAY_URL="https://gateway.pinata.cloud"
 ```
 
 `ACCOUNT_ADDRESS` is used for voter identity, mandate profiles, and audit records. `PRIVATE_KEY` is used only for authorized `--send` actions. `RPC_URL` powers live reads, preflight checks, and transaction broadcasts.
@@ -113,7 +115,6 @@ Optional template secrets:
 ```bash
 export GRAPH_URL="https://gateway.thegraph.com/api/YOUR_GRAPH_KEY/subgraphs/id/7yh4eHJ4qpHEiLPAk9BXhL5YgYrTrRE6gWy8x4oHyAqW"
 export GRAPH_API_KEY="..."
-export PINATA_JWT="..."
 ```
 
 Do not commit `.env`, private keys, mnemonics, or raw signer credentials.

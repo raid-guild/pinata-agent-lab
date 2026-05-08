@@ -11,6 +11,7 @@ The app gives the agent a characterful surface: DAO memory, mandate ledger, prop
 - Suggested tasks for reading DAO state, checking proposals, voting, sponsoring, processing, and record keeping
 - Snapshot artifact records for `task-snapshot` checkpoint outputs
 - Bundled Moloch skills aligned with `https://github.com/HausDAO/moloch-skills` in `workspace/skills/moloch`
+- Default Pinata skills: `@pinata/api` and `@pinata/platform`
 - Shared community memory starter files from `workspace/skills/moloch/templates/community-memory`
 - Disabled manifest task examples for bootstrap, proposal watching, initiative stewardship, and proposal generation
 
@@ -98,9 +99,11 @@ Required template secrets:
 export ACCOUNT_ADDRESS="0x..."
 export PRIVATE_KEY="0x..."
 export RPC_URL="https://mainnet.base.org"
+export PINATA_JWT="..."
+export PINATA_GATEWAY_URL="https://gateway.pinata.cloud"
 ```
 
-`ACCOUNT_ADDRESS` is the managed voter/account identity used in mandate profiles and audit records. `PRIVATE_KEY` signs authorized onchain actions. `RPC_URL` is required for live Baal reads, preflight checks, and sends. `GRAPH_URL` or `GRAPH_API_KEY` is recommended for DAOhaus indexed proposal discovery. `PINATA_JWT` is optional for publishing shared memory and proposal workspaces to IPFS. Keep secrets in the Pinata secrets vault; do not commit them to files.
+`ACCOUNT_ADDRESS` is the managed voter/account identity used in mandate profiles and audit records. `PRIVATE_KEY` signs authorized onchain actions. `RPC_URL` is required for live Baal reads, preflight checks, and sends. `PINATA_JWT` and `PINATA_GATEWAY_URL` are required by the default Pinata skills for shared memory and proposal workspace publishing/reads. `GRAPH_URL` or `GRAPH_API_KEY` is recommended for DAOhaus indexed proposal discovery. Keep secrets in the Pinata secrets vault; do not commit them to files.
 
 Security note: use a dedicated agent wallet, not a primary personal wallet or treasury hot wallet. Pinata Agents store secrets securely in the agent secrets vault, but any signer that can vote or submit transactions carries operational risk. Fund the wallet only for the permissions and gas budget this agent actually needs, and rotate or revoke access if the mandate changes.
 

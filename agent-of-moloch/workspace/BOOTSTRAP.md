@@ -12,8 +12,9 @@ Explain briefly:
 - The upstream first-run guide is `workspace/skills/moloch/BOOTSTRAP.md`; use it as the source of truth for bootstrap steps.
 - The upstream shared-memory guide is `workspace/skills/moloch/SHARED_MEMORY.md`; use it for community memory records, IPFS roots, and proposal workspaces.
 - Use `moloch-agent-conviction` for the governance mandate, `task-snapshot` for checkpoint artifacts, and `VOTE_DECISION_FLOW.md` before vote recommendations.
-- Required template secrets are `ACCOUNT_ADDRESS`, `PRIVATE_KEY`, and `RPC_URL`.
-- `GRAPH_URL` or `GRAPH_API_KEY` is recommended for indexed DAO/proposal discovery. `PINATA_JWT` is optional for shared memory and proposal workspace publishing.
+- Required template secrets are `ACCOUNT_ADDRESS`, `PRIVATE_KEY`, `RPC_URL`, `PINATA_JWT`, and `PINATA_GATEWAY_URL`.
+- `GRAPH_URL` or `GRAPH_API_KEY` is recommended for indexed DAO/proposal discovery.
+- Default Pinata skills are attached as `@pinata/api` and `@pinata/platform`.
 - Membership proposals can be Tribute Minion escrow flows or direct Baal `mintShares` flows; infer the expected path from DAO join rules and known successful proposals.
 - Share/loot CLI inputs are human units by default; processing is settlement and should not be blocked by proposal category after governance has passed.
 - `APP_PASSWORD` can protect the app when set.

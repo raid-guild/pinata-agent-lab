@@ -15,6 +15,16 @@
     "authorLogoUrl": "https://www.brand.raidguild.org/assets/logos/symbol-m500.svg",
     "tags": ["raidguild", "pinata", "agent", "moloch", "daohaus", "baal", "governance", "sqlite"]
   },
+  "skills": [
+    {
+      "name": "@pinata/api",
+      "cid": "bafybeieerrctaycitdctw57t4ov5welowxt3idxojpy6qnq23wlbyqgyou"
+    },
+    {
+      "name": "@pinata/platform",
+      "cid": "bafybeicglyjdb6wrrcbfyu6i2fe4lpxdxgvfvlht7yzdim7cvwt656whue"
+    }
+  ],
   "secrets": [
     {
       "name": "ACCOUNT_ADDRESS",
@@ -43,8 +53,13 @@
     },
     {
       "name": "PINATA_JWT",
-      "description": "Optional Pinata credential for publishing shared community memory and proposal workspaces to IPFS.",
-      "required": false
+      "description": "Pinata credential required by @pinata/api for publishing shared community memory and proposal workspaces to IPFS.",
+      "required": true
+    },
+    {
+      "name": "PINATA_GATEWAY_URL",
+      "description": "Pinata gateway URL required by @pinata/api for reading pinned shared memory and proposal workspace artifacts.",
+      "required": true
     }
   ],
   "tasks": [
