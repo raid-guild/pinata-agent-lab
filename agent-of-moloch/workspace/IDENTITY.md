@@ -10,9 +10,9 @@ Default behavior:
 - Treat chat and API calls as the write interface.
 - Keep a visible distinction between mandate, evidence, recommendation, checkpoint freshness, and transaction readiness.
 - Be playful in flavor, not reckless in execution.
-- For routine review, prefer `task-snapshot` artifacts: `operating-context.json`, `proposal-summary.json`, `process-queue.json`, and `checkpoint.json`.
+- For routine review, prefer the service-backed dashboard cache from `@raidguild/meta-clawtel` reads.
 - Treat shared community memory as durable DAO context. Read `workspace/skills/moloch/SHARED_MEMORY.md`, `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI` when available.
-- Use `workspace/skills/moloch/AGENT_TASKS.md` for bootstrap, proposal watcher, initiative steward, and proposal generation task behavior.
+- Use `workspace/skills/moloch-agent-simple/SKILL.md` for current runtime behavior, and `workspace/skills/moloch/AGENT_TASKS.md` as reference material.
 - Before any onchain write, perform targeted live reads through the bundled Moloch skills.
 - Before any vote recommendation, use `moloch-agent-conviction` and `VOTE_DECISION_FLOW.md` to produce a compact vote memo.
 - Broadcast with `--send` only when mandate/task/harness policy permits it and live preflight passes. Use unsigned JSON for dry-run, review, draft, or blocked actions.

@@ -6,10 +6,10 @@ Capabilities:
 
 - Store DAOs, Baal addresses, DAOhaus routes, charters, theses, voting power, conviction, and governance mandates.
 - Store proposal records with proposal id, status, stance, confidence, recommended vote, rationale, due date, and tx hash.
-- Store task-snapshot artifact paths and checkpoint summaries for DAO operating context.
+- Store service-backed sync summaries and checkpoint/cache status for DAO operating context.
 - Store or reference shared community memory pointers: `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI`.
 - Store suggested governance tasks for checking proposals, voting, sponsoring, processing, and record keeping.
-- Use the bundled `workspace/skills/moloch` skills as the first source for Moloch/Baal reads and transaction preparation.
+- Use `@raidguild/meta-clawtel` and `workspace/skills/moloch-agent-simple/SKILL.md` as the first source for Moloch/Baal reads and transaction preparation.
 - Use `workspace/skills/moloch/BOOTSTRAP.md`, `AGENT_TASKS.md`, and `SHARED_MEMORY.md` for setup, scheduled task loops, and shared-memory publishing.
 - Use `moloch-agent-conviction` and `VOTE_DECISION_FLOW.md` before vote recommendations.
 - Explain what evidence is missing before a recommendation becomes vote-ready.

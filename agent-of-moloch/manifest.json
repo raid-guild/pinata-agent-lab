@@ -43,47 +43,62 @@
     },
     {
       "name": "GRAPH_URL",
-      "description": "DAOhaus Graph endpoint used for indexed DAO/proposal discovery. Use this or GRAPH_API_KEY when your harness constructs the URL.",
+      "description": "Optional direct Graph endpoint for legacy local tools. The default @raidguild/meta-clawtel flow reads Graph through MOLOCH_SERVICE_URL.",
       "required": false
     },
     {
       "name": "GRAPH_API_KEY",
-      "description": "Optional Graph API key used by the bundled Moloch tools when GRAPH_URL is not provided.",
-      "required": true
+      "description": "Optional direct Graph API key for legacy local tools. Not required when using the hosted moloch-service.",
+      "required": false
     },
     {
       "name": "PINATA_JWT",
-      "description": "Pinata credential required by @pinata/api for publishing shared community memory and proposal workspaces to IPFS.",
-      "required": true
+      "description": "Optional Pinata credential for direct @pinata/api use. The default moloch-service flow handles pinning outside the agent runtime.",
+      "required": false
     },
     {
       "name": "PINATA_GATEWAY_URL",
-      "description": "Pinata gateway URL required by @pinata/api for reading pinned shared memory and proposal workspace artifacts.",
-      "required": true
+      "description": "Optional Pinata gateway URL for direct @pinata/api reads. IPFS_GATEWAY_URL is also supported.",
+      "required": false
+    },
+    {
+      "name": "MOLOCH_SERVICE_URL",
+      "description": "Optional moloch-service URL used by @raidguild/meta-clawtel for Graph reads and Pinata-backed JSON pinning. Defaults to the hosted service.",
+      "required": false
+    },
+    {
+      "name": "IPFS_GATEWAY_URL",
+      "description": "Optional gateway URL for reading shared memory CIDs. Defaults to a public Pinata IPFS gateway.",
+      "required": false
+    },
+    {
+      "name": "MOLOCH_SEND_DEFAULT",
+      "description": "Optional safety switch. Set to false when transaction commands should build unsigned transactions by default.",
+      "required": false
     }
   ],
   "tasks": [
     {
       "name": "bootstrap-dao-agent",
-      "prompt": "Run the one-time Agent of Moloch bootstrap. Read workspace/BOOTSTRAP.md and workspace/skills/moloch/BOOTSTRAP.md. Gather DAO address or summon intent, ACCOUNT_ADDRESS, mandate/conviction, autonomy boundaries, RPC/Graph/pinning status, and scheduled task cadence. Create or locate the shared community memory root from workspace/skills/moloch/templates/community-memory, prepare the first community-state.md, create the mandate from moloch-agent-conviction, run task-snapshot, and store dashboard/API records. Do not invent missing mandate fields or broadcast transactions without explicit operator approval.",
+      "prompt": "Run the one-time Agent of Moloch bootstrap. Read workspace/BOOTSTRAP.md and workspace/skills/moloch-agent-simple/SKILL.md. Gather DAO address or summon intent, ACCOUNT_ADDRESS, mandate/conviction, autonomy boundaries, RPC/service status, and scheduled task cadence. Use @raidguild/meta-clawtel commands through moloch-agent. Create or locate the shared community memory root, create the mandate, sync /app/api/sync/dao, and store dashboard/API records. Do not invent missing mandate fields or broadcast transactions without explicit operator approval.",
       "schedule": "0 9 * * *",
       "enabled": false
     },
     {
       "name": "proposal-action-watcher",
-      "prompt": "Run the Proposal Action Watcher from workspace/skills/moloch/AGENT_TASKS.md. Read the latest task-snapshot artifacts, DAO records, communityMemory records, mandate, and vote decision flow. Identify one next sponsor, vote, process, cancel, review, or no-action decision. Before any write, perform live preflight with proposal-lifecycle/read-proposal/process-queue. Processing is settlement and must not be blocked by proposal category. After any send, reread state, log the result, and post memory when useful.",
+      "prompt": "Run the Proposal Action Watcher from workspace/skills/moloch-agent-simple/SKILL.md. Sync current DAO state with moloch-agent proposals, records, and process-queue. Read mandate, DAO database memory, and dashboard cache. Identify one next sponsor, vote, process, cancel, review, or no-action decision. Before any write, perform live preflight with proposal-lifecycle/read-proposal/process-queue. Processing is settlement and must not be blocked by proposal category. After any send, reread state, log the result, and post memory when useful.",
       "schedule": "0 * * * *",
       "enabled": false
     },
     {
       "name": "initiative-steward",
-      "prompt": "Run the Initiative Steward task from workspace/skills/moloch/AGENT_TASKS.md. Load the mandate initiative backlog, task-snapshot artifacts, shared community-state.md, and relevant communityMemory records. Update operating context from recent passed, failed, rejected, and processed proposals. Maintain initiative statuses, evidence, next useful actions, and proposal readiness. Create or update a proposal draft workspace only when the mandate and open-proposal throttle allow it.",
+      "prompt": "Run the Initiative Steward task from workspace/skills/moloch-agent-simple/SKILL.md. Load the mandate initiative backlog, moloch-agent synced proposals, shared community-state.md, and relevant communityMemory records. Update operating context from recent passed, failed, rejected, and processed proposals. Maintain initiative statuses, evidence, next useful actions, and proposal readiness. Create or update a proposal draft workspace only when the mandate and open-proposal throttle allow it.",
       "schedule": "0 12 * * *",
       "enabled": false
     },
     {
       "name": "proposal-generation",
-      "prompt": "Run the Proposal Generation task from workspace/skills/moloch/AGENT_TASKS.md. Read snapshot artifacts, shared memory, mandate, and active initiative backlog. If three or more proposals are currently in voting, do not create a new proposal. Otherwise choose at most one draft/signal/membership/reward/settings proposal or no action. Use the shared proposal workspace template, include evidence from DAO history, run live preflight, and post the workspace/submission note with memory-post when useful.",
+      "prompt": "Run the Proposal Generation task from workspace/skills/moloch-agent-simple/SKILL.md. Read service-backed proposal state, shared memory, mandate, and active initiative backlog. If three or more proposals are currently in voting, do not create a new proposal. Otherwise choose at most one draft/signal/membership/reward/settings proposal or no action. Pin proposal JSON with moloch-agent pin-json when needed, include evidence from DAO history, run live preflight, and post the workspace/submission note with memory-post when useful.",
       "schedule": "0 */6 * * *",
       "enabled": false
     }

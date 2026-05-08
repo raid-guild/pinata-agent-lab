@@ -32,7 +32,7 @@ POST /app/api/sync/memory
 GET /app/api/community-memory
 ```
 
-Sync routes are server-side only. They may use `RPC_URL`, `GRAPH_URL` or `GRAPH_API_KEY`, `PINATA_JWT`, and `PINATA_GATEWAY_URL`, then write normalized cache rows to SQLite for the dashboard.
+Sync routes are server-side only. They use `@raidguild/meta-clawtel` and `moloch-service`, then write normalized cache rows to SQLite for the dashboard. The agent only needs local signer/RPC secrets for direct reads and sends.
 
 Example DAO sync payload:
 
@@ -110,26 +110,26 @@ DELETE /app/api/tasks/:id
 
 Task action types: `read-dao`, `check-proposal`, `vote`, `sponsor`, `process`, `record`.
 
-## Snapshot Artifacts
+## Sync Checkpoints
 
 ```http
 GET /app/api/artifacts
 POST /app/api/artifacts
 ```
 
-Use this route to record the latest `task-snapshot` output paths and checkpoint summary for a DAO.
+Use this route to record service-backed sync checkpoint metadata for a DAO. `/app/api/sync/dao` updates this automatically.
 
 Example payload:
 
 ```json
 {
   "daoId": 1,
-  "artifactDir": "workspace/runtime/moloch-artifacts/0xDAO",
-  "checkpointPath": "workspace/runtime/moloch-artifacts/0xDAO/checkpoint.json",
-  "operatingContextPath": "workspace/runtime/moloch-artifacts/0xDAO/operating-context.json",
-  "proposalSummaryPath": "workspace/runtime/moloch-artifacts/0xDAO/proposal-summary.json",
-  "processQueuePath": "workspace/runtime/moloch-artifacts/0xDAO/process-queue.json",
-  "directStatePath": "workspace/runtime/moloch-artifacts/0xDAO/direct-state.json",
+  "artifactDir": "moloch-service:default",
+  "checkpointPath": "service:dao/proposals/process-queue",
+  "operatingContextPath": "service:dao/records/daoProfile",
+  "proposalSummaryPath": "service:dao/proposals",
+  "processQueuePath": "service:dao/process-queue",
+  "directStatePath": "rpc:read-dao",
   "lastGraphProposalIdSeen": 12,
   "votingCount": 2,
   "needsProcessingCount": 1,
@@ -140,27 +140,21 @@ Example payload:
 
 Statuses: `fresh`, `stale`, `missing`, `manual`.
 
-## Moloch Skills
+## Moloch Runtime
 
-Bundled skills:
+Primary runtime:
 
-- `workspace/skills/moloch/moloch-dao-read`
-- `workspace/skills/moloch/moloch-agent-conviction`
-- `workspace/skills/moloch/moloch-proposals`
-- `workspace/skills/moloch/moloch-proposal-actions`
-- `workspace/skills/moloch/moloch-summon`
-- `workspace/skills/moloch/moloch-shared`
-- `workspace/skills/moloch/BOOTSTRAP.md`
-- `workspace/skills/moloch/AGENT_TASKS.md`
-- `workspace/skills/moloch/SHARED_MEMORY.md`
-- `workspace/skills/moloch/VOTE_DECISION_FLOW.md`
-- `workspace/skills/moloch/templates/community-memory`
+- `@raidguild/meta-clawtel`
+- `moloch-agent`
+- `workspace/skills/moloch-agent-simple/SKILL.md`
 
-Use `task-snapshot` artifacts for routine review and token-efficient scheduled work. Use direct reads immediately before any write action. Use Graph reads for proposal metadata and original `proposalData`. If the two disagree, prefer direct contract state for timing and permission checks.
+Legacy skill references remain under `workspace/skills/moloch`.
+
+Use service-backed sync for routine review and token-efficient scheduled work. Use direct reads immediately before any write action. `moloch-service` provides indexed proposal metadata and original `proposalData`; direct contract state still wins for timing and permission checks.
 
 For processing, use `process-queue --first 100` or larger. Process only the first item in the queue, then rerun `process-queue` before processing another proposal. When `RPC_URL` is configured, direct `state(id) == Ready` is the source of truth for processability.
 
-Processing is settlement after governance has completed. Do not block processing based on proposal category, value, membership, shares, loot, payments, settings, or mandate preference. The current skill uses an explicit process transaction gas limit: stored `baalGas + 400000`, or `800000` when stored `baalGas` is zero. Use `--gas-limit` only for deliberate overrides.
+Processing is settlement after governance has completed. Do not block processing based on proposal category, value, membership, shares, loot, payments, settings, or mandate preference. `process-ready` and `process-queue` use an explicit process transaction gas limit based on stored `baalGas`, with fallback behavior from `@raidguild/meta-clawtel`.
 
 Membership proposals require extra intent checks:
 
@@ -204,12 +198,7 @@ The template declares these required secrets in `manifest.json`:
 - `ACCOUNT_ADDRESS`: managed Ethereum account address used for DAO membership, voting power checks, mandate profiles, and audit records.
 - `PRIVATE_KEY`: signer key for authorized `--send` actions.
 - `RPC_URL`: live chain endpoint used for Baal reads, preflight checks, and transaction broadcasts.
-- `PINATA_JWT`: Pinata credential used by `@pinata/api` for shared memory and proposal workspace publishing.
-- `PINATA_GATEWAY_URL`: Pinata gateway used by `@pinata/api` for shared memory and proposal workspace reads.
-
-The manifest also documents optional secrets:
-
-- `GRAPH_URL` or `GRAPH_API_KEY`: indexed DAOhaus reads.
+- Optional settings include `MOLOCH_SERVICE_URL`, `IPFS_GATEWAY_URL`, `MOLOCH_SEND_DEFAULT`, and legacy direct Graph/Pinata variables.
 
 Keep secrets in the Pinata secrets vault. Do not write them into workspace files, logs, or chat transcripts.
 

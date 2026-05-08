@@ -1,11 +1,10 @@
 import { execFile } from "node:child_process";
-import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import {
   createDao,
-  listDaos,
   listCommunityRecords,
+  listDaos,
   updateDao,
   upsertCommunityRecord,
   upsertProposalByDaoProposalId,
@@ -13,14 +12,12 @@ import {
 } from "./db";
 
 const execFileAsync = promisify(execFile);
-const molochRoot = path.join(process.cwd(), "workspace", "skills", "moloch");
-const molochScript = path.join(molochRoot, "moloch-shared", "scripts", "moloch.mjs");
+const molochAgentBin = path.join(process.cwd(), "node_modules", ".bin", process.platform === "win32" ? "moloch-agent.cmd" : "moloch-agent");
 
 type SyncInput = {
   daoId?: number;
   daoAddress?: string;
   name?: string;
-  outDir?: string;
   first?: number;
 };
 
@@ -28,52 +25,51 @@ type JsonRecord = Record<string, unknown>;
 
 export async function syncDao(input: SyncInput) {
   const dao = ensureDao(input);
-  if (!dao.daoAddress) {
-    throw new Error("DAO address is required before sync");
-  }
+  if (!dao.daoAddress) throw new Error("DAO address is required before sync");
 
-  const outDir = input.outDir || path.join("workspace", "runtime", "moloch-artifacts", dao.daoAddress.toLowerCase());
-  const snapshot = await runMoloch("task-snapshot", [
-    "--dao",
-    dao.daoAddress,
-    "--first",
-    String(input.first || 100),
-    "--out-dir",
-    outDir
+  const first = input.first || 100;
+  const [daoResult, proposalsResult, processQueueResult, profileRecordsResult, memoryRecordsResult] = await Promise.all([
+    runMolochAgent("dao", ["--dao", dao.daoAddress]),
+    runMolochAgent("proposals", ["--dao", dao.daoAddress, "--first", String(first)]),
+    runMolochAgent("process-queue", ["--dao", dao.daoAddress, "--first", String(first)]),
+    runMolochAgent("records", ["--dao", dao.daoAddress, "--table", "daoProfile", "--first", "20"]),
+    runMolochAgent("records", ["--dao", dao.daoAddress, "--table", "communityMemory", "--first", "50"])
   ]);
 
-  const files = snapshot.files as JsonRecord | undefined;
-  const summary = snapshot.summary as JsonRecord | undefined;
+  const proposals = extractArray(proposalsResult, "proposals");
+  const processQueue = extractArray(processQueueResult, "queue");
+  const profileRecords = extractArray(profileRecordsResult, "records");
+  const memoryRecords = extractArray(memoryRecordsResult, "records");
 
   const artifact = upsertSnapshotArtifact({
     daoId: dao.id,
-    artifactDir: String(snapshot.outDir || outDir),
-    checkpointPath: stringField(files, "checkpoint"),
-    operatingContextPath: stringField(files, "operatingContext"),
-    proposalSummaryPath: stringField(files, "proposalSummary"),
-    processQueuePath: stringField(files, "processQueue"),
-    directStatePath: stringField(files, "directState"),
-    lastGraphProposalIdSeen: await lastGraphProposalId(stringField(files, "checkpoint")),
-    votingCount: numberField(summary, "votingCount"),
-    needsProcessingCount: numberField(summary, "needsProcessingCount"),
-    pendingActionCount: numberField(summary, "needsProcessingCount"),
+    artifactDir: `moloch-service:${process.env.MOLOCH_SERVICE_URL || "default"}`,
+    checkpointPath: "service:dao/proposals/process-queue",
+    operatingContextPath: "service:dao/records/daoProfile",
+    proposalSummaryPath: "service:dao/proposals",
+    processQueuePath: "service:dao/process-queue",
+    directStatePath: process.env.RPC_URL ? "rpc:read-dao" : "",
+    lastGraphProposalIdSeen: proposals.reduce((max, proposal) => Math.max(max, Number(proposal.proposalId || 0)), 0),
+    votingCount: proposals.filter((proposal) => mapProposalStatusFromProposal(proposal) === "voting").length,
+    needsProcessingCount: processQueue.length,
+    pendingActionCount: processQueue.length,
     status: "fresh"
   });
 
-  const operatingContext = await readJsonFile(stringField(files, "operatingContext"));
-  const proposalSummary = await readJsonFile(stringField(files, "proposalSummary"));
-  const daoRecords = await readJsonFile(stringField(files, "daoRecords"));
-
-  const updatedDao = ingestOperatingContext(dao.id, operatingContext);
-  const proposals = ingestProposalSummary(dao.id, proposalSummary);
-  const records = ingestDaoRecords(dao.id, daoRecords);
+  const updatedDao = ingestDaoProfile(dao.id, daoResult, profileRecords);
+  const cachedProposals = ingestProposals(dao.id, proposals);
+  const cachedProfileRecords = profileRecords.map((record) => ingestGraphRecord(dao.id, "daoProfile", record)).filter(Boolean);
+  const cachedMemoryRecords = memoryRecords.map((record) => ingestGraphRecord(dao.id, "communityMemory", record)).filter(Boolean);
 
   return {
     dao: updatedDao,
     artifact,
-    proposals,
-    records,
-    snapshot
+    proposals: cachedProposals,
+    records: [...cachedProfileRecords, ...cachedMemoryRecords],
+    service: {
+      dao: daoResult,
+      processQueue: processQueueResult
+    }
   };
 }
 
@@ -83,14 +79,12 @@ export async function syncArtifacts(input: SyncInput) {
 
 export async function syncMemory(input: SyncInput & { table?: string }) {
   const dao = ensureDao(input);
-  if (!dao.daoAddress) {
-    throw new Error("DAO address is required before memory sync");
-  }
+  if (!dao.daoAddress) throw new Error("DAO address is required before memory sync");
 
   const table = input.table || "communityMemory";
-  const result = await runMoloch("graph-records", ["--dao", dao.daoAddress, "--table", table]);
-  const records = Array.isArray(result.records) ? result.records : [];
-  const cached = records.map((record) => ingestGraphRecord(dao.id, table, record as JsonRecord)).filter(Boolean);
+  const result = await runMolochAgent("records", ["--dao", dao.daoAddress, "--table", table, "--first", String(input.first || 100)]);
+  const records = extractArray(result, "records");
+  const cached = records.map((record) => ingestGraphRecord(dao.id, table, record)).filter(Boolean);
 
   return {
     dao,
@@ -102,22 +96,17 @@ export async function syncMemory(input: SyncInput & { table?: string }) {
 
 export async function getSharedMemoryState(daoId?: number) {
   const daos = typeof daoId === "number" ? listDaos().filter((dao) => dao.id === daoId) : listDaos();
-  const results = await Promise.all(daos.map(async (dao) => {
-    const sharedState = await fetchIpfsJsonOrText(dao.sharedStateUri);
-    const communityMemory = await fetchIpfsJsonOrText(dao.communityMemoryUri);
-    return {
-      dao,
-      sharedState,
-      communityMemory,
-      records: listCommunityRecords(dao.id)
-    };
-  }));
-  return results;
+  return Promise.all(daos.map(async (dao) => ({
+    dao,
+    sharedState: await fetchIpfsJsonOrText(dao.sharedStateUri),
+    communityMemory: await fetchIpfsJsonOrText(dao.communityMemoryUri),
+    records: listCommunityRecords(dao.id)
+  })));
 }
 
-async function runMoloch(command: string, args: string[]) {
-  const { stdout } = await execFileAsync("node", [molochScript, command, ...args], {
-    cwd: molochRoot,
+async function runMolochAgent(command: string, args: string[]) {
+  const { stdout } = await execFileAsync(molochAgentBin, [command, ...args], {
+    cwd: process.cwd(),
     env: process.env,
     maxBuffer: 1024 * 1024 * 20
   });
@@ -133,9 +122,7 @@ function ensureDao(input: SyncInput) {
   }
 
   const address = input.daoAddress?.trim();
-  if (!address) {
-    throw new Error("daoId or daoAddress is required");
-  }
+  if (!address) throw new Error("daoId or daoAddress is required");
 
   const existing = listDaos().find((item) => item.daoAddress.toLowerCase() === address.toLowerCase());
   if (existing) return existing;
@@ -151,29 +138,23 @@ function ensureDao(input: SyncInput) {
   return created;
 }
 
-function ingestOperatingContext(daoId: number, context: unknown) {
-  const data = asRecord(context);
-  const profile = asRecord(data.currentProfile);
-  const charter = asRecord(data.currentCharter);
-  const description = stringField(profile, "description") || stringField(profile, "longDescription");
-  const charterText = stringField(charter, "body") || stringField(charter, "description") || stringField(charter, "title");
+function ingestDaoProfile(daoId: number, daoResult: unknown, records: JsonRecord[]) {
+  const indexedDao = asRecord(asRecord(daoResult).dao);
+  const latestProfile = latestContent(records);
+  const description = stringField(latestProfile, "description") || stringField(latestProfile, "longDescription");
 
   return updateDao(daoId, {
-    name: stringField(profile, "name") || undefined,
-    communityMemoryUri: stringField(profile, "communityMemoryURI") || undefined,
-    proposalWorkspaceUri: stringField(profile, "proposalWorkspaceURI") || undefined,
-    sharedStateUri: stringField(profile, "sharedStateURI") || undefined,
+    name: stringField(latestProfile, "name") || stringField(indexedDao, "name") || undefined,
+    communityMemoryUri: stringField(latestProfile, "communityMemoryURI") || undefined,
+    proposalWorkspaceUri: stringField(latestProfile, "proposalWorkspaceURI") || undefined,
+    sharedStateUri: stringField(latestProfile, "sharedStateURI") || undefined,
     thesis: description || undefined,
-    charter: charterText || undefined
+    votingPower: stringField(indexedDao, "totalShares") || undefined
   });
 }
 
-function ingestProposalSummary(daoId: number, summary: unknown) {
-  const data = asRecord(summary);
-  const items = Array.isArray(data.items) ? data.items : [];
-  return items.map((item) => {
-    const proposal = asRecord(item);
-    const lifecycle = asRecord(proposal.lifecycle);
+function ingestProposals(daoId: number, proposals: JsonRecord[]) {
+  return proposals.map((proposal) => {
     const proposalId = String(proposal.proposalId || "");
     if (!proposalId) return null;
     return upsertProposalByDaoProposalId({
@@ -181,22 +162,14 @@ function ingestProposalSummary(daoId: number, summary: unknown) {
       proposalId,
       title: String(proposal.title || `Proposal ${proposalId}`),
       proposalType: String(proposal.proposalType || "SIGNAL"),
-      status: mapProposalStatus(String(lifecycle.status || "")),
-      summary: String(lifecycle.status || ""),
+      status: mapProposalStatusFromProposal(proposal),
+      summary: String(proposal.description || proposal.contentURI || ""),
       agentStance: "watch",
       confidence: "medium",
       recommendedVote: "defer",
-      rationale: "Synced from moloch-skills task-snapshot. Review mandate and live preflight before action."
+      rationale: "Synced from @raidguild/meta-clawtel through moloch-service. Review mandate and live preflight before action."
     });
   }).filter(Boolean);
-}
-
-function ingestDaoRecords(daoId: number, records: unknown) {
-  const data = asRecord(records);
-  return Object.entries(data).flatMap(([table, value]) => {
-    const items = Array.isArray(value) ? value : [];
-    return items.map((record) => ingestGraphRecord(daoId, table, asRecord(record))).filter(Boolean);
-  });
 }
 
 function ingestGraphRecord(daoId: number, tableName: string, record: JsonRecord) {
@@ -219,54 +192,52 @@ function ingestGraphRecord(daoId: number, tableName: string, record: JsonRecord)
   });
 }
 
-async function readJsonFile(file: string) {
-  if (!file) return null;
-  try {
-    return JSON.parse(await fs.readFile(path.resolve(process.cwd(), file), "utf8"));
-  } catch {
-    return null;
-  }
-}
-
-async function lastGraphProposalId(checkpointPath: string) {
-  const checkpoint = asRecord(await readJsonFile(checkpointPath));
-  return numberField(checkpoint, "lastGraphProposalIdSeen");
-}
-
 async function fetchIpfsJsonOrText(uri: string) {
-  if (!uri || !process.env.PINATA_GATEWAY_URL) return null;
-  const url = ipfsToGatewayUrl(uri, process.env.PINATA_GATEWAY_URL);
+  const gateway = process.env.IPFS_GATEWAY_URL || process.env.PINATA_GATEWAY_URL || "https://gateway.pinata.cloud/ipfs/";
+  if (!uri) return null;
+  const url = ipfsToGatewayUrl(uri, gateway);
   if (!url) return null;
 
-  const response = await fetch(url, {
-    headers: process.env.PINATA_JWT ? { Authorization: `Bearer ${process.env.PINATA_JWT}` } : undefined,
-    cache: "no-store"
-  });
+  const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) return { uri, ok: false, status: response.status };
 
   const contentType = response.headers.get("content-type") || "";
-  if (contentType.includes("json")) {
-    return { uri, ok: true, content: await response.json() };
-  }
+  if (contentType.includes("json")) return { uri, ok: true, content: await response.json() };
   return { uri, ok: true, content: await response.text() };
 }
 
 function ipfsToGatewayUrl(uri: string, gateway: string) {
   const cleanGateway = gateway.replace(/\/$/, "");
-  if (uri.startsWith("ipfs://")) return `${cleanGateway}/ipfs/${uri.slice(7)}`;
+  const gatewayBase = cleanGateway.endsWith("/ipfs") ? cleanGateway : `${cleanGateway}/ipfs`;
+  if (uri.startsWith("ipfs://")) return `${gatewayBase}/${uri.slice(7)}`;
   if (/^https?:\/\//.test(uri)) return uri;
-  if (uri.startsWith("bafy") || uri.startsWith("Qm")) return `${cleanGateway}/ipfs/${uri}`;
+  if (uri.startsWith("bafy") || uri.startsWith("Qm")) return `${gatewayBase}/${uri}`;
   return "";
 }
 
-function mapProposalStatus(status: string) {
-  if (status.includes("voting")) return "voting";
-  if (status.includes("grace")) return "grace";
-  if (status.includes("ready") || status.includes("process")) return "ready";
-  if (status.includes("processed")) return "processed";
-  if (status.includes("cancel")) return "cancelled";
-  if (status.includes("draft")) return "draft";
+function mapProposalStatusFromProposal(proposal: JsonRecord) {
+  const now = Math.floor(Date.now() / 1000);
+  if (Boolean(proposal.cancelled)) return "cancelled";
+  if (Boolean(proposal.processed)) return "processed";
+  if (!Boolean(proposal.sponsored)) return "submitted";
+  const votingStarts = Number(proposal.votingStarts || 0);
+  const votingEnds = Number(proposal.votingEnds || 0);
+  const graceEnds = Number(proposal.graceEnds || 0);
+  if (votingStarts < now && votingEnds > now) return "voting";
+  if (votingEnds < now && graceEnds > now) return "grace";
+  if (graceEnds < now) return "ready";
   return "submitted";
+}
+
+function latestContent(records: JsonRecord[]) {
+  const latest = records[0];
+  if (!latest) return {};
+  return asRecord(parseJson(String(latest.content || "")));
+}
+
+function extractArray(record: JsonRecord, key: string) {
+  const value = record[key];
+  return Array.isArray(value) ? value.map(asRecord) : [];
 }
 
 function asRecord(value: unknown): JsonRecord {
@@ -284,11 +255,6 @@ function parseJson(value: string) {
 function stringField(record: JsonRecord | undefined, key: string) {
   const value = record?.[key];
   return typeof value === "string" ? value.trim() : "";
-}
-
-function numberField(record: JsonRecord | undefined, key: string) {
-  const value = Number(record?.[key]);
-  return Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
 function unixOrStringDate(value: unknown) {

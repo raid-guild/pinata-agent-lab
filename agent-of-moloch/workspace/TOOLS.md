@@ -33,30 +33,32 @@ Database:
 - Server-side sync logic: `lib/sync.ts`
 - Demo rows are opt-in with `SEED_DEMO_DATA=true`
 
-Bundled Moloch tools:
+Moloch agent CLI:
 
 ```bash
-cd workspace/skills/moloch/moloch-shared
-npm install
-node scripts/moloch.mjs --help
+moloch-agent help
+moloch-agent health
+moloch-agent capabilities
 ```
 
 Common Moloch reads:
 
 ```bash
-node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs read-dao --dao 0xDAO
-node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs graph-proposals --dao 0xDAO --first 20
-node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs read-proposal --dao 0xDAO --proposal 1
-node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs task-snapshot --dao 0xDAO --first 100 --out-dir workspace/runtime/moloch-artifacts/0xDAO
-node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs proposal-lifecycle --dao 0xDAO --proposal 1
-node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs process-queue --dao 0xDAO --first 100
+moloch-agent dao --dao 0xDAO
+moloch-agent proposals --dao 0xDAO --first 100
+moloch-agent records --dao 0xDAO --table communityMemory --first 100
+moloch-agent read-dao --dao 0xDAO
+moloch-agent read-proposal --dao 0xDAO --proposal 1
+moloch-agent proposal-lifecycle --dao 0xDAO --proposal 1
+moloch-agent process-queue --dao 0xDAO --first 100
 ```
 
 Shared-memory and metadata helpers:
 
 ```bash
-node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs dao-meta --dao 0xDAO --community-memory-uri ipfs://CID --proposal-workspace-uri ipfs://CID --shared-state-uri ipfs://CID
-node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs memory-post --dao 0xDAO --type communityMemory --thread-id agent-bootstrap --title "Agent mandate and shared memory" --content "Bootstrap pointers and mandate summary."
+moloch-agent pin-json --file community-state.json --name community-state-v1
+moloch-agent dao-meta --dao 0xDAO --community-memory-uri ipfs://CID --proposal-workspace-uri ipfs://CID --shared-state-uri ipfs://CID
+moloch-agent memory-post --dao 0xDAO --type communityMemory --thread-id agent-bootstrap --title "Agent mandate and shared memory" --body "Bootstrap pointers and mandate summary."
 cp -R workspace/skills/moloch/templates/community-memory workspace/runtime/community-memory/0xDAO
 ```
 
@@ -65,17 +67,15 @@ Read these before enabling autonomous tasks:
 - `workspace/skills/moloch/BOOTSTRAP.md`
 - `workspace/skills/moloch/AGENT_TASKS.md`
 - `workspace/skills/moloch/SHARED_MEMORY.md`
+- `workspace/skills/moloch-agent-simple/SKILL.md`
 
-Snapshot artifacts written by `task-snapshot`:
+Service-backed sync cache fields:
 
-- `direct-state.json`
-- `graph-history.json`
-- `proposal-summary.json`
-- `membership-summary.json`
-- `dao-records.json`
-- `operating-context.json`
-- `process-queue.json`
-- `checkpoint.json`
+- DAO profile from `moloch-agent dao`
+- proposal list from `moloch-agent proposals`
+- process queue from `moloch-agent process-queue`
+- DAO database records from `moloch-agent records`
+- direct preflight from `moloch-agent read-dao`, `read-proposal`, and `proposal-lifecycle`
 
 Processing note:
 
@@ -98,20 +98,12 @@ Required env for chain reads:
 export RPC_URL="https://mainnet.base.org"
 ```
 
-Required env for DAOhaus Graph reads:
-
-```bash
-export GRAPH_URL="https://gateway.thegraph.com/api/YOUR_GRAPH_KEY/subgraphs/id/7yh4eHJ4qpHEiLPAk9BXhL5YgYrTrRE6gWy8x4oHyAqW"
-```
-
 Required template secrets:
 
 ```bash
 export ACCOUNT_ADDRESS="0x..."
 export PRIVATE_KEY="0x..."
 export RPC_URL="https://mainnet.base.org"
-export PINATA_JWT="..."
-export PINATA_GATEWAY_URL="https://gateway.pinata.cloud"
 ```
 
 `ACCOUNT_ADDRESS` is used for voter identity, mandate profiles, and audit records. `PRIVATE_KEY` is used only for authorized `--send` actions. `RPC_URL` powers live reads, preflight checks, and transaction broadcasts.
@@ -119,8 +111,9 @@ export PINATA_GATEWAY_URL="https://gateway.pinata.cloud"
 Optional template secrets:
 
 ```bash
-export GRAPH_URL="https://gateway.thegraph.com/api/YOUR_GRAPH_KEY/subgraphs/id/7yh4eHJ4qpHEiLPAk9BXhL5YgYrTrRE6gWy8x4oHyAqW"
-export GRAPH_API_KEY="..."
+export MOLOCH_SERVICE_URL="https://moloch-service-production.up.railway.app"
+export IPFS_GATEWAY_URL="https://gateway.pinata.cloud/ipfs/"
+export MOLOCH_SEND_DEFAULT="false"
 ```
 
 Do not commit `.env`, private keys, mnemonics, or raw signer credentials.
