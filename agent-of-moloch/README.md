@@ -86,7 +86,7 @@ For processing, use `process-queue --first 100` or larger, process only the firs
 
 Membership proposal note: Moloch/Baal DAOs may admit members through different executable paths. A Tribute Minion membership proposal includes a Minion `releaseEscrow` action before shares or loot are minted. A direct membership proposal may call the Baal DAO directly with `mintShares(address[],uint256[])` and no Minion escrow action. Before drafting or processing membership proposals, check the DAO's join rules and decode a known successful membership proposal from that DAO. Use `mint-shares --amount 10000` for 10,000 human voting shares; use `--amount-raw`, `--shares-raw`, or `--loot-raw` only for exact base units.
 
-Required for local chain reads and transaction sends:
+Optional for local chain reads and transaction sends:
 
 ```bash
 export RPC_URL="https://mainnet.base.org"
@@ -97,10 +97,9 @@ Required template secrets:
 ```bash
 export ACCOUNT_ADDRESS="0x..."
 export PRIVATE_KEY="0x..."
-export RPC_URL="https://mainnet.base.org"
 ```
 
-`ACCOUNT_ADDRESS` is the managed voter/account identity used in mandate profiles and audit records. `PRIVATE_KEY` signs authorized onchain actions. `RPC_URL` is required for live Baal reads, preflight checks, and sends. `MOLOCH_SERVICE_URL`, `IPFS_GATEWAY_URL`, `GRAPH_URL`, `GRAPH_API_KEY`, `PINATA_JWT`, and `PINATA_GATEWAY_URL` are optional because the default service-backed flow keeps Graph and Pinata credentials outside the agent runtime. Keep secrets in the Pinata secrets vault; do not commit them to files.
+`ACCOUNT_ADDRESS` is the managed voter/account identity used in mandate profiles and audit records. `PRIVATE_KEY` signs authorized onchain actions. `RPC_URL` is optional for the service-backed site, but needed when the agent performs direct Baal reads, live preflight, or transaction sends. `MOLOCH_SERVICE_URL`, `IPFS_GATEWAY_URL`, `GRAPH_URL`, `GRAPH_API_KEY`, `PINATA_JWT`, and `PINATA_GATEWAY_URL` are optional runtime settings because the default service-backed flow keeps Graph and Pinata credentials outside the agent runtime. Keep secrets in the Pinata secrets vault; do not commit them to files.
 
 Security note: use a dedicated agent wallet, not a primary personal wallet or treasury hot wallet. Pinata Agents store secrets securely in the agent secrets vault, but any signer that can vote or submit transactions carries operational risk. Fund the wallet only for the permissions and gas budget this agent actually needs, and rotate or revoke access if the mandate changes.
 

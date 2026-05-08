@@ -14,10 +14,10 @@ The service handles DAOhaus Graph reads and Pinata-backed JSON pinning. The agen
 
 - `ACCOUNT_ADDRESS`: the managed voter/account identity.
 - `PRIVATE_KEY`: local signer for authorized transaction commands.
-- `RPC_URL`: Base RPC for direct chain reads, preflight, and transaction sends.
 
 ## Optional Runtime Settings
 
+- `RPC_URL`: Base RPC for direct chain reads, preflight, and transaction sends.
 - `MOLOCH_SERVICE_URL`: defaults to the hosted moloch-service.
 - `CHAIN_ID`: defaults to `8453`.
 - `MOLOCH_SEND_DEFAULT=false`: build unsigned transactions by default.

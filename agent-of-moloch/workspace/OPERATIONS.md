@@ -197,8 +197,8 @@ The template declares these required secrets in `manifest.json`:
 
 - `ACCOUNT_ADDRESS`: managed Ethereum account address used for DAO membership, voting power checks, mandate profiles, and audit records.
 - `PRIVATE_KEY`: signer key for authorized `--send` actions.
-- `RPC_URL`: live chain endpoint used for Baal reads, preflight checks, and transaction broadcasts.
 - Optional settings include `MOLOCH_SERVICE_URL`, `IPFS_GATEWAY_URL`, `MOLOCH_SEND_DEFAULT`, and legacy direct Graph/Pinata variables.
+- `RPC_URL` is optional for service-backed reads, but needed for direct Baal reads, live preflight, and transaction broadcasts.
 
 Keep secrets in the Pinata secrets vault. Do not write them into workspace files, logs, or chat transcripts.
 

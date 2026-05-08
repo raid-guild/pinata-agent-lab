@@ -35,46 +35,6 @@
       "name": "PRIVATE_KEY",
       "description": "Private key for the managed Ethereum account. Required for authorized sponsor, vote, process, summon, or proposal broadcast actions.",
       "required": true
-    },
-    {
-      "name": "RPC_URL",
-      "description": "Base-compatible RPC endpoint used for live Baal reads, preflight checks, and transaction broadcasts.",
-      "required": true
-    },
-    {
-      "name": "GRAPH_URL",
-      "description": "Optional direct Graph endpoint for legacy local tools. The default @raidguild/meta-clawtel flow reads Graph through MOLOCH_SERVICE_URL.",
-      "required": false
-    },
-    {
-      "name": "GRAPH_API_KEY",
-      "description": "Optional direct Graph API key for legacy local tools. Not required when using the hosted moloch-service.",
-      "required": false
-    },
-    {
-      "name": "PINATA_JWT",
-      "description": "Optional Pinata credential for direct @pinata/api use. The default moloch-service flow handles pinning outside the agent runtime.",
-      "required": false
-    },
-    {
-      "name": "PINATA_GATEWAY_URL",
-      "description": "Optional Pinata gateway URL for direct @pinata/api reads. IPFS_GATEWAY_URL is also supported.",
-      "required": false
-    },
-    {
-      "name": "MOLOCH_SERVICE_URL",
-      "description": "Optional moloch-service URL used by @raidguild/meta-clawtel for Graph reads and Pinata-backed JSON pinning. Defaults to the hosted service.",
-      "required": false
-    },
-    {
-      "name": "IPFS_GATEWAY_URL",
-      "description": "Optional gateway URL for reading shared memory CIDs. Defaults to a public Pinata IPFS gateway.",
-      "required": false
-    },
-    {
-      "name": "MOLOCH_SEND_DEFAULT",
-      "description": "Optional safety switch. Set to false when transaction commands should build unsigned transactions by default.",
-      "required": false
     }
   ],
   "tasks": [

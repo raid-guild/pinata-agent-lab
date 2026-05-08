@@ -92,7 +92,7 @@ Membership proposal path check:
 - Decode known successful membership proposals for the DAO before drafting or processing a new membership proposal.
 - `mint-shares --amount 10000` means 10,000 voting shares. Use raw flags only for exact base units.
 
-Required env for chain reads:
+Optional env for direct chain reads and sends:
 
 ```bash
 export RPC_URL="https://mainnet.base.org"
@@ -103,16 +103,16 @@ Required template secrets:
 ```bash
 export ACCOUNT_ADDRESS="0x..."
 export PRIVATE_KEY="0x..."
-export RPC_URL="https://mainnet.base.org"
 ```
 
-`ACCOUNT_ADDRESS` is used for voter identity, mandate profiles, and audit records. `PRIVATE_KEY` is used only for authorized `--send` actions. `RPC_URL` powers live reads, preflight checks, and transaction broadcasts.
+`ACCOUNT_ADDRESS` is used for voter identity, mandate profiles, and audit records. `PRIVATE_KEY` is used only for authorized transaction actions. `RPC_URL` is optional for service-backed reads, but powers direct chain reads, preflight checks, and transaction broadcasts.
 
 Optional template secrets:
 
 ```bash
 export MOLOCH_SERVICE_URL="https://moloch-service-production.up.railway.app"
 export IPFS_GATEWAY_URL="https://gateway.pinata.cloud/ipfs/"
+export RPC_URL="https://mainnet.base.org"
 export MOLOCH_SEND_DEFAULT="false"
 ```
 
