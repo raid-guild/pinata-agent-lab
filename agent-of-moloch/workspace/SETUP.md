@@ -8,10 +8,11 @@ Agent of Moloch is a Pinata template for a characterful Moloch/Baal governance a
 
 Immediate next steps for a fresh instance:
 
-- Replace seed DAO addresses with real Base Baal DAO addresses.
+- Add real Base Baal DAO addresses. Demo rows are created only when `SEED_DEMO_DATA=true`.
 - Record each DAO's charter, thesis, and the agent's governance mandate.
 - Run the bootstrap flow in `workspace/skills/moloch/BOOTSTRAP.md`.
 - Create or locate shared memory using `workspace/skills/moloch/templates/community-memory` and record `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI` when available.
+- Use `/app/api/sync/dao` and `/app/api/sync/memory` to cache real DAOhaus/DAO database records for the dashboard.
 - Run `task-snapshot` for each real DAO and store checkpoint paths through `/app/api/artifacts`.
 - Add active proposals from DAOhaus or the Moloch skills.
 - Enable the manifest task examples only after signer, mandate, RPC/Graph access, shared-memory location, and autonomy boundaries are configured.

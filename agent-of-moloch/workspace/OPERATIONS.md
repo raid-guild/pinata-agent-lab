@@ -21,7 +21,39 @@ GET /app/api/governance
 GET /app/api/governance?status=voting
 ```
 
-Returns DAOs, proposal records, suggested tasks, snapshot artifacts, and summary stats for the dashboard.
+Returns DAOs, proposal records, suggested tasks, snapshot artifacts, DAO database memory records, and summary stats for the dashboard.
+
+## Sync
+
+```http
+POST /app/api/sync/dao
+POST /app/api/sync/artifacts
+POST /app/api/sync/memory
+GET /app/api/community-memory
+```
+
+Sync routes are server-side only. They may use `RPC_URL`, `GRAPH_URL` or `GRAPH_API_KEY`, `PINATA_JWT`, and `PINATA_GATEWAY_URL`, then write normalized cache rows to SQLite for the dashboard.
+
+Example DAO sync payload:
+
+```json
+{
+  "daoAddress": "0x...",
+  "name": "Example DAO",
+  "first": 100
+}
+```
+
+Example memory sync payload:
+
+```json
+{
+  "daoAddress": "0x...",
+  "table": "communityMemory"
+}
+```
+
+New instances do not seed demo data unless `SEED_DEMO_DATA=true`.
 
 ## DAOs
 
@@ -40,6 +72,9 @@ Example payload:
   "daoAddress": "0x...",
   "chainId": "8453",
   "daohausUrl": "https://admin.daohaus.club/#/molochv3/0x2105/0x...",
+  "communityMemoryUri": "ipfs://...",
+  "proposalWorkspaceUri": "ipfs://...",
+  "sharedStateUri": "ipfs://...",
   "charter": "Prototype agent-friendly DAO operations.",
   "thesis": "Use explicit voter platforms to make agent governance legible.",
   "conviction": "Prefer reversible experiments and documented permissions.",

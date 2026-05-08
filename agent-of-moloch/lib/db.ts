@@ -8,6 +8,9 @@ export type Dao = {
   daoAddress: string;
   chainId: string;
   daohausUrl: string;
+  communityMemoryUri: string;
+  proposalWorkspaceUri: string;
+  sharedStateUri: string;
   charter: string;
   thesis: string;
   conviction: string;
@@ -75,10 +78,29 @@ export type SnapshotArtifact = {
   createdAt: string;
 };
 
-type DaoInput = Partial<Pick<Dao, "name" | "daoAddress" | "chainId" | "daohausUrl" | "charter" | "thesis" | "conviction" | "platform" | "votingPower" | "status">>;
+export type CommunityRecord = {
+  id: number;
+  daoId: number;
+  daoName: string;
+  daoAddress: string;
+  tableName: string;
+  recordId: string;
+  content: string;
+  contentJson: string;
+  contentUri: string;
+  threadId: string;
+  topicId: string;
+  proposalId: string;
+  recordType: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type DaoInput = Partial<Pick<Dao, "name" | "daoAddress" | "chainId" | "daohausUrl" | "communityMemoryUri" | "proposalWorkspaceUri" | "sharedStateUri" | "charter" | "thesis" | "conviction" | "platform" | "votingPower" | "status">>;
 type ProposalInput = Partial<Pick<Proposal, "daoId" | "proposalId" | "title" | "summary" | "proposalType" | "status" | "agentStance" | "confidence" | "recommendedVote" | "rationale" | "dueDate" | "txHash">>;
 type TaskInput = Partial<Pick<GovernanceTask, "daoId" | "proposalRecordId" | "title" | "body" | "actionType" | "status" | "priority" | "dueDate">>;
 type SnapshotInput = Partial<Pick<SnapshotArtifact, "daoId" | "artifactDir" | "checkpointPath" | "operatingContextPath" | "proposalSummaryPath" | "processQueuePath" | "directStatePath" | "lastGraphProposalIdSeen" | "lastPassedProposalIdIncorporated" | "votingCount" | "needsProcessingCount" | "pendingActionCount" | "status">>;
+type CommunityRecordInput = Partial<Pick<CommunityRecord, "daoId" | "tableName" | "recordId" | "content" | "contentJson" | "contentUri" | "threadId" | "topicId" | "proposalId" | "recordType" | "createdAt">>;
 
 const dataDir = path.join(process.cwd(), "data");
 const dbPath = path.join(dataDir, "agent-of-moloch.sqlite");
@@ -116,6 +138,9 @@ function migrate(database: Database.Database) {
       dao_address TEXT NOT NULL DEFAULT '',
       chain_id TEXT NOT NULL DEFAULT '8453',
       daohaus_url TEXT NOT NULL DEFAULT '',
+      community_memory_uri TEXT NOT NULL DEFAULT '',
+      proposal_workspace_uri TEXT NOT NULL DEFAULT '',
+      shared_state_uri TEXT NOT NULL DEFAULT '',
       charter TEXT NOT NULL DEFAULT '',
       thesis TEXT NOT NULL DEFAULT '',
       conviction TEXT NOT NULL DEFAULT '',
@@ -180,10 +205,35 @@ function migrate(database: Database.Database) {
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (dao_id) REFERENCES daos(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS community_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      dao_id INTEGER NOT NULL,
+      table_name TEXT NOT NULL DEFAULT 'communityMemory',
+      record_id TEXT NOT NULL DEFAULT '',
+      content TEXT NOT NULL DEFAULT '',
+      content_json TEXT NOT NULL DEFAULT '',
+      content_uri TEXT NOT NULL DEFAULT '',
+      thread_id TEXT NOT NULL DEFAULT '',
+      topic_id TEXT NOT NULL DEFAULT '',
+      proposal_id TEXT NOT NULL DEFAULT '',
+      record_type TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (dao_id) REFERENCES daos(id) ON DELETE CASCADE
+    );
   `);
+
+  ensureColumn(database, "daos", "community_memory_uri", "TEXT NOT NULL DEFAULT ''");
+  ensureColumn(database, "daos", "proposal_workspace_uri", "TEXT NOT NULL DEFAULT ''");
+  ensureColumn(database, "daos", "shared_state_uri", "TEXT NOT NULL DEFAULT ''");
 }
 
 function seed(database: Database.Database) {
+  if (process.env.SEED_DEMO_DATA !== "true") {
+    return;
+  }
+
   const count = database.prepare("SELECT COUNT(*) as count FROM daos").get() as { count: number };
   if (count.count > 0) {
     return;
@@ -339,12 +389,14 @@ export function getGovernanceBundle(status?: string) {
   const allProposals = listProposals();
   const tasks = listTasks();
   const artifacts = listSnapshotArtifacts();
+  const communityRecords = listCommunityRecords();
 
   return {
     daos,
     proposals,
     tasks,
     artifacts,
+    communityRecords,
     stats: {
       daoCount: daos.length,
       activeDaos: daos.filter((dao) => dao.status === "active").length,
@@ -353,7 +405,8 @@ export function getGovernanceBundle(status?: string) {
       openTasks: tasks.filter((task) => task.status !== "done").length,
       urgentTasks: tasks.filter((task) => task.status !== "done" && task.priority === "urgent").length,
       freshArtifacts: artifacts.filter((artifact) => artifact.status === "fresh").length,
-      pendingArtifactActions: artifacts.reduce((sum, artifact) => sum + artifact.pendingActionCount, 0)
+      pendingArtifactActions: artifacts.reduce((sum, artifact) => sum + artifact.pendingActionCount, 0),
+      communityRecords: communityRecords.length
     }
   };
 }
@@ -366,6 +419,9 @@ export function listDaos() {
       dao_address as daoAddress,
       chain_id as chainId,
       daohaus_url as daohausUrl,
+      community_memory_uri as communityMemoryUri,
+      proposal_workspace_uri as proposalWorkspaceUri,
+      shared_state_uri as sharedStateUri,
       charter,
       thesis,
       conviction,
@@ -470,6 +526,33 @@ export function listSnapshotArtifacts() {
   `).all() as SnapshotArtifact[];
 }
 
+export function listCommunityRecords(daoId?: number) {
+  const query = `
+    SELECT
+      community_records.id,
+      community_records.dao_id as daoId,
+      daos.name as daoName,
+      daos.dao_address as daoAddress,
+      community_records.table_name as tableName,
+      community_records.record_id as recordId,
+      community_records.content,
+      community_records.content_json as contentJson,
+      community_records.content_uri as contentUri,
+      community_records.thread_id as threadId,
+      community_records.topic_id as topicId,
+      community_records.proposal_id as proposalId,
+      community_records.record_type as recordType,
+      community_records.created_at as createdAt,
+      community_records.updated_at as updatedAt
+    FROM community_records
+    JOIN daos ON daos.id = community_records.dao_id
+    ${daoId ? "WHERE community_records.dao_id = ?" : ""}
+    ORDER BY community_records.created_at DESC, community_records.updated_at DESC
+  `;
+
+  return (daoId ? getDb().prepare(query).all(daoId) : getDb().prepare(query).all()) as CommunityRecord[];
+}
+
 export function upsertSnapshotArtifact(input: SnapshotInput) {
   const daoId = Number(input.daoId);
   if (!Number.isInteger(daoId) || !getDao(daoId)) {
@@ -540,13 +623,19 @@ export function createDao(input: DaoInput) {
   const name = required(input.name, "name");
   const database = getDb();
   const result = database.prepare(`
-    INSERT INTO daos (name, dao_address, chain_id, daohaus_url, charter, thesis, conviction, platform, voting_power, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO daos (
+      name, dao_address, chain_id, daohaus_url, community_memory_uri, proposal_workspace_uri, shared_state_uri,
+      charter, thesis, conviction, platform, voting_power, status
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     name,
     input.daoAddress?.trim() ?? "",
     input.chainId?.trim() || "8453",
     input.daohausUrl?.trim() ?? "",
+    input.communityMemoryUri?.trim() ?? "",
+    input.proposalWorkspaceUri?.trim() ?? "",
+    input.sharedStateUri?.trim() ?? "",
     input.charter?.trim() ?? "",
     input.thesis?.trim() ?? "",
     input.conviction?.trim() ?? "",
@@ -563,7 +652,8 @@ export function updateDao(id: number, input: DaoInput) {
   const name = input.name === undefined ? existing.name : required(input.name, "name");
   getDb().prepare(`
     UPDATE daos
-    SET name = ?, dao_address = ?, chain_id = ?, daohaus_url = ?, charter = ?, thesis = ?, conviction = ?, platform = ?,
+    SET name = ?, dao_address = ?, chain_id = ?, daohaus_url = ?, community_memory_uri = ?,
+      proposal_workspace_uri = ?, shared_state_uri = ?, charter = ?, thesis = ?, conviction = ?, platform = ?,
       voting_power = ?, status = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `).run(
@@ -571,6 +661,9 @@ export function updateDao(id: number, input: DaoInput) {
     value(input.daoAddress, existing.daoAddress),
     value(input.chainId, existing.chainId) || "8453",
     value(input.daohausUrl, existing.daohausUrl),
+    value(input.communityMemoryUri, existing.communityMemoryUri),
+    value(input.proposalWorkspaceUri, existing.proposalWorkspaceUri),
+    value(input.sharedStateUri, existing.sharedStateUri),
     value(input.charter, existing.charter),
     value(input.thesis, existing.thesis),
     value(input.conviction, existing.conviction),
@@ -580,6 +673,51 @@ export function updateDao(id: number, input: DaoInput) {
     id
   );
   return getDao(id);
+}
+
+export function upsertProposalByDaoProposalId(input: ProposalInput & { daoId: number; proposalId: string }) {
+  const existing = listProposals().find((proposal) => proposal.daoId === input.daoId && proposal.proposalId === input.proposalId);
+  if (existing) {
+    return updateProposal(existing.id, input);
+  }
+  return createProposal(input);
+}
+
+export function upsertCommunityRecord(input: CommunityRecordInput) {
+  const daoId = Number(input.daoId);
+  if (!Number.isInteger(daoId) || !getDao(daoId)) {
+    throw new Error("valid daoId is required");
+  }
+
+  const tableName = input.tableName?.trim() || "communityMemory";
+  const recordId = input.recordId?.trim() || `${tableName}:${input.threadId || input.topicId || input.proposalId || Date.now()}`;
+  const existing = listCommunityRecords(daoId).find((record) => record.tableName === tableName && record.recordId === recordId);
+  const content = input.content?.trim() ?? "";
+  const contentJson = input.contentJson?.trim() ?? "";
+  const contentUri = input.contentUri?.trim() ?? "";
+  const threadId = input.threadId?.trim() ?? "";
+  const topicId = input.topicId?.trim() ?? "";
+  const proposalId = input.proposalId?.trim() ?? "";
+  const recordType = input.recordType?.trim() ?? "";
+  const createdAt = input.createdAt?.trim() || new Date().toISOString();
+
+  if (existing) {
+    getDb().prepare(`
+      UPDATE community_records
+      SET content = ?, content_json = ?, content_uri = ?, thread_id = ?, topic_id = ?, proposal_id = ?,
+        record_type = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(content, contentJson, contentUri, threadId, topicId, proposalId, recordType, existing.id);
+    return listCommunityRecords(daoId).find((record) => record.id === existing.id);
+  }
+
+  const result = getDb().prepare(`
+    INSERT INTO community_records (
+      dao_id, table_name, record_id, content, content_json, content_uri, thread_id, topic_id, proposal_id, record_type, created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(daoId, tableName, recordId, content, contentJson, contentUri, threadId, topicId, proposalId, recordType, createdAt);
+  return listCommunityRecords(daoId).find((record) => record.id === Number(result.lastInsertRowid));
 }
 
 export function deleteDao(id: number) {
@@ -776,4 +914,12 @@ function todayOffset(days: number) {
   const date = new Date();
   date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
+}
+
+function ensureColumn(database: Database.Database, table: string, column: string, definition: string) {
+  const columns = database.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  if (columns.some((item) => item.name === column)) {
+    return;
+  }
+  database.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }

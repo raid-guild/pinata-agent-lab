@@ -7,6 +7,9 @@ type Dao = {
   name: string;
   daoAddress: string;
   chainId: string;
+  communityMemoryUri: string;
+  proposalWorkspaceUri: string;
+  sharedStateUri: string;
   charter: string;
   thesis: string;
   conviction: string;
@@ -59,11 +62,24 @@ type SnapshotArtifact = {
   status: string;
 };
 
+type CommunityRecord = {
+  id: number;
+  daoName: string;
+  tableName: string;
+  content: string;
+  contentUri: string;
+  threadId: string;
+  proposalId: string;
+  recordType: string;
+  createdAt: string;
+};
+
 type Bundle = {
   daos: Dao[];
   proposals: Proposal[];
   tasks: GovernanceTask[];
   artifacts: SnapshotArtifact[];
+  communityRecords: CommunityRecord[];
   stats: {
     daoCount: number;
     activeDaos: number;
@@ -73,6 +89,7 @@ type Bundle = {
     urgentTasks: number;
     freshArtifacts: number;
     pendingArtifactActions: number;
+    communityRecords: number;
   };
 };
 
@@ -81,6 +98,7 @@ const emptyBundle: Bundle = {
   proposals: [],
   tasks: [],
   artifacts: [],
+  communityRecords: [],
   stats: {
     daoCount: 0,
     activeDaos: 0,
@@ -89,7 +107,8 @@ const emptyBundle: Bundle = {
     openTasks: 0,
     urgentTasks: 0,
     freshArtifacts: 0,
-    pendingArtifactActions: 0
+    pendingArtifactActions: 0,
+    communityRecords: 0
   }
 };
 
@@ -180,6 +199,7 @@ export default function Home() {
             <span><strong>{bundle.stats.readyToVote}</strong> ready votes</span>
             <span><strong>{bundle.stats.urgentTasks}</strong> urgent rites</span>
             <span><strong>{bundle.stats.pendingArtifactActions}</strong> artifact actions</span>
+            <span><strong>{bundle.stats.communityRecords}</strong> memory records</span>
           </div>
         </aside>
 
@@ -220,6 +240,12 @@ export default function Home() {
               </div>
               <p>{dao.thesis}</p>
               <blockquote>{dao.platform}</blockquote>
+              {dao.communityMemoryUri || dao.sharedStateUri ? (
+                <div className="memoryLinks">
+                  {dao.communityMemoryUri ? <code>{dao.communityMemoryUri}</code> : null}
+                  {dao.sharedStateUri ? <code>{dao.sharedStateUri}</code> : null}
+                </div>
+              ) : null}
             </article>
           ))}
         </section>
@@ -269,9 +295,34 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="artifactGrid" aria-label="DAO database memory">
+        <div className="sectionHead">
+          <h2>DAO memory</h2>
+          <span>{bundle.communityRecords.length} records</span>
+        </div>
+        <div className="artifactBoard">
+          {bundle.communityRecords.slice(0, 6).map((record) => (
+            <article className="artifact" key={record.id}>
+              <div className="cardTop">
+                <span>{record.daoName}</span>
+                <em>{record.tableName}</em>
+              </div>
+              <strong>{record.recordType || record.threadId || record.proposalId || "memory"}</strong>
+              <p>{summarizeRecord(record)}</p>
+              {record.contentUri ? <code>{record.contentUri}</code> : null}
+              <time>Posted {formatDate(record.createdAt)}</time>
+            </article>
+          ))}
+          {bundle.communityRecords.length === 0 ? <p className="empty">No DAO database memory synced yet.</p> : null}
+        </div>
+      </section>
+
       <section className="apiStrip" aria-label="Useful API routes">
         <code>GET /app/api/governance</code>
         <code>POST /app/api/artifacts</code>
+        <code>POST /app/api/sync/dao</code>
+        <code>POST /app/api/sync/memory</code>
+        <code>GET /app/api/community-memory</code>
         <code>POST /app/api/daos</code>
         <code>POST /app/api/proposals</code>
         <code>POST /app/api/tasks</code>
@@ -290,4 +341,13 @@ export default function Home() {
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(value));
+}
+
+function summarizeRecord(record: CommunityRecord) {
+  try {
+    const parsed = JSON.parse(record.content);
+    return parsed.title || parsed.body || parsed.description || record.content.slice(0, 180);
+  } catch {
+    return record.content.slice(0, 180) || "Synced DAO database record.";
+  }
 }

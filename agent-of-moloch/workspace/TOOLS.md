@@ -14,7 +14,11 @@ Useful app routes:
 - `/app`
 - `/app/api/health`
 - `/app/api/governance`
+- `/app/api/community-memory`
 - `/app/api/artifacts`
+- `/app/api/sync/dao`
+- `/app/api/sync/artifacts`
+- `/app/api/sync/memory`
 - `/app/api/daos`
 - `/app/api/proposals`
 - `/app/api/tasks`
@@ -25,7 +29,9 @@ Useful app routes:
 Database:
 
 - SQLite database path: `data/agent-of-moloch.sqlite`
-- Schema and seed logic: `lib/db.ts`
+- Schema and cache logic: `lib/db.ts`
+- Server-side sync logic: `lib/sync.ts`
+- Demo rows are opt-in with `SEED_DEMO_DATA=true`
 
 Bundled Moloch tools:
 

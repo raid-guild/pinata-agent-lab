@@ -37,8 +37,12 @@ npm run typecheck
 
 - `GET /app/api/governance`
 - `GET /app/api/governance?status=voting`
+- `GET /app/api/community-memory`
 - `GET /app/api/artifacts`
 - `POST /app/api/artifacts`
+- `POST /app/api/sync/dao`
+- `POST /app/api/sync/artifacts`
+- `POST /app/api/sync/memory`
 - `GET /app/api/daos`
 - `POST /app/api/daos`
 - `PATCH /app/api/daos/:id`
@@ -121,6 +125,20 @@ The latest bundled Moloch skills include a first-run bootstrap and reusable sche
 The manifest includes disabled task examples. Enable them only after the DAO address, signer, mandate, autonomy boundaries, RPC/Graph access, and shared-memory location are configured. Run bootstrap once to create or locate the DAO shared memory root, fill the first `community-state.md`, create the agent mandate, run `task-snapshot`, and publish memory pointers when appropriate.
 
 Shared memory is the durable coordination layer for multiple agents. Use `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI` in DAO metadata or memory records, and use local snapshot artifacts only as task cache.
+
+New instances start without demo rows. Set `SEED_DEMO_DATA=true` only when you want local placeholder DAOs and proposals for design testing.
+
+The dashboard can be populated from real server-side sync routes. These routes use `moloch-skills`, `GRAPH_URL` or `GRAPH_API_KEY`, `RPC_URL`, and Pinata env vars on the server, then cache normalized rows in SQLite for the browser:
+
+```bash
+curl -X POST http://localhost:3000/app/api/sync/dao \
+  -H 'content-type: application/json' \
+  -d '{"daoAddress":"0xDAO","name":"My DAO"}'
+
+curl -X POST http://localhost:3000/app/api/sync/memory \
+  -H 'content-type: application/json' \
+  -d '{"daoAddress":"0xDAO","table":"communityMemory"}'
+```
 
 ## Optional App Auth
 

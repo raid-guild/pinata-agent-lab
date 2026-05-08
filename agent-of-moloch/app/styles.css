@@ -389,6 +389,21 @@ h1 {
   padding-left: 12px;
 }
 
+.memoryLinks {
+  display: grid;
+  gap: 6px;
+}
+
+.memoryLinks code {
+  background: #f7edd9;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #4b3820;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+  padding: 7px;
+}
+
 .task.priority-urgent {
   border-top-color: var(--ember);
 }

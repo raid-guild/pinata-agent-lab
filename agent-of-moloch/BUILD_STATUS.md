@@ -10,6 +10,10 @@ Validation targets:
 - `GET /app/api/health`
 - `GET /app/api/governance`
 - `GET /app/api/artifacts`
+- `GET /app/api/community-memory`
+- `POST /app/api/sync/dao`
+- `POST /app/api/sync/artifacts`
+- `POST /app/api/sync/memory`
 - `GET /app/api/daos`
 - `GET /app/api/proposals`
 - `GET /app/api/tasks`
