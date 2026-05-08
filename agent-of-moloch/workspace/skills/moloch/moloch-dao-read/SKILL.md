@@ -20,8 +20,9 @@ node ../moloch-shared/scripts/moloch.mjs graph-proposals --dao 0xDAO --first 20
 node ../moloch-shared/scripts/moloch.mjs graph-dao-history --dao 0xDAO --first 100
 node ../moloch-shared/scripts/moloch.mjs graph-members --dao 0xDAO --first 100
 node ../moloch-shared/scripts/moloch.mjs graph-member --dao 0xDAO --member 0xMEMBER
-node ../moloch-shared/scripts/moloch.mjs graph-records --dao 0xDAO --table charter
-node ../moloch-shared/scripts/moloch.mjs graph-records --dao 0xDAO --table joinRules
+node ../moloch-shared/scripts/moloch.mjs graph-records --dao 0xDAO --table daoProfile
+node ../moloch-shared/scripts/moloch.mjs graph-records --dao 0xDAO --table signal
+node ../moloch-shared/scripts/moloch.mjs graph-records --dao 0xDAO --table communityMemory
 node ../moloch-shared/scripts/moloch.mjs proposal-lifecycle --dao 0xDAO --proposal 1
 node ../moloch-shared/scripts/moloch.mjs process-queue --dao 0xDAO --first 100
 ```
@@ -56,7 +57,7 @@ Proposal-level:
 - exact `proposalData` for processing, preferably from the indexed proposal payload
 - indexed `details`, `title`, `description`, `proposalType`, and vote history from Graph
 - member `shares`, `loot`, delegation, and vote history from Graph
-- DAO records such as `daoProfile`, `charter`, and `joinRules`
+- DAO database records such as `daoProfile`, `signal`, `communityMemory`, `communityStateVersions`, charter/join-rule pointers, and proposal workspace announcements
 
 ## Daohaus Frontend Context
 

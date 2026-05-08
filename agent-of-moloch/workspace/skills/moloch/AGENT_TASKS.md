@@ -2,15 +2,23 @@
 
 This repo supports DAO agents that run on a schedule. Use these task patterns to keep agents active without spamming proposals.
 
+Tasks fall into three categories:
+
+- **One-time setup**: summon a DAO, create shared memory, bootstrap an agent mandate.
+- **Recurring operations**: check for proposals that need sponsor, vote, process, or cancellation action.
+- **Initiative work**: maintain longer-term goals and decide when to turn one goal into a draft or proposal.
+
 ## Recommended Workflow
 
 Split scheduled agent work into three layers:
 
 1. **Cron snapshot**: a deterministic command gathers DAO state, Graph history, lifecycle summaries, process queue, and checkpoint files.
 2. **Agent decision task**: the agent reads compact artifacts and decides one action.
-3. **Action/postcondition task**: the agent builds or sends the transaction according to policy, then rereads state and updates logs.
+3. **Action/postcondition task**: the agent sends the transaction when live preflight passes, then rereads state and updates logs.
 
 This reduces tokens because scheduled prompts do not need to repeat every chain/Graph query. The agent can read cached artifacts first, then make targeted live reads only for actions it may take.
+
+Local task artifacts are not the DAO's durable memory. Use the shared IPFS community memory root from `SHARED_MEMORY.md` for cross-agent communication, proposal collaboration, and versioned community state.
 
 ## Cron Snapshot
 
@@ -35,8 +43,8 @@ The command writes:
 - `graph-history.json`: DAOhaus indexed DAO/proposal history.
 - `proposal-summary.json`: compact lifecycle summary for proposals.
 - `membership-summary.json`: members, shares, loot, delegation, and vote counts.
-- `dao-records.json`: latest profile, charter, and join-rules records.
-- `operating-context.json`: compact current profile/charter/join-rules pointers and paths.
+- `dao-records.json`: latest profile, signal, community memory, charter, and join-rule records.
+- `operating-context.json`: compact current profile, shared memory, charter, join-rule, and community-state pointers.
 - `process-queue.json`: oldest ready-to-process proposals first.
 - `checkpoint.json`: stable task checkpoint fields.
 
@@ -63,6 +71,35 @@ Focus on voting, review, sponsorship, processing, or revision feedback instead.
 ```
 
 Agents may still sponsor useful unsponsored proposals if doing so will not push the active voting count above the operator's intended limit.
+
+## Task 0: Bootstrap DAO Or Agent
+
+Purpose: perform one-time setup for a new DAO or a new autonomous agent.
+
+Run this when summoning a DAO, onboarding a new agent, or resetting an agent mandate.
+
+Prompt:
+
+```text
+You are running the Bootstrap task for a DAO agent.
+
+Your job is to create the minimum durable context the agent needs before recurring autonomous work begins.
+
+Steps:
+1. If summoning a new DAO, prepare summon params, initial members, governance settings, and initial metadata.
+2. Create or locate the DAO shared memory root:
+   - communityMemoryURI
+   - proposalWorkspaceURI
+   - sharedStateURI
+3. Create the first versioned community-state.md with concise DAO purpose, current goals, rules of engagement, join rules, roles, and operating focus.
+4. Pin the shared memory root with the configured pinning provider.
+5. Publish the shared memory pointers in summon metadata or through a dao-meta proposal.
+6. Create the agent governance mandate from the conviction profile template.
+7. Include long-term initiatives, success criteria, proposal cadence, and explicit no-action conditions in the mandate.
+8. Store the mandate where the harness can load it every run.
+9. Post a concise memory record announcing the agent mandate and shared memory pointers when useful.
+10. Run task-snapshot and verify the agent can read chain state, Graph records, shared memory pointers, and its mandate.
+```
 
 ## Task 1: Proposal Action Watcher
 
@@ -93,21 +130,22 @@ Steps:
    - voting proposals you have not voted on
    - proposals ready for processing
    - proposals that should be opposed, revised, cancelled, or left alone
-4. Review passed proposals since your last checkpoint and update your DAO operating context.
-5. For likely actions, perform targeted live preflight:
+4. Read relevant Poster database records for active proposal topics, especially `communityMemory` and `signal`, and incorporate discussion/vote reasons from content fields such as `type`, `threadId`, `topicId`, and `proposalId`.
+5. Review passed proposals since your last checkpoint and update your DAO operating context.
+6. For likely actions, perform targeted live preflight:
    - proposal-lifecycle for vote/process decisions
    - read-proposal before process/cancel
    - process-queue with a broad `--first` value, usually `100` or more
-6. For each actionable proposal, produce a short memo:
+7. For each actionable proposal, produce a short memo:
    - proposal id
    - current status
    - relevant passed-proposal context
    - recommended action: sponsor, vote yes, vote no, abstain, process, cancel, or no action
    - reason
-7. If the action is inside the agent mandate and harness auto-send policy, broadcast by default with `--send`.
-8. For processing, the action is always in scope when `process-queue` says it is first and chain-ready. Do not block processing because of proposal category, value, membership, shares, loot, payments, settings, or mandate preference.
-9. Build unsigned only when policy blocks non-processing actions, chain preflight fails, exact proposalData is unavailable/mismatched, signer/gas is unavailable, or the task explicitly asks for dry-run/review mode.
-10. After any send, reread state and append an action log entry.
+8. If live preflight passes and the managed signer has the required gas and DAO permissions, broadcast with `--send`.
+9. For processing, the action is always in scope when `process-queue` says it is first and chain-ready. Do not block processing because of proposal category, value, membership, shares, loot, payments, settings, or mandate preference.
+10. Build unsigned only when chain preflight fails, exact proposalData is unavailable/mismatched, signer/gas is unavailable, or the task explicitly asks for dry-run/review mode.
+11. After any send, reread state, append an action log entry, and post a concise Poster memory record when useful.
 
 Priority order:
 1. Vote on proposals in voting before their voting period ends.
@@ -119,7 +157,7 @@ Priority order:
 
 ## Task 2: Proposal Generation Task
 
-Purpose: decide whether the agent should create one new proposal according to its mandate.
+Purpose: decide whether the agent should create one new proposal according to its mandate and current initiative backlog.
 
 Suggested cadence:
 
@@ -140,19 +178,95 @@ Steps:
 3. Count proposals currently in voting from proposal-summary.json.
 4. If there are 3 or more proposals currently in voting, do not create a new proposal. Summarize what needs to resolve first.
 5. Review passed proposals since your last run and update your DAO operating context.
-6. Check your mandate checklist.
-7. If fewer than 3 proposals are currently in voting, choose at most one:
+6. Read the DAO shared memory root when `communityMemoryURI` is available and incorporate the current versioned `community-state.md` plus open draft workspaces.
+7. Check your mandate checklist and active initiative backlog.
+8. If fewer than 3 proposals are currently in voting, choose at most one:
    - draft a signal proposal
    - draft a tribute/join/mint-shares/reward proposal
    - draft a DAO settings proposal
    - no action
-8. New proposals must:
+9. New proposals must:
    - reference relevant passed proposals
+   - create or reuse a proposal workspace under shared memory
+   - update proposal workspace files for details, discussions, negotiations, action items, vote reasons, and status
    - avoid conflict with current DAO rules unless explicitly framed as an amendment
    - include a clear title, description, expected outcome, and success criteria
    - explain why now
-9. Broadcast by default with `--send` if the proposal is inside the agent mandate and harness auto-send policy. Save unsigned transaction JSON only for dry-run/review mode or when policy blocks broadcast.
+10. Broadcast by default with `--send` when live preflight passes and the managed signer has the required gas and DAO permissions. Save unsigned transaction JSON only for explicit dry-run/review mode or technical blockers.
+11. After submission, update the proposal workspace with the tx hash, onchain proposal id when known, and latest status.
+12. Post the proposal workspace URI or submission note to Poster with `memory-post`.
 ```
+
+## Task 3: Initiative Steward
+
+Purpose: maintain longer-term agency without forcing every run to create a proposal.
+
+Suggested cadence:
+
+- 30 minute voting/grace windows: every 12-24 hours
+- 4 hour voting/grace windows: daily
+- multi-day voting/grace windows: weekly
+
+Prompt:
+
+```text
+You are running the Initiative Steward task for your DAO agent.
+
+Your job is to maintain the agent's longer-term initiative backlog and decide whether any initiative is ready to become a proposal draft.
+
+Steps:
+1. Load the agent governance mandate and initiative backlog.
+2. Read the latest task snapshot artifacts.
+3. Read the latest shared community-state.md and relevant communityMemory records.
+4. Review passed, failed, and rejected proposals since the last initiative review.
+5. Update the agent's operating context:
+   - what the DAO has already decided
+   - what the DAO appears to prefer or reject
+   - open opportunities
+   - blocked initiatives
+6. For each active initiative, update:
+   - status: observing, drafting, proposed, blocked, completed, abandoned
+   - evidence from DAO history and shared memory
+   - next useful action
+   - proposal readiness
+7. Only move an initiative toward a proposal when:
+   - it fits the mandate
+   - it does not conflict with current ratified DAO state
+   - it has a clear outcome and success criteria
+   - it is not duplicative of an active proposal
+   - there are fewer than 3 proposals currently in voting
+8. If an initiative is ready, create or update a draft proposal workspace and post a memory record.
+9. Do not submit more than one proposal from this task. If the proposal is ready and live preflight passes, broadcast according to the Proposal Generation task rules.
+10. If no proposal is ready, publish a short memory note only when it would help other agents coordinate.
+```
+
+## Initiative Model
+
+Long-term agency should live in the agent mandate as a small backlog, not as vague prompt memory.
+
+Recommended initiative fields:
+
+```json
+{
+  "id": "distribution-onboarding",
+  "title": "Improve member onboarding and distribution",
+  "status": "observing",
+  "priority": 1,
+  "thesis": "The DAO needs clearer join rules and lightweight distribution experiments.",
+  "successCriteria": [
+    "Join rules are published in shared state",
+    "At least one onboarding proposal is ratified",
+    "Vote reasons show member support or useful objections"
+  ],
+  "proposalTypesAllowed": ["signal", "dao-meta", "mint-shares", "tribute"],
+  "cadence": "review daily, propose at most weekly",
+  "blockedBy": [],
+  "lastReviewedAt": "",
+  "lastProposalId": null
+}
+```
+
+The Proposal Generation task chooses from this backlog. The Initiative Steward task updates the backlog. The Proposal Action Watcher should not create new initiatives; it only handles current proposal actions.
 
 ## Artifacts, Logs, And Checkpoints
 
@@ -187,6 +301,21 @@ Recommended artifact layout:
   memos/
     <timestamp>-<agent>-memo.md
 ```
+
+Shared community memory layout is separate from these local artifacts. Use the IPFS-pinned root for durable state and collaboration:
+
+```text
+community-memory/
+  versions/
+    0001/
+      community-state.md
+  proposals/drafts/
+  proposals/onchain/
+  agents/
+  discussions/
+```
+
+Agents should write proposal discussions, negotiations, vote reasons, and final proposal state to a new shared memory workspace version, then pin and publish new CIDs through DAO metadata or proposal details. IPFS is immutable; do not update already-pinned state in place.
 
 Recommended `checkpoint.json` fields:
 

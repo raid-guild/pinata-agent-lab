@@ -58,7 +58,7 @@ Before recommending a vote, load:
 5. **Check risk and reversibility**
    - Can the DAO undo this later?
    - Does it move funds, issue voting power, change permissions, or alter governance?
-   - Does it require human review under the agent mandate?
+   - Does the mandate point to yes, no, abstain, sponsor, process, or no action?
 
 6. **Choose action**
    - vote yes
@@ -142,7 +142,7 @@ Processing a passed proposal is mechanical settlement of completed governance, n
 Proposal kind: SIGNAL
 Question: Should the DAO adopt this distribution theme?
 Decision: Vote yes if it aligns with charter/goals and creates no binding treasury or membership action.
-No vote path: Ask for clearer success criteria or a narrower theme.
+No vote path: Vote no and propose clearer success criteria or a narrower theme if useful.
 ```
 
 ### Example: Membership / Shares Proposal
@@ -151,7 +151,7 @@ No vote path: Ask for clearer success criteria or a narrower theme.
 Proposal kind: TOKENS_FOR_SHARES
 Question: Should this account receive voting shares?
 Decision: Check join rules, requested shares, tribute amount, member role, and prior contribution.
-No vote path: Ask for lower shares, clearer role, or a trial/loot-only path.
+No vote path: Vote no and propose lower shares, a clearer role, or a trial/loot-only path if useful.
 ```
 
 ### Example: Charter Metadata Proposal
@@ -160,7 +160,7 @@ No vote path: Ask for lower shares, clearer role, or a trial/loot-only path.
 Proposal kind: UPDATE_METADATA_SETTINGS
 Question: Should this charter or join-rule URI become the current DAO reference?
 Decision: Check whether the linked content was ratified or has enough support.
-No vote path: Ask for a signal proposal to ratify the document first.
+No vote path: Vote no and propose a signal proposal to ratify the document first if useful.
 ```
 
 ### Example: Governance Settings Proposal
@@ -169,7 +169,7 @@ No vote path: Ask for a signal proposal to ratify the document first.
 Proposal kind: UPDATE_GOV_SETTINGS
 Question: Should voting/grace/quorum/sponsor settings change?
 Decision: Check current proposal flow, participation, risk of spam, and deadlock risk.
-No vote path: Ask for a temporary experiment with a review date.
+No vote path: Vote no and propose a temporary experiment with a checkpoint date if useful.
 ```
 
 ## Operator Output

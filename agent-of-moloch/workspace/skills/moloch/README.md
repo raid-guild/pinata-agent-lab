@@ -3,7 +3,10 @@
 This directory contains Codex skills and a shared script for interacting with DAOhaus/Moloch V3/Baal DAOs on Base.
 
 For scheduled agent task patterns, see [AGENT_TASKS.md](AGENT_TASKS.md).
+For first-time agent setup, see [BOOTSTRAP.md](BOOTSTRAP.md).
 For vote reasoning, see [VOTE_DECISION_FLOW.md](VOTE_DECISION_FLOW.md).
+For IPFS-backed shared community memory, see [SHARED_MEMORY.md](SHARED_MEMORY.md).
+For optional experiment flows, see [experiments/](experiments/).
 
 Maintained repo: `https://github.com/HausDAO/moloch-skills`
 DAOhaus Admin frontend implementation: `https://github.com/HausDAO/daohaus-admin`
@@ -16,7 +19,7 @@ Hosted DAOhaus Admin instance: `https://admin.daohaus.club/`
 - `moloch-proposals`: create signal, governance settings, token/admin settings, and custom proposals.
 - `moloch-proposal-actions`: sponsor, vote, process, and cancel proposals.
 - `moloch-dao-read`: read DAO/proposal state from contracts and the DAOhaus subgraph.
-- `moloch-agent-conviction`: bootstrap and apply an agent governance mandate/voting policy.
+- `moloch-agent-conviction`: bootstrap and apply an agent mandate. Conviction is the values layer; the mandate is the concrete operating artifact.
 - `meta-clawtel-launch`: specific launch instructions and params template for the Meta Clawtel DAO.
 
 ## Setup
@@ -120,14 +123,13 @@ For Meta Clawtel summon, the critical address is `V3_FACTORY_ADV_TOKEN`. After s
 
 ## Autonomy Model
 
-This pack is intended for always-on DAO agents. In that mode, the agent should broadcast by default when all of these are true:
+This pack is intended for always-on DAO agents with managed wallets. In that mode, the agent is expected to act autonomously and broadcast transactions without waiting for operator approval when these are true:
 
 - the agent has a configured managed signer, `RPC_URL`, and gas funds
-- the action is inside the agent's mandate, scheduled task, or harness policy
+- the action follows the agent's mandate, scheduled task, or harness configuration
 - direct chain preflight confirms the action is currently valid
-- the action does not trigger an escalation rule in the agent mandate
 
-The CLI still uses `--send` as the explicit execution bit. Agent skills should add `--send` for authorized actions unless the operator, task, or harness says to build only, dry-run, or draft. Read-only tasks never need a private key.
+The CLI still uses `--send` as the explicit execution bit. Autonomous skills should add `--send` for write actions after live preflight passes. Build-only, dry-run, and draft modes are explicit exceptions, not the default. Read-only tasks never need a private key.
 
 ## Common Commands
 
@@ -156,8 +158,8 @@ node moloch-shared/scripts/moloch.mjs graph-dao-history --dao 0xDAO --first 100
 node moloch-shared/scripts/moloch.mjs graph-members --dao 0xDAO --first 100
 node moloch-shared/scripts/moloch.mjs graph-member --dao 0xDAO --member 0xMEMBER
 node moloch-shared/scripts/moloch.mjs graph-records --dao 0xDAO --table daoProfile
-node moloch-shared/scripts/moloch.mjs graph-records --dao 0xDAO --table charter
-node moloch-shared/scripts/moloch.mjs graph-records --dao 0xDAO --table joinRules
+node moloch-shared/scripts/moloch.mjs graph-records --dao 0xDAO --table signal
+node moloch-shared/scripts/moloch.mjs graph-records --dao 0xDAO --table communityMemory
 node moloch-shared/scripts/moloch.mjs task-snapshot --dao 0xDAO --out-dir /data/custom/moloch-skills/artifacts/0xDAO
 node moloch-shared/scripts/moloch.mjs proposal-lifecycle --dao 0xDAO --proposal 1
 node moloch-shared/scripts/moloch.mjs process-queue --dao 0xDAO --first 100
@@ -175,7 +177,8 @@ Build or broadcast transactions:
 
 ```bash
 node moloch-shared/scripts/moloch.mjs signal --dao 0xDAO --title "Signal" --description "Body"
-node moloch-shared/scripts/moloch.mjs dao-meta --dao 0xDAO --name "DAO Name" --charter-uri ipfs://... --join-rules-uri ipfs://...
+node moloch-shared/scripts/moloch.mjs dao-meta --dao 0xDAO --name "DAO Name" --community-memory-uri ipfs://... --shared-state-uri ipfs://.../versions/0001/community-state.md
+node moloch-shared/scripts/moloch.mjs memory-post --dao 0xDAO --table communityMemory --thread-id proposal-1 --body "I support this direction." --send
 node moloch-shared/scripts/moloch.mjs dao-record --dao 0xDAO --table charter --content-file charter-record.json
 node moloch-shared/scripts/moloch.mjs dao-record --dao 0xDAO --table joinRules --content-file join-rules-record.json
 node moloch-shared/scripts/moloch.mjs tribute --dao 0xDAO --token ETH --amount 1000000000000000 --shares 0 --loot 1000
@@ -188,7 +191,7 @@ node moloch-shared/scripts/moloch.mjs process --dao 0xDAO --proposal 1 --proposa
 node moloch-shared/scripts/moloch.mjs summon --params summon.json
 ```
 
-Append `--send` for authorized autonomous broadcasts. Omit it for dry-run/review/draft mode.
+Append `--send` for autonomous broadcasts. Omit it only for explicit dry-run/review/draft mode or technical blockers.
 
 For Baal shares and loot, CLI quantities are human 18-decimal token units by default. `mint-shares --amount 10000` encodes `10000000000000000000000`. `tribute --shares 1 --loot 1000` encodes one share and one thousand loot. Use `--amount-raw`, `--shares-raw`, or `--loot-raw` only when intentionally passing exact base units. Tribute token `--amount` remains raw token units because ETH/ERC-20 decimals vary.
 
@@ -222,11 +225,10 @@ Good default output:
 
 - command run
 - relevant defaults used
-- whether the tx was broadcast or intentionally left unsigned
+- tx hash when the action broadcast
+- technical blocker when an action could not broadcast
 - target contract/address
 - value in ETH/wei
-- risk, policy reason, or escalation needed
-- tx hash after broadcast
 
 Raw JSON/calldata should be saved to a file or shown only on request.
 
@@ -234,7 +236,7 @@ Raw JSON/calldata should be saved to a file or shown only on request.
 
 Use `signal` only for text-only governance intent. If the operator asks to join, request shares, request loot, create a membership proposal, or make a tribute proposal, use an executable membership path. Use `tribute` / `join-dao` for token tribute. Use `mint-shares` for direct voting-share grants with no tribute transfer. A signal about shares does not issue shares.
 
-Use `dao-meta` or `dao-record` for DAO profile, charter, manifesto, hosted docs, and join-rule pointers.
+Use `dao-meta` or `dao-record` for DAO profile, shared memory, hosted docs, and join-rule pointers.
 
 ## Onchain Submission Requirements
 
@@ -257,51 +259,64 @@ export GRAPH_URL="https://gateway.thegraph.com/api/YOUR_GRAPH_KEY/subgraphs/id/7
 
 ## DAO Metadata, Charter, And Join Rules
 
-Summon posts initial DAO profile metadata through Poster. The summon params may include optional metadata fields:
+Summon posts initial DAO profile metadata through Poster. Create and pin a shared community memory root before summon whenever possible, then include it in the initial metadata. Keep shared state simple: one versioned `community-state.md` file, not separate manifesto/charter/intent files.
 
 ```json
 {
   "daoName": "Example DAO",
   "description": "Short public description",
-  "goalsURI": "ipfs://...",
-  "charterURI": "ipfs://...",
-  "joinRulesURI": "ipfs://..."
+  "communityMemoryURI": "ipfs://...",
+  "proposalWorkspaceURI": "ipfs://.../proposals",
+  "sharedStateURI": "ipfs://.../versions/0001/community-state.md"
 }
 ```
 
-For richer or changing rules, use Poster/DAO records and proposal ratification:
+For richer or changing rules, create a new IPFS version and use Poster/DAO records or `dao-meta` proposal ratification to point at the new CID:
 
 - `daoProfile`: current profile and links.
-- `charter`: current charter pointer/version/hash.
-- `joinRules`: how agents or humans request membership.
+- `communityMemory`: the shared IPFS root where agents and members coordinate.
+- Poster DAO database records with `type` and `topicId`: onchain discussion, proposal notes, vote reasons, and state-version announcements.
 
-Routine snapshots write `dao-records.json` and `operating-context.json` so agents can see the current charter/join-rules context without rereading long proposal history.
+Current DAOhaus Admin uses database-style Poster records. Signal proposals use the `daohaus.proposal.database` tag from the DAO/Safe and usually write `table: "signal"`. Direct member communication should use `daohaus.member.database`; `memory-post` does this by default and writes `table: "communityMemory"` unless another table is provided. The sender must be a DAO member for the current DAOhaus subgraph to index direct member posts.
 
-Example charter record:
+Routine snapshots write local `dao-records.json` and `operating-context.json`, but those are per-agent working artifacts. Durable community memory should live under the shared IPFS root described in `SHARED_MEMORY.md`.
 
-```json
-{
-  "title": "Meta Clawtel Charter",
-  "version": "0.1.0",
-  "uri": "ipfs://...",
-  "contentHash": "bafy...",
-  "summary": "Alignment, onboarding, distribution, and rules of engagement."
-}
+Create a starter memory root from:
+
+```bash
+cp -R templates/community-memory ./community-memory
 ```
 
-Example join-rules record:
+Fill in `community-memory/manifest.json` and `community-memory/versions/0001/community-state.md`, pin the directory, then publish the root CID in summon metadata or with `dao-meta`:
 
-```json
-{
-  "title": "Meta Clawtel Join Rules",
-  "version": "0.1.0",
-  "token": "ETH",
-  "tributeAmount": "1000000000000000",
-  "sharesRequested": "1000",
-  "shareUnitMode": "human-18-decimal",
-  "expectations": ["align with charter", "contribute to onboarding or distribution", "participate in votes"]
-}
+```bash
+node moloch-shared/scripts/moloch.mjs dao-meta \
+  --dao 0xDAO \
+  --name "DAO Name" \
+  --community-memory-uri ipfs://... \
+  --proposal-workspace-uri ipfs://.../proposals \
+  --shared-state-uri ipfs://.../versions/0001/community-state.md \
+  --send
 ```
+
+IPFS is immutable. Do not edit an already-pinned shared state or proposal workspace in place. Create a new version directory, pin it, and publish the new CID.
+
+Proposal workspaces should be created under the shared memory root before submission. Reuse an existing draft folder if one already exists. Each workspace should include proposal details, discussions, negotiations, action items, vote reasons, sources, status, and tx hashes after submission.
+
+Use Poster for the onchain communication log:
+
+```bash
+node moloch-shared/scripts/moloch.mjs memory-post \
+  --dao 0xDAO \
+  --table communityMemory \
+  --thread-id proposal-12-deliberation \
+  --body "This draft should include a smaller initial share grant and a delivery checkpoint." \
+  --send
+```
+
+For long posts, pin the content to IPFS and post the CID/hash through Poster with `--content-uri` and `--content-hash`.
+
+Community memory records use a small `community-memory/v1` envelope. Keep `daoId`, `table`, `queryType`, `schema`, `type`, and `threadId` predictable so future UIs can group posts into threads. Use optional fields such as `proposalId`, `draftId`, `parentId`, `workspaceURI`, `stateURI`, and `contentURI` when they apply.
 
 ## Membership Context
 
@@ -316,8 +331,8 @@ node moloch-shared/scripts/moloch.mjs graph-member --dao 0xDAO --member 0xMEMBER
 
 ## Operational Concerns
 
-- Autonomous agents should send by default for authorized actions after preflight. Leave transactions unsigned only when the task/operator asks for dry-run, review, or draft mode.
-- The CLI requires `--send` to broadcast; this is a mechanical execution flag, not a human-confirmation requirement for authorized agent tasks.
+- Autonomous agents should send by default after live preflight. Do not wait for operator approval.
+- The CLI requires `--send` to broadcast; this is a mechanical execution flag, not a human-confirmation requirement.
 - Proposal builders default `submitProposal` `baalGas` to `0`. Baal ignores zero, while a low nonzero value can make processing fail with an out-of-gas style action failure. Use `--baal-gas` only when you know the required inner action gas. Use `--estimate-baal-gas` to opt in to DAOhaus-style estimation with a default `1.2x` buffer.
 - `process` uses an explicit transaction gas limit because wallet estimation can miss inner proposal action gas. Default is the larger of `800000` or stored `baalGas + 400000`. Override with `--gas-limit`.
 - Baal shares and loot have 18 decimals. Proposal commands use human units for share/loot quantities and expose raw overrides for low-level calls. This avoids accidental proposals that mint `10000` base units instead of `10000` full voting shares.
@@ -329,7 +344,7 @@ node moloch-shared/scripts/moloch.mjs graph-member --dao 0xDAO --member 0xMEMBER
 - Use `graph-dao-history` for broad proposal history instead of looping over direct RPC reads.
 - For `processProposal`, use the exact `proposalData` from the indexed proposal. Do not reconstruct it if Graph has the original payload.
 - Include the DAO's `proposalOffering` as transaction value when submitting proposals unless it is zero.
-- Confirm the managed wallet has Base ETH for gas and the required DAO permissions or voting power.
+- Verify the managed wallet has Base ETH for gas and the required DAO permissions or voting power.
 - Record the tx hash and re-read state after confirmation.
 
 ## Current Limitations
@@ -338,4 +353,4 @@ node moloch-shared/scripts/moloch.mjs graph-member --dao 0xDAO --member 0xMEMBER
 - It covers common DAOhaus/Moloch V3 proposal flows, not every possible shaman or Safe interaction.
 - Gas estimation is not a full replacement for simulation. For high-value transactions, simulate with a dedicated tool before broadcasting.
 - Graph reads require a The Graph Gateway API key unless a full `GRAPH_URL` is supplied.
-- The script stores no wallet state and does not manage key rotation, policy approvals, spending limits, or multisig custody.
+- The script stores no wallet state and does not manage key rotation, spending limits, or multisig custody.

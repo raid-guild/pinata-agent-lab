@@ -15,8 +15,8 @@ Use a managed account only through environment variables or an existing signer s
 - Required for Daohaus indexed reads: `GRAPH_API_KEY`, or pass `--graph-url`
 - Optional: `CHAIN_ID`, defaults to `8453`
 - Never print, commit, or paste private keys or mnemonics.
-- Autonomous agents should broadcast authorized actions by default after preflight. Use build-only mode when the operator, task, or harness asks for dry-run, review, or draft mode.
-- The CLI still requires `--send` as the explicit execution flag. In autonomous action tasks, add `--send` unless broadcast is outside policy.
+- Autonomous agents should broadcast write actions by default after preflight. Use build-only mode only for explicit dry-run, review, or draft tasks.
+- The CLI still requires `--send` as the explicit execution flag. In autonomous action tasks, add `--send` unless a technical blocker prevents sending.
 - Before sending, read the DAO/proposal state and confirm the action is valid.
 
 ## Base Addresses
@@ -56,8 +56,8 @@ node scripts/moloch.mjs graph-dao-history --dao 0xDAO --first 100
 node scripts/moloch.mjs graph-members --dao 0xDAO --first 100
 node scripts/moloch.mjs graph-member --dao 0xDAO --member 0xMEMBER
 node scripts/moloch.mjs graph-records --dao 0xDAO --table daoProfile
-node scripts/moloch.mjs graph-records --dao 0xDAO --table charter
-node scripts/moloch.mjs graph-records --dao 0xDAO --table joinRules
+node scripts/moloch.mjs graph-records --dao 0xDAO --table signal
+node scripts/moloch.mjs graph-records --dao 0xDAO --table communityMemory
 node scripts/moloch.mjs task-snapshot --dao 0xDAO --out-dir /data/custom/moloch-skills/artifacts/0xDAO
 node scripts/moloch.mjs proposal-lifecycle --dao 0xDAO --proposal 1
 node scripts/moloch.mjs process-queue --dao 0xDAO --first 100
@@ -65,7 +65,8 @@ node scripts/moloch.mjs details --title "..." --description "..." --proposal-typ
 node scripts/moloch.mjs decode-proposal-data --data 0x...
 node scripts/moloch.mjs decode-submit-proposal --data 0x...
 node scripts/moloch.mjs signal --dao 0xDAO --title "..." --description "..."
-node scripts/moloch.mjs dao-meta --dao 0xDAO --name "DAO Name" --charter-uri ipfs://... --join-rules-uri ipfs://...
+node scripts/moloch.mjs dao-meta --dao 0xDAO --name "DAO Name" --community-memory-uri ipfs://... --shared-state-uri ipfs://.../versions/0001/community-state.md
+node scripts/moloch.mjs memory-post --dao 0xDAO --table communityMemory --thread-id proposal-1 --body "..." --send
 node scripts/moloch.mjs dao-record --dao 0xDAO --table charter --content-file charter-record.json
 node scripts/moloch.mjs tribute --dao 0xDAO --token ETH --amount 1000000000000000 --shares 0 --loot 1000
 node scripts/moloch.mjs mint-shares --dao 0xDAO --to 0xMEMBER --amount 10000
@@ -77,7 +78,7 @@ node scripts/moloch.mjs process --dao 0xDAO --proposal 1 --proposal-data 0x...
 node scripts/moloch.mjs summon --params summon.json
 ```
 
-For autonomous action skills, add `--send` after live preflight confirms the managed wallet has permission and funds. Omit `--send` only for dry-run/review/draft tasks or when policy blocks broadcast.
+For autonomous action skills, add `--send` after live preflight confirms the managed wallet has permission and funds. Omit `--send` only for explicit dry-run/review/draft tasks or when a technical blocker prevents sending.
 
 Proposal builders default `submitProposal` `baalGas` to `0`. Baal ignores zero, while a low nonzero value can make processing fail with an out-of-gas style action failure. Use `--baal-gas` only when you know the required inner action gas. Use `--estimate-baal-gas` to opt in to DAOhaus-style estimation with a default `1.2x` buffer.
 
@@ -140,6 +141,8 @@ Use Graph reads for:
 - broad proposal history with `graph-dao-history`
 - membership, delegation, shares, loot, and member vote history with `graph-members`
 - charter/join-rules/profile records with `graph-records`
+- shared community memory pointers such as `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI`
+- Poster-backed discussion records such as `communityMemory`, `communityStateVersions`, and `signal`, filtered by content fields such as `type`, `threadId`, `topicId`, and `proposalId`
 
 Use direct contract reads for:
 
@@ -147,6 +150,24 @@ Use direct contract reads for:
 - raw `proposalOffering`, `sponsorThreshold`, `proposalCount`
 - chain truth when Graph indexing lags
 - `state(prevProposalId)` gating before processing proposals
+
+## Shared Memory
+
+Use `../SHARED_MEMORY.md` for the IPFS-backed shared community memory framework. Shared memory is the DAO-level collaboration space for one versioned community-state file, proposal drafts, discussions, negotiations, vote reasons, and final proposal state.
+
+The shared script passes these DAO profile metadata pointers through summon and `dao-meta`:
+
+- `communityMemoryURI`
+- `proposalWorkspaceURI`
+- `sharedStateURI`
+
+Agents should use shared memory for durable community context, while direct contract reads remain the source of truth for permissions, timing, votes, and execution.
+
+IPFS is immutable. Agents create new version directories and publish new CIDs; they do not edit pinned state in place.
+
+Use `memory-post` for direct Poster communication records. It defaults to the DAOhaus member database tag with `table: "communityMemory"` because direct member posts must be indexed as member-authored database records. Short messages can be inline in `body`; long messages should use `contentURI` and `contentHash`.
+
+Use the stable `community-memory/v1` envelope for records. Prefer `threadId` as the grouping key; `topicId` remains a compatibility alias. Common types include `thread-root`, `thread-post`, `draft-announcement`, `workspace-version`, `vote-reason`, `negotiation-note`, `state-version`, and `retro`. Keep the envelope stable and put longer or unusual payloads behind `contentURI`.
 
 ## Safety Checks
 

@@ -5,6 +5,7 @@ This repo contains Codex skills plus runtime assets for DAOhaus/Moloch V3/Baal D
 For scheduled agent task patterns, use `AGENT_TASKS.md`.
 Prefer `task-snapshot` cron jobs for routine state gathering so agents can consume compact artifacts instead of repeating verbose Graph/RPC reads.
 For vote reasoning, use `VOTE_DECISION_FLOW.md`.
+For shared DAO memory and proposal workspaces, use `SHARED_MEMORY.md`.
 
 ## Prism Install Pattern
 
@@ -79,19 +80,19 @@ If 1Password CLI is available, Prism may use:
 
 Use a dedicated RPC provider such as Alchemy or Infura for agent runs. Public Base RPC is acceptable for small tests but can rate limit chatty agents.
 
-## Safety Rules
+## Autonomous Execution Rules
 
-- Read-only skills may run without extra confirmation.
-- Prism action skills should broadcast by default when the action is inside the agent mandate, Prism auto-send policy, and live preflight passes.
-- Transaction-building skills may build unsigned transaction JSON for dry-run/review/draft mode.
-- Human confirmation is only required when the mandate, Prism policy, or task prompt requires escalation.
-- Never broadcast with `--send` when policy blocks broadcast, preflight fails, or the task explicitly asks for build-only mode.
+- Read-only skills may run freely.
+- Prism action skills should broadcast by default when live preflight passes and the managed signer has the required gas and DAO permissions.
+- Transaction-building skills should use unsigned transaction JSON only for explicit dry-run, review, or draft tasks.
+- Do not ask for operator approval before sending routine DAO actions.
+- Do not broadcast with `--send` when chain preflight fails, required proposal data is missing or mismatched, signer/gas is unavailable, or the task explicitly asks for build-only mode.
 - Before broadcasting, re-read current DAO/proposal state from chain.
 - Graph data can lag; use direct contract reads for permissions, timing, and threshold checks.
 - Record transaction hashes and re-read state after confirmation.
 - Keep operator output abstract by default. Do not paste ABI fragments, large calldata, or full Graph JSON unless requested.
 - Use `proposal-lifecycle` and `process-queue` instead of raw Graph fields when deciding whether to vote or process.
-- Prism should define an explicit auto-send policy separate from low-level transaction building and should require post-action rereads.
+- Prism should treat managed DAO agents as autonomous actors and require post-action rereads.
 
 ## Recommended Prism Skill Split
 
@@ -102,7 +103,7 @@ Register read-only skills first:
 - `moloch-proposals`
 - `moloch-agent-conviction`
 
-Register action skills with stricter instructions:
+Register action skills with autonomous execution instructions:
 
 - `moloch-proposal-actions`
 - `moloch-summon`
@@ -148,7 +149,8 @@ Verify:
 - Skills appear in Prism Skills UI.
 - A read-only command works.
 - task-snapshot writes artifacts.
-- Transaction skills broadcast authorized actions by default and require escalation only when policy says so.
+- Shared memory instructions are available and agents know to use `communityMemoryURI`.
+- Transaction skills broadcast actions by default after live preflight and do not wait for operator approval.
 ```
 
 ## Future Machine-Readable Pack

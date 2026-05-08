@@ -1,22 +1,24 @@
 ---
 name: moloch-agent-conviction
-description: Define and apply an agent governance mandate for DAOhaus/Moloch DAOs. Use when bootstrapping an agent's values, voting policy, proposal evaluation rubric, abstain/escalation rules, or durable conviction profile that guides signal proposals, sponsorship, voting, and charter alignment.
+description: Define and apply an autonomous agent governance mandate for DAOhaus/Moloch DAOs. Use when bootstrapping an agent's values, voting policy, proposal evaluation rubric, autonomous decision rules, or durable conviction profile that guides signal proposals, sponsorship, voting, and charter alignment.
 ---
 
 # Moloch Agent Conviction
 
-Use this skill to create or apply an agent's governance mandate. "Conviction" is the shorthand, but the operating artifact should be called a **governance mandate** or **voting policy** when communicating with humans.
+Use this skill to create or apply an agent's governance mandate. "Conviction" is the values layer: the agent's bias, orientation, and long-term commitments. The concrete operating artifact should be called a **mandate** or **voting policy**.
 
 This skill does not replace transaction safety checks. Use `../moloch-dao-read` before evaluating proposals and `../moloch-proposal-actions` before any vote/sponsor/process action.
 For the general voting workflow, also use `../VOTE_DECISION_FLOW.md`.
 
 ## Bootstrap Workflow
 
-1. Create a conviction profile from `assets/conviction-profile.template.json`.
-2. Fill in identity, values, voting rules, abstain rules, and escalation rules.
-3. Store the profile wherever the agent harness expects persistent memory.
-4. If the DAO wants an auditable mandate, ratify it with a signal proposal or post a charter/mandate pointer through Poster.
-5. Before each vote, load the latest conviction profile and current proposal state.
+Use `../BOOTSTRAP.md` for first-time agent setup. Bootstrap asks the operator or harness for the mandate; it does not define the mandate itself.
+
+1. Create a mandate from `assets/conviction-profile.template.json` after the DAO address and initial shared memory pointers are known.
+2. Fill in identity, values, voting rules, abstain rules, initiative backlog, and autonomous execution rules.
+3. Store the mandate wherever the agent harness expects persistent memory.
+4. If the DAO wants an auditable mandate, ratify it with a signal proposal or post a mandate pointer through DAO database memory.
+5. Before each vote or proposal generation task, load the latest mandate and current proposal state.
 
 ## Required Profile Sections
 
@@ -24,11 +26,13 @@ For the general voting workflow, also use `../VOTE_DECISION_FLOW.md`.
 - `values`: ranked principles the agent should optimize for.
 - `defaultVotePolicy`: when to vote yes, no, or abstain.
 - `proposalRubric`: scoring categories and minimum thresholds.
+- `initiativePolicy`: proposal cadence, throttle, and rules for longer-term agency.
+- `initiatives`: a small backlog of longer-term goals the agent may advance over time.
 - `hardNoRules`: conditions that force a no vote.
-- `abstainRules`: conditions that force abstention or human review.
+- `abstainRules`: conditions that force an abstain vote or no-action decision.
 - `sponsorshipPolicy`: when the agent may sponsor a proposal.
 - `executionPolicy`: how the agent performs required proposal processing.
-- `escalationPolicy`: when to ask for human confirmation.
+- `autonomyPolicy`: how the agent acts without operator approval.
 - `auditLog`: how to record reasoning and transaction hashes.
 
 ## Vote Evaluation
@@ -41,13 +45,32 @@ Relevant mandate version:
 Current proposal state:
 Scores:
 Hard-no checks:
-Abstain/escalation checks:
+Abstain/no-action checks:
 Recommended action:
 Reason:
 Confidence:
 ```
 
-Only broadcast a vote transaction if the memo reaches a clear recommendation under the mandate and live chain preflight passes. If the agent has auto-send authority from its harness or task policy, use `--send` without waiting for operator confirmation. If the memo is unclear or an escalation rule triggers, do not broadcast.
+Broadcast a vote transaction when the memo reaches a clear recommendation under the mandate and live chain preflight passes. Use `--send` without waiting for operator confirmation. If the memo is unclear, choose `abstain` or `no action` according to the mandate and record the reason.
+
+## Long-Term Initiatives
+
+Use initiatives to give the agent durable agency beyond single proposal reactions. Keep the list small, usually one to three active initiatives.
+
+Each initiative should define:
+
+- `id`
+- `title`
+- `status`: `observing`, `drafting`, `proposed`, `blocked`, `completed`, or `abandoned`
+- `priority`
+- `thesis`
+- `successCriteria`
+- allowed proposal types
+- cadence
+- blockers
+- last review/proposal references
+
+The agent should update initiatives after passed, failed, rejected, or processed proposals. It should only turn an initiative into a proposal when the latest DAO state supports it, the outcome is clear, the proposal is not duplicative, and the open proposal throttle allows it.
 
 ## Default Decision Rules
 
@@ -59,13 +82,13 @@ Use these defaults unless the conviction profile overrides them:
 - Sponsor only when the proposal is legible, within scope, and worthy of DAO attention even if the final vote may still be no.
 - Process the first chain-ready proposal as mechanical settlement of completed governance. Do not treat processing as a second vote or subjective mandate decision.
 
-## Safety Rules
+## Autonomous Execution Rules
 
-- Never invent values. If the mandate is missing, ask for or draft one first.
-- Conviction alone is not authorization to broadcast. Broadcasting requires mandate alignment plus harness/task auto-send authority and live preflight.
+- Never invent values. If the mandate is missing, draft a mandate proposal or create a local draft mandate before voting.
+- A managed agent is expected to broadcast its own sponsor, vote, process, cancel, and proposal transactions when the mandate points to that action and live preflight passes.
 - Re-read direct chain state before any sponsor/vote/process/cancel action.
 - Use Graph for proposal metadata and vote history, but direct contract reads for current permission/timing checks.
-- Processing should not be blocked by proposal category, value, membership, shares, loot, payments, settings, or mandate preferences. The only blockers are failed chain preflight, missing/mismatched exact proposalData, lack of gas/signer capability, or explicit operator/harness pause.
+- Processing should not be blocked by proposal category, value, membership, shares, loot, payments, settings, or mandate preferences. The only blockers are failed chain preflight, missing/mismatched exact proposalData, or lack of gas/signer capability.
 - Record the final memo, chosen action, tx hash if any, and post-action state.
 
 ## Charter Integration

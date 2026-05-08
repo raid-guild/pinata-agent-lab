@@ -10,8 +10,11 @@ Immediate next steps for a fresh instance:
 
 - Replace seed DAO addresses with real Base Baal DAO addresses.
 - Record each DAO's charter, thesis, and the agent's governance mandate.
+- Run the bootstrap flow in `workspace/skills/moloch/BOOTSTRAP.md`.
+- Create or locate shared memory using `workspace/skills/moloch/templates/community-memory` and record `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI` when available.
 - Run `task-snapshot` for each real DAO and store checkpoint paths through `/app/api/artifacts`.
 - Add active proposals from DAOhaus or the Moloch skills.
+- Enable the manifest task examples only after signer, mandate, RPC/Graph access, shared-memory location, and autonomy boundaries are configured.
 - Use `workspace/skills/moloch/moloch-agent-conviction` and `workspace/skills/moloch/VOTE_DECISION_FLOW.md` before vote recommendations.
 - Use `workspace/skills/moloch/moloch-dao-read` before any vote or proposal action.
 - Broadcast only when mandate, task, or harness policy permits it and live preflight passes. Otherwise build unsigned transactions for review.

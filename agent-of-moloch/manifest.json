@@ -25,6 +25,52 @@
       "name": "PRIVATE_KEY",
       "description": "Private key for the managed Ethereum account. Required for authorized sponsor, vote, process, summon, or proposal broadcast actions.",
       "required": true
+    },
+    {
+      "name": "RPC_URL",
+      "description": "Base-compatible RPC endpoint used for live Baal reads, preflight checks, and transaction broadcasts.",
+      "required": true
+    },
+    {
+      "name": "GRAPH_URL",
+      "description": "DAOhaus Graph endpoint used for indexed DAO/proposal discovery. Use this or GRAPH_API_KEY when your harness constructs the URL.",
+      "required": false
+    },
+    {
+      "name": "GRAPH_API_KEY",
+      "description": "Optional Graph API key used by the bundled Moloch tools when GRAPH_URL is not provided.",
+      "required": false
+    },
+    {
+      "name": "PINATA_JWT",
+      "description": "Optional Pinata credential for publishing shared community memory and proposal workspaces to IPFS.",
+      "required": false
+    }
+  ],
+  "tasks": [
+    {
+      "name": "bootstrap-dao-agent",
+      "prompt": "Run the one-time Agent of Moloch bootstrap. Read workspace/BOOTSTRAP.md and workspace/skills/moloch/BOOTSTRAP.md. Gather DAO address or summon intent, ACCOUNT_ADDRESS, mandate/conviction, autonomy boundaries, RPC/Graph/pinning status, and scheduled task cadence. Create or locate the shared community memory root from workspace/skills/moloch/templates/community-memory, prepare the first community-state.md, create the mandate from moloch-agent-conviction, run task-snapshot, and store dashboard/API records. Do not invent missing mandate fields or broadcast transactions without explicit operator approval.",
+      "schedule": "0 9 * * *",
+      "enabled": false
+    },
+    {
+      "name": "proposal-action-watcher",
+      "prompt": "Run the Proposal Action Watcher from workspace/skills/moloch/AGENT_TASKS.md. Read the latest task-snapshot artifacts, DAO records, communityMemory records, mandate, and vote decision flow. Identify one next sponsor, vote, process, cancel, review, or no-action decision. Before any write, perform live preflight with proposal-lifecycle/read-proposal/process-queue. Processing is settlement and must not be blocked by proposal category. After any send, reread state, log the result, and post memory when useful.",
+      "schedule": "*/30 * * * *",
+      "enabled": false
+    },
+    {
+      "name": "initiative-steward",
+      "prompt": "Run the Initiative Steward task from workspace/skills/moloch/AGENT_TASKS.md. Load the mandate initiative backlog, task-snapshot artifacts, shared community-state.md, and relevant communityMemory records. Update operating context from recent passed, failed, rejected, and processed proposals. Maintain initiative statuses, evidence, next useful actions, and proposal readiness. Create or update a proposal draft workspace only when the mandate and open-proposal throttle allow it.",
+      "schedule": "0 12 * * *",
+      "enabled": false
+    },
+    {
+      "name": "proposal-generation",
+      "prompt": "Run the Proposal Generation task from workspace/skills/moloch/AGENT_TASKS.md. Read snapshot artifacts, shared memory, mandate, and active initiative backlog. If three or more proposals are currently in voting, do not create a new proposal. Otherwise choose at most one draft/signal/membership/reward/settings proposal or no action. Use the shared proposal workspace template, include evidence from DAO history, run live preflight, and post the workspace/submission note with memory-post when useful.",
+      "schedule": "0 */6 * * *",
+      "enabled": false
     }
   ],
   "scripts": {

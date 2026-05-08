@@ -16,8 +16,8 @@ Use this skill for proposal lifecycle actions.
    `node ../moloch-shared/scripts/moloch.mjs graph-proposal --dao 0xDAO --proposal 1`
 4. Derive lifecycle before acting:
    `node ../moloch-shared/scripts/moloch.mjs proposal-lifecycle --dao 0xDAO --proposal 1`
-5. If the action is inside the agent mandate/harness policy, broadcast with `--send`.
-6. Build unsigned only when the task asks for dry-run/review/draft mode or policy blocks broadcast.
+5. If live preflight passes and the managed signer has the required gas and DAO permissions, broadcast with `--send`.
+6. Build unsigned only when the task explicitly asks for dry-run/review/draft mode or a technical blocker prevents sending.
 7. Re-read the proposal after confirmation and record the tx hash.
 
 ## Commands
@@ -41,7 +41,7 @@ Process:
 node ../moloch-shared/scripts/moloch.mjs process --dao 0xDAO --proposal 1 --proposal-data 0x... --send
 ```
 
-Processing is required contract maintenance after governance is complete. It is not a second vote. If `process-queue` marks a proposal as the first chain-ready item, process it unless chain preflight fails, exact indexed `proposalData` is unavailable or mismatched, signer/gas is unavailable, or the operator/harness has explicitly paused all transaction sending.
+Processing is required contract maintenance after governance is complete. It is not a second vote. If `process-queue` marks a proposal as the first chain-ready item, process it unless chain preflight fails, exact indexed `proposalData` is unavailable or mismatched, or signer/gas is unavailable.
 
 Use an explicit process gas limit. Wallet/RPC estimation can undercount inner proposal actions and still produce a successful outer transaction with `actionFailed: true`. The CLI sets one automatically: stored `baalGas + 400000`, or `800000` when stored `baalGas` is `0`. Override with `--gas-limit` only when needed.
 
@@ -65,7 +65,7 @@ Cancel:
 node ../moloch-shared/scripts/moloch.mjs cancel --dao 0xDAO --proposal 1 --send
 ```
 
-Omit `--send` only for dry-run/review mode.
+Omit `--send` only for explicit dry-run/review mode or when a technical blocker prevents sending.
 
 ## Eligibility
 
@@ -83,4 +83,4 @@ Omit `--send` only for dry-run/review mode.
 After sponsoring, do not immediately assume voting is available. Re-read `proposal-lifecycle` or poll briefly until status becomes `voting`. If an immediate vote reverts with `!determined`, wait and retry after state/indexing advances.
 - Cancel is usually proposer, sponsor-below-threshold, or governance shaman behavior.
 
-If eligibility is unclear, read Daohaus indexed state from the frontend/subgraph before sending.
+If eligibility is unclear, read DAOhaus indexed state and direct contract state before sending.

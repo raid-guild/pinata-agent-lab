@@ -21,7 +21,7 @@ Use these sibling skills:
 - Voting token symbol: `CLAW`
 - Loot token name: `Meta Clawtel Loot`
 - Loot token symbol: `CLAWLOOT`
-- Initial metadata: include description plus IPFS pointers for goals, charter, join rules, and manifesto when available.
+- Initial metadata: include description plus IPFS pointers for the shared community memory root and the current versioned community-state file when available.
 - Voting token transferable: `false`
 - Loot token transferable: `true`
 - Voting period: `4 hours` = `14400` seconds
@@ -37,16 +37,19 @@ Use these sibling skills:
 - Network: Base, chain id `8453`
 
 The three member addresses are intentionally placeholders until the launcher provides them.
-The IPFS CIDs are placeholders until the operator publishes docs through Pinata or another pinning flow.
+The IPFS CIDs are placeholders until the launcher publishes docs and the community memory root through Pinata or another pinning flow.
 
-## Initial Metadata Themes
+## Initial Shared State
 
-Use concise metadata and CIDs rather than long text directly in summon params:
+Use one versioned `community-state.md` file rather than separate manifesto, charter, goals, and intent files. It should include:
 
-- Charter: alignment, voting expectations, proposal etiquette, and rules of engagement.
-- Join rules: example `X ETH tribute for Y shares`, expected contribution area, and review process.
-- Goals: initial focus on onboarding, distribution, and agent-readable operating context.
-- Manifesto: narrative layer for why the DAO exists.
+- purpose and current focus
+- rules of engagement
+- join rules such as `X ETH tribute for Y shares`
+- roles and responsibilities
+- links to proposal workspaces
+
+Community memory is an immutable IPFS versioning flow. To change state, create a new version directory and publish a new CID.
 
 ## Address Collection
 
@@ -62,25 +65,25 @@ Validate:
 
 - all three are valid Ethereum addresses
 - no duplicates
-- the deployer confirms each address should receive `10000 CLAW`
+- each address is intended to receive `10000 CLAW`
 
 ## Build Params
 
-Copy `assets/meta-clawtel-summon.template.json` to a working file, replace the three placeholder addresses, then build:
+Copy `assets/meta-clawtel-summon.template.json` to a working file, replace the three placeholder addresses and IPFS CIDs, then build:
 
 ```bash
 cd /home/dekanjbrown/Projects/raidguild/skills/moloch
 node moloch-shared/scripts/moloch.mjs summon --params meta-clawtel-summon.json
 ```
 
-Review the unsigned transaction:
+Check the transaction summary:
 
 - `chainId` must be `8453`
 - `to` must be Base advanced token summoner `0x97Aaa5be8B38795245f1c38A883B44cccdfB3E11`
 - `value` must be `0`
 - member arrays must have exactly 3 entries
 
-Broadcast only when explicitly requested:
+Broadcast with the managed wallet after the transaction summary matches the launch settings:
 
 ```bash
 node moloch-shared/scripts/moloch.mjs summon --params meta-clawtel-summon.json --send
@@ -109,16 +112,9 @@ If CIDs are not ready at summon time, propose them later:
 node moloch-shared/scripts/moloch.mjs dao-meta \
   --dao 0xDAO \
   --name "Meta Clawtel" \
-  --charter-uri ipfs://... \
-  --join-rules-uri ipfs://... \
-  --goals-uri ipfs://...
-```
-
-For detailed records:
-
-```bash
-node moloch-shared/scripts/moloch.mjs dao-record --dao 0xDAO --table charter --content-file charter-record.json
-node moloch-shared/scripts/moloch.mjs dao-record --dao 0xDAO --table joinRules --content-file join-rules-record.json
+  --community-memory-uri ipfs://... \
+  --proposal-workspace-uri ipfs://.../proposals \
+  --shared-state-uri ipfs://.../versions/0001/community-state.md
 ```
 
 ## Settings Rationale

@@ -16,10 +16,12 @@ Default to high-level commands and concise summaries. Do not expose ABI fragment
 3. Read DAO state first:
    `node ../moloch-shared/scripts/moloch.mjs read-dao --dao 0xDAO`
 4. Optionally read indexed DAO/proposal context with `graph-dao` or `graph-proposals`.
-5. Include `proposalOffering` as tx value for `submitProposal` unless the DAO uses zero offering.
-6. Build the proposal tx and review the compact summary.
-7. Decode the full calldata with `decode-submit-proposal` only when reviewing complex proposals or when asked.
-8. For autonomous proposal tasks, broadcast with `--send` when the proposal is inside mandate/harness policy and live preflight passes. Omit `--send` only for dry-run, review, or draft mode.
+5. Find the DAO shared memory root from `daoProfile.communityMemoryURI` when available.
+6. Create or reuse a proposal workspace folder under shared memory before submitting.
+7. Include `proposalOffering` as tx value for `submitProposal` unless the DAO uses zero offering.
+8. Build the proposal tx and review the compact summary.
+9. Decode the full calldata with `decode-submit-proposal` only when reviewing complex proposals or when asked.
+10. For autonomous proposal tasks, broadcast with `--send` when live preflight passes and the managed signer has the required gas and DAO permissions. Omit `--send` only for explicit dry-run, review, draft mode, or technical blockers.
 
 ## Proposal Intent Preflight
 
@@ -30,7 +32,7 @@ Choose the proposal path by operator intent:
 | signal, temperature check, text-only governance intent | `signal` |
 | join DAO with tribute, tokens-for-shares, tokens-for-loot | `tribute` / `join-dao` |
 | grant or mint voting shares directly, no tribute involved | `mint-shares` |
-| update DAO profile, charter URI, join rules URI, manifesto/docs links | `dao-meta` / `dao-record` |
+| update DAO profile, shared memory URI, community state URI, hosted docs links | `dao-meta` / `dao-record` |
 | change voting period, grace period, offering, quorum, retention | `gov-settings` |
 | change share/loot pause or transferability setting | `token-settings` |
 | arbitrary contract execution | custom proposal path |
@@ -77,7 +79,7 @@ DAOhaus has at least two common executable membership paths:
 - `tribute` / `join-dao`: submits through Tribute Minion for tokens-for-shares or tokens-for-loot.
 - `mint-shares`: submits a Baal proposal that calls `mintShares(address[],uint256[])` on the DAO itself.
 
-Use `mint-shares` for grants, steward admissions, retroactive rewards, or membership approvals where no ETH/ERC-20 contribution should be escrowed by Tribute Minion.
+Use `mint-shares` for grants, steward admissions, retroactive rewards, or membership entries where no ETH/ERC-20 contribution should be escrowed by Tribute Minion.
 
 Share and loot quantities use human 18-decimal units by default. Use `--amount 10000` for 10,000 shares, not `10000000000000000000000`. Use `--amount-raw`, `--shares-raw`, or `--loot-raw` only when you intentionally want exact base units.
 
@@ -134,9 +136,9 @@ node ../moloch-shared/scripts/moloch.mjs tribute \
 
 For ERC-20 tribute, check and approve Tribute Minion allowance before broadcasting. For ETH tribute, tx `value` equals `amount`. Tribute token `--amount` remains raw token units because ERC-20 decimals vary; share/loot outputs use human 18-decimal units by default.
 
-## DAO Metadata / Charter / Join Rules Proposal
+## DAO Metadata / Shared Memory Proposal
 
-Use this for DAOhaus-readable metadata and agent-readable rules.
+Use this for DAOhaus-readable metadata, agent-readable rules, and shared community memory pointers.
 
 Profile links:
 
@@ -144,13 +146,13 @@ Profile links:
 node ../moloch-shared/scripts/moloch.mjs dao-meta \
   --dao 0xDAO \
   --name "DAO Name" \
-  --charter-uri ipfs://... \
-  --join-rules-uri ipfs://... \
-  --goals-uri ipfs://... \
+  --community-memory-uri ipfs://... \
+  --proposal-workspace-uri ipfs://.../proposals \
+  --shared-state-uri ipfs://.../versions/0001/community-state.md \
   --send
 ```
 
-Custom records:
+Custom records remain available for DAOs that already use Poster tables:
 
 ```bash
 node ../moloch-shared/scripts/moloch.mjs dao-record \
@@ -166,7 +168,47 @@ node ../moloch-shared/scripts/moloch.mjs dao-record \
   --send
 ```
 
-These build a proposal that posts a Poster record if passed. Use IPFS/Pinata CIDs for larger charter, manifesto, join rules, or hosted docs content.
+These build a proposal that posts a Poster record if passed. Use IPFS/Pinata CIDs for shared memory roots and versioned community state files.
+
+Current DAOhaus Admin indexes database-style Poster records. Signal proposals use `daohaus.proposal.database` from the DAO/Safe and usually write `table: "signal"`. Direct member-authored proposal commons posts should use `memory-post`, which defaults to `daohaus.member.database` and `table: "communityMemory"`.
+
+## Proposal Workspace
+
+Before submitting any proposal, create or reuse a shared memory workspace under:
+
+```text
+community-memory/proposals/drafts/<proposal-slug>/
+```
+
+Use `templates/community-memory/proposals/drafts/_template` as the starting shape. At minimum, keep:
+
+- `proposal.md`
+- `details.json`
+- `actions.json`
+- `discussions.md`
+- `negotiations.md`
+- `action-items.md`
+- `vote-reasons.md`
+- `status.json`
+
+Pin the new memory root or proposal workspace version. Put the workspace URI in `details.contentURI` or in the proposal body when it helps members and agents inspect the work. After submission, copy the workspace to `proposals/onchain/proposal-<id>/` and add submission, vote, processing, and final state records.
+
+IPFS is immutable. Do not describe this as editing a folder or updating a table in place. Create a new versioned directory and publish the new CID.
+
+Use Poster for proposal communication around the workspace:
+
+```bash
+node ../moloch-shared/scripts/moloch.mjs memory-post \
+  --dao 0xDAO \
+  --table communityMemory \
+  --thread-id proposal-draft-slug \
+  --type draft-announcement \
+  --workspace-uri ipfs://.../proposals/drafts/proposal-draft-slug \
+  --body "Draft workspace created for review." \
+  --send
+```
+
+Agents should post vote reasons, negotiation updates, and workspace version CIDs through Poster so other members can discover them through DAOhaus-indexed records. Use the shared `community-memory/v1` envelope and group proposal discussion with a stable `threadId`.
 
 Zero-tribute membership request example:
 

@@ -18,11 +18,11 @@ Notes:
 
 - The dashboard is read-only.
 - Governance writes are available through API routes.
-- The Moloch skill bundle is aligned with `HausDAO/moloch-skills` commit `8fcd9f2f947cc2bd0b53573bf8e99857f40ad648`.
+- The Moloch skill bundle is aligned with `HausDAO/moloch-skills` commit `d4afd27a8729cba2332b63ea21b516dc487d3ade`.
 - `APP_PASSWORD` is optional.
 - `API_PASSWORD` is optional and enables OpenClaw proxy routes.
 
-Validation completed locally on 2026-05-07:
+Validation completed locally on 2026-05-08:
 
-- `npm run typecheck`
 - `npm run build`
+- `npm run typecheck`

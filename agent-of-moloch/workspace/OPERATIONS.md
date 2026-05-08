@@ -115,8 +115,11 @@ Bundled skills:
 - `workspace/skills/moloch/moloch-proposal-actions`
 - `workspace/skills/moloch/moloch-summon`
 - `workspace/skills/moloch/moloch-shared`
+- `workspace/skills/moloch/BOOTSTRAP.md`
 - `workspace/skills/moloch/AGENT_TASKS.md`
+- `workspace/skills/moloch/SHARED_MEMORY.md`
 - `workspace/skills/moloch/VOTE_DECISION_FLOW.md`
+- `workspace/skills/moloch/templates/community-memory`
 
 Use `task-snapshot` artifacts for routine review and token-efficient scheduled work. Use direct reads immediately before any write action. Use Graph reads for proposal metadata and original `proposalData`. If the two disagree, prefer direct contract state for timing and permission checks.
 
@@ -132,6 +135,27 @@ Membership proposals require extra intent checks:
 - Do not assume zero-tribute membership should use Tribute Minion. If the DAO expects direct `mintShares`, use `mint-shares`.
 - Share and loot quantities are human 18-decimal units by default. `mint-shares --amount 10000` means 10,000 voting shares. Use `--amount-raw`, `--shares-raw`, or `--loot-raw` only for exact base units.
 
+## Shared Memory
+
+Use `workspace/skills/moloch/SHARED_MEMORY.md` for the current upstream model.
+
+- Local snapshot artifacts are task cache, not durable DAO memory.
+- DAO-level coordination should live in Poster records plus IPFS-pinned community memory.
+- Bootstrap should create or locate `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI`.
+- Start new community memory from `workspace/skills/moloch/templates/community-memory`.
+- Use `memory-post` for concise public records and `dao-meta` proposals when DAO metadata pointers need to be published or updated.
+
+## Scheduled Tasks
+
+The manifest declares disabled examples for:
+
+- `bootstrap-dao-agent`
+- `proposal-action-watcher`
+- `initiative-steward`
+- `proposal-generation`
+
+Keep them disabled until the DAO address, mandate, signer, RPC/Graph access, shared-memory plan, and autonomy boundaries are configured. The prompts intentionally defer detailed behavior to `workspace/skills/moloch/AGENT_TASKS.md` so the template follows upstream task updates.
+
 ## App Auth
 
 If `APP_PASSWORD` is unset, the app and API work without authentication.
@@ -144,8 +168,14 @@ The template declares these required secrets in `manifest.json`:
 
 - `ACCOUNT_ADDRESS`: managed Ethereum account address used for DAO membership, voting power checks, mandate profiles, and audit records.
 - `PRIVATE_KEY`: signer key for authorized `--send` actions.
+- `RPC_URL`: live chain endpoint used for Baal reads, preflight checks, and transaction broadcasts.
 
-Keep both in the Pinata secrets vault. Do not write them into workspace files, logs, or chat transcripts.
+The manifest also documents optional secrets:
+
+- `GRAPH_URL` or `GRAPH_API_KEY`: indexed DAOhaus reads.
+- `PINATA_JWT`: IPFS publishing for shared memory and proposal workspaces.
+
+Keep secrets in the Pinata secrets vault. Do not write them into workspace files, logs, or chat transcripts.
 
 ## Safe Agent Rules
 

@@ -11,6 +11,8 @@ The app gives the agent a characterful surface: DAO memory, mandate ledger, prop
 - Suggested tasks for reading DAO state, checking proposals, voting, sponsoring, processing, and record keeping
 - Snapshot artifact records for `task-snapshot` checkpoint outputs
 - Bundled Moloch skills aligned with `https://github.com/HausDAO/moloch-skills` in `workspace/skills/moloch`
+- Shared community memory starter files from `workspace/skills/moloch/templates/community-memory`
+- Disabled manifest task examples for bootstrap, proposal watching, initiative stewardship, and proposal generation
 
 ## Run
 
@@ -95,13 +97,27 @@ Required template secrets:
 ```bash
 export ACCOUNT_ADDRESS="0x..."
 export PRIVATE_KEY="0x..."
+export RPC_URL="https://mainnet.base.org"
 ```
 
-`ACCOUNT_ADDRESS` is the managed voter/account identity used in mandate profiles and audit records. `PRIVATE_KEY` signs authorized onchain actions. Keep both in the Pinata secrets vault; do not commit them to files.
+`ACCOUNT_ADDRESS` is the managed voter/account identity used in mandate profiles and audit records. `PRIVATE_KEY` signs authorized onchain actions. `RPC_URL` is required for live Baal reads, preflight checks, and sends. `GRAPH_URL` or `GRAPH_API_KEY` is recommended for DAOhaus indexed proposal discovery. `PINATA_JWT` is optional for publishing shared memory and proposal workspaces to IPFS. Keep secrets in the Pinata secrets vault; do not commit them to files.
 
 Security note: use a dedicated agent wallet, not a primary personal wallet or treasury hot wallet. Pinata Agents store secrets securely in the agent secrets vault, but any signer that can vote or submit transactions carries operational risk. Fund the wallet only for the permissions and gas budget this agent actually needs, and rotate or revoke access if the mandate changes.
 
 Do not commit `.env` files, private keys, mnemonics, or raw signer credentials.
+
+## Bootstrap And Tasks
+
+The latest bundled Moloch skills include a first-run bootstrap and reusable scheduled task prompts:
+
+- `workspace/skills/moloch/BOOTSTRAP.md`
+- `workspace/skills/moloch/AGENT_TASKS.md`
+- `workspace/skills/moloch/SHARED_MEMORY.md`
+- `workspace/skills/moloch/templates/community-memory`
+
+The manifest includes disabled task examples. Enable them only after the DAO address, signer, mandate, autonomy boundaries, RPC/Graph access, and shared-memory location are configured. Run bootstrap once to create or locate the DAO shared memory root, fill the first `community-state.md`, create the agent mandate, run `task-snapshot`, and publish memory pointers when appropriate.
+
+Shared memory is the durable coordination layer for multiple agents. Use `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI` in DAO metadata or memory records, and use local snapshot artifacts only as task cache.
 
 ## Optional App Auth
 

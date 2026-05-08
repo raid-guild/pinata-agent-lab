@@ -31,6 +31,8 @@ const THE_GRAPH_GATEWAY = 'https://gateway.thegraph.com/api';
 const POSTER_TAG_DAO_DB = 'daohaus.proposal.database';
 const POSTER_TAG_SUMMONER = 'daohaus.summoner.daoProfile';
 const POSTER_TAG_DAO_PROFILE_UPDATE = 'daohaus.shares.daoProfile';
+const POSTER_TAG_MEMBER_DB = 'daohaus.member.database';
+const POSTER_TAG_SHARES_DB = 'daohaus.shares.database';
 const POSTER_POST_SELECTOR = toFunctionSelector('post(string,string)');
 const ACTION_GAS_LIMIT_ADDITION = 150000n;
 const PROCESS_PROPOSAL_GAS_LIMIT_ADDITION = 400000n;
@@ -260,6 +262,9 @@ function compactLinks(p) {
     ['goalsURI', 'Goals'],
     ['manifestoURI', 'Manifesto'],
     ['docsURI', 'Docs'],
+    ['communityMemoryURI', 'Community Memory'],
+    ['proposalWorkspaceURI', 'Proposal Workspace'],
+    ['sharedStateURI', 'Shared State'],
   ];
   const links = labels
     .filter(([key]) => p[key])
@@ -270,13 +275,34 @@ function compactLinks(p) {
   return links;
 }
 
-function daoRecordContent(dao, table, content) {
+function daoRecordContent(dao, table, content, queryType = 'latest') {
   return {
     daoId: dao,
     table,
-    queryType: 'latest',
+    queryType,
     ...content,
   };
+}
+
+function memoryPostContent(dao, table, content) {
+  return daoRecordContent(dao, table, Object.fromEntries(Object.entries({
+    schema: content.schema || 'community-memory/v1',
+    type: content.type || 'proposal-commons-post',
+    title: content.title,
+    body: content.body,
+    threadId: content.threadId || content.topicId,
+    topicId: content.topicId,
+    parentId: content.parentId,
+    proposalId: content.proposalId,
+    draftId: content.draftId,
+    contentURI: content.contentURI || content.link,
+    contentHash: content.contentHash,
+    workspaceURI: content.workspaceURI,
+    stateURI: content.stateURI,
+    agent: content.agent,
+    version: content.version,
+    createdAt: content.createdAt || new Date().toISOString(),
+  }).filter(([, value]) => value !== undefined && value !== null && value !== '')), content.queryType || 'list');
 }
 
 function daoProfileContent(dao, p) {
@@ -291,6 +317,9 @@ function daoProfileContent(dao, p) {
     joinRulesURI: p.joinRulesURI,
     goalsURI: p.goalsURI,
     manifestoURI: p.manifestoURI,
+    communityMemoryURI: p.communityMemoryURI,
+    proposalWorkspaceURI: p.proposalWorkspaceURI,
+    sharedStateURI: p.sharedStateURI,
   }).filter(([, value]) => value !== undefined && value !== null && value !== '')));
 }
 
@@ -737,6 +766,10 @@ function summonProfile(p) {
     charterURI: p.charterURI,
     joinRulesURI: p.joinRulesURI,
     rulesURI: p.rulesURI,
+    manifestoURI: p.manifestoURI,
+    communityMemoryURI: p.communityMemoryURI,
+    proposalWorkspaceURI: p.proposalWorkspaceURI,
+    sharedStateURI: p.sharedStateURI,
   }).filter(([, value]) => value !== undefined && value !== null && value !== ''));
 }
 
@@ -888,12 +921,13 @@ async function main() {
   graph-dao-history    DAO plus proposal history in one Graph query
   graph-members        Indexed members with shares, loot, delegation, vote history
   graph-member         One indexed member: --member 0x...
-  graph-records        DAO Poster records: --table daoProfile|charter|joinRules
+  graph-records        DAO Poster records: --table daoProfile|signal|communityMemory
   proposal-lifecycle   Derived status: unsponsored/voting/grace/needsProcessing/failed/processed
   process-queue        Oldest ready-to-process proposals first
   signal               Text/metadata governance signal. Not for membership, shares, or loot.
   dao-meta             Proposal to update daoProfile metadata/links through Poster
   dao-record           Proposal to post a charter/joinRules/manifesto record through Poster
+  memory-post          Direct Poster post for DAO forum/memory/discussion records
   tribute, join-dao    Real tokens-for-shares or tokens-for-loot proposal via Tribute Minion
   mint-shares          Direct Baal proposal to mint voting shares to member address(es)
   gov-settings         Governance config proposal
@@ -905,7 +939,7 @@ Options:
   --compact            Hide large calldata/proposalData in output
   --estimate-baal-gas  Opt in to DAOhaus-style submitProposal baalGas estimation
   --no-estimate-baal-gas  Legacy no-op; baalGas is 0 by default unless explicitly set
-  --baal-gas <n>       Explicit submitProposal baalGas; use carefully because low nonzero values can make processing fail
+  --baal-gas <n>       Explicit submitProposal baalGas; low nonzero values can make processing fail
   --baal-gas-buffer <n>  Multiplier for opt-in estimated baalGas; default 1.2
   --require-baal-gas-estimate  Error if baalGas cannot be estimated
   --safe 0xSAFE        DAO Safe address for DAOhaus-style baalGas estimation
@@ -913,6 +947,9 @@ Options:
   --amount-raw <n>     Raw 18-decimal base units for mint-shares amount
   --shares-raw <n>     Raw 18-decimal base units for Tribute Minion shares
   --loot-raw <n>       Raw 18-decimal base units for Tribute Minion loot
+  --community-memory-uri ipfs://...  DAO profile pointer to shared memory root
+  --proposal-workspace-uri ipfs://... DAO profile pointer to proposal workspaces
+  --shared-state-uri ipfs://... DAO profile pointer to current shared state
   --send               Broadcast a write tx
   --wait               Wait for receipt after send
   --vault-provider 1password --vault-item <item> [--vault-field private_key]
@@ -1064,7 +1101,33 @@ Share and loot quantities default to human 18-decimal units:
   }
 
   let out;
-  if (command === 'signal') {
+  if (command === 'memory-post' || command === 'poster-post') {
+    const dao = requireDao();
+    const p = arg('content-file') ? jsonFile(arg('content-file')) : {};
+    const table = arg('table', p.table || 'communityMemory');
+    const content = memoryPostContent(dao, table, {
+      ...p,
+      schema: arg('schema', p.schema),
+      type: arg('type', p.type),
+      title: arg('title', p.title),
+      body: arg('body', p.body || arg('description', '')),
+      threadId: arg('thread-id', p.threadId),
+      topicId: arg('topic-id', p.topicId),
+      parentId: arg('parent-id', p.parentId),
+      proposalId: arg('proposal', p.proposalId),
+      draftId: arg('draft-id', p.draftId),
+      contentURI: arg('content-uri', p.contentURI || arg('link', p.link)),
+      contentHash: arg('content-hash', p.contentHash),
+      workspaceURI: arg('workspace-uri', p.workspaceURI),
+      stateURI: arg('state-uri', p.stateURI),
+      agent: arg('agent', p.agent),
+      version: arg('version', p.version),
+      queryType: arg('query-type', p.queryType || 'list'),
+    });
+    const tag = arg('tag', POSTER_TAG_MEMBER_DB);
+    const data = encodeFunctionData({ abi: POSTER_ABI, functionName: 'post', args: [JSON.stringify(content), tag] });
+    out = withSummary(tx(POSTER, data), { action: 'post', proposalKind: 'MEMORY_POST', submissionTarget: 'POSTER', dao, recordTable: table, tag, queryType: content.queryType, type: content.type, title: content.title, threadId: content.threadId, topicId: content.topicId, proposalId: content.proposalId, draftId: content.draftId, contentURI: content.contentURI, note: 'Direct Poster post using the DAOhaus member database tag. The sender must be a DAO member for current DAOhaus indexing.' });
+  } else if (command === 'signal') {
     const dao = requireDao();
     const title = arg('title');
     const description = arg('description', '');
@@ -1078,7 +1141,7 @@ Share and loot quantities default to human 18-decimal units:
     const p = arg('params') ? jsonFile(arg('params')) : {};
     const title = arg('title', p.title || 'Update DAO metadata');
     const description = arg('description', p.proposalDescription || p.description || '');
-    const content = daoProfileContent(dao, { ...p, name: arg('name', p.name), description: arg('dao-description', p.description), charterURI: arg('charter-uri', p.charterURI), joinRulesURI: arg('join-rules-uri', p.joinRulesURI), goalsURI: arg('goals-uri', p.goalsURI), manifestoURI: arg('manifesto-uri', p.manifestoURI), web: arg('web', p.web) });
+    const content = daoProfileContent(dao, { ...p, name: arg('name', p.name), description: arg('dao-description', p.description), charterURI: arg('charter-uri', p.charterURI), joinRulesURI: arg('join-rules-uri', p.joinRulesURI), goalsURI: arg('goals-uri', p.goalsURI), manifestoURI: arg('manifesto-uri', p.manifestoURI), communityMemoryURI: arg('community-memory-uri', p.communityMemoryURI), proposalWorkspaceURI: arg('proposal-workspace-uri', p.proposalWorkspaceURI), sharedStateURI: arg('shared-state-uri', p.sharedStateURI), web: arg('web', p.web) });
     const postData = encodeFunctionData({ abi: POSTER_ABI, functionName: 'post', args: [JSON.stringify(content), POSTER_TAG_DAO_PROFILE_UPDATE] });
     out = withSummary(await proposalTx({ dao, title, description, link: arg('link', p.link || ''), proposalType: 'UPDATE_METADATA_SETTINGS', expiration: Number(arg('expiration', p.expiration || 0)), baalGas: arg('baal-gas') == null && p.baalGas == null ? undefined : BigInt(arg('baal-gas', p.baalGas)), value: BigInt(arg('value', p.value || 0)), actions: [{ to: POSTER, value: 0, data: postData, operation: 0 }] }), { action: 'submitProposal', proposalKind: 'UPDATE_METADATA_SETTINGS', submissionTarget: 'BAAL', dao, recordTable: 'daoProfile' });
   } else if (command === 'dao-record') {

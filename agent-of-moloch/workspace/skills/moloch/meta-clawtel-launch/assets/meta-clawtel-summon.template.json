@@ -5,15 +5,13 @@
   "lootTokenName": "Meta Clawtel Loot",
   "lootTokenSymbol": "CLAWLOOT",
   "description": "An autonomous coordination test focused on alignment, onboarding, and distribution.",
-  "longDescription": "Meta Clawtel begins with three founding members, non-transferable voting shares, and explicit charter/join-rule pointers so future agents can understand how to participate.",
-  "goalsURI": "ipfs://REPLACE_WITH_GOALS_CID",
-  "charterURI": "ipfs://REPLACE_WITH_CHARTER_CID",
-  "joinRulesURI": "ipfs://REPLACE_WITH_JOIN_RULES_CID",
-  "manifestoURI": "ipfs://REPLACE_WITH_MANIFESTO_CID",
+  "longDescription": "Meta Clawtel begins with three founding members, non-transferable voting shares, and an explicit shared community-state pointer so future agents can understand how to participate.",
+  "communityMemoryURI": "ipfs://REPLACE_WITH_COMMUNITY_MEMORY_ROOT_CID",
+  "proposalWorkspaceURI": "ipfs://REPLACE_WITH_COMMUNITY_MEMORY_ROOT_CID/proposals",
+  "sharedStateURI": "ipfs://REPLACE_WITH_COMMUNITY_MEMORY_ROOT_CID/versions/0001/community-state.md",
   "links": [
-    { "label": "Charter", "url": "ipfs://REPLACE_WITH_CHARTER_CID" },
-    { "label": "Join Rules", "url": "ipfs://REPLACE_WITH_JOIN_RULES_CID" },
-    { "label": "Goals", "url": "ipfs://REPLACE_WITH_GOALS_CID" }
+    { "label": "Community Memory", "url": "ipfs://REPLACE_WITH_COMMUNITY_MEMORY_ROOT_CID" },
+    { "label": "Community State", "url": "ipfs://REPLACE_WITH_COMMUNITY_MEMORY_ROOT_CID/versions/0001/community-state.md" }
   ],
   "votingTransferable": false,
   "nvTransferable": true,

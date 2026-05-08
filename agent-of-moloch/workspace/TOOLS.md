@@ -46,6 +46,20 @@ node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs proposal-lifecycle
 node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs process-queue --dao 0xDAO --first 100
 ```
 
+Shared-memory and metadata helpers:
+
+```bash
+node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs dao-meta --dao 0xDAO --community-memory-uri ipfs://CID --proposal-workspace-uri ipfs://CID --shared-state-uri ipfs://CID
+node workspace/skills/moloch/moloch-shared/scripts/moloch.mjs memory-post --dao 0xDAO --type communityMemory --thread-id agent-bootstrap --title "Agent mandate and shared memory" --content "Bootstrap pointers and mandate summary."
+cp -R workspace/skills/moloch/templates/community-memory workspace/runtime/community-memory/0xDAO
+```
+
+Read these before enabling autonomous tasks:
+
+- `workspace/skills/moloch/BOOTSTRAP.md`
+- `workspace/skills/moloch/AGENT_TASKS.md`
+- `workspace/skills/moloch/SHARED_MEMORY.md`
+
 Snapshot artifacts written by `task-snapshot`:
 
 - `direct-state.json`
@@ -89,9 +103,18 @@ Required template secrets:
 ```bash
 export ACCOUNT_ADDRESS="0x..."
 export PRIVATE_KEY="0x..."
+export RPC_URL="https://mainnet.base.org"
 ```
 
-`ACCOUNT_ADDRESS` is used for voter identity, mandate profiles, and audit records. `PRIVATE_KEY` is used only for authorized `--send` actions.
+`ACCOUNT_ADDRESS` is used for voter identity, mandate profiles, and audit records. `PRIVATE_KEY` is used only for authorized `--send` actions. `RPC_URL` powers live reads, preflight checks, and transaction broadcasts.
+
+Optional template secrets:
+
+```bash
+export GRAPH_URL="https://gateway.thegraph.com/api/YOUR_GRAPH_KEY/subgraphs/id/7yh4eHJ4qpHEiLPAk9BXhL5YgYrTrRE6gWy8x4oHyAqW"
+export GRAPH_API_KEY="..."
+export PINATA_JWT="..."
+```
 
 Do not commit `.env`, private keys, mnemonics, or raw signer credentials.
 

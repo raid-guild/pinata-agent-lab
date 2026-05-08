@@ -48,9 +48,39 @@
       { "name": "communityLegitimacy", "weight": 20 }
     ]
   },
+  "initiativePolicy": {
+    "purpose": "Maintain longer-term agency without creating proposals every run.",
+    "maxActiveInitiatives": 3,
+    "maxNewProposalsPerGenerationRun": 1,
+    "proposalThrottle": "Do not create a new proposal when 3 or more proposals are currently in voting.",
+    "reviewCadence": "daily",
+    "rules": [
+      "Use initiatives as a backlog for longer-term goals.",
+      "Move an initiative to proposal drafting only when it has a clear outcome, success criteria, and fit with the latest DAO state.",
+      "Do not create duplicate proposals for work already active in governance.",
+      "Update initiative status after passed, failed, rejected, or processed proposals."
+    ]
+  },
+  "initiatives": [
+    {
+      "id": "example-initiative",
+      "title": "Example longer-term initiative",
+      "status": "observing",
+      "priority": 1,
+      "thesis": "Describe why this initiative matters to the DAO.",
+      "successCriteria": [
+        "Define the first measurable outcome."
+      ],
+      "proposalTypesAllowed": ["signal"],
+      "cadence": "review daily, propose at most weekly",
+      "blockedBy": [],
+      "lastReviewedAt": "",
+      "lastProposalId": null
+    }
+  ],
   "hardNoRules": [
     "Transfers treasury assets without clear recipient, purpose, and accountability.",
-    "Expands agent authority or custody without explicit human approval.",
+    "Expands agent authority or custody without a clear DAO governance basis.",
     "Conflicts with the latest ratified charter or mandate.",
     "Contains action data that does not match the proposal text."
   ],
@@ -70,19 +100,26 @@
   "executionPolicy": {
     "mustProcessReadyProposals": true,
     "rules": [
-      "Processing is mechanical settlement of completed governance, not a second approval decision.",
+      "Processing is mechanical settlement of completed governance, not a second governance decision.",
       "Process the first item from process-queue whenever direct chain state says it is executable.",
       "Use the exact indexed proposalData from the proposal.",
       "Do not block processing because of proposal category, value, membership, shares, loot, payments, settings, or mandate preferences. Governance is already complete."
     ]
   },
-  "escalationPolicy": {
-    "requiresHumanReview": [
-      "Action data is missing, malformed, or does not match the passed proposal text",
+  "autonomyPolicy": {
+    "broadcastByDefault": true,
+    "requiresOperatorApproval": false,
+    "noActionWhen": [
+      "Action data is missing, malformed, or does not match the proposal text",
       "Processing would use reconstructed proposalData instead of the exact indexed proposalData",
-      "The proposal changes this agent's own authority, custody, signer policy, or mandate",
-      "Charter or mandate amendments",
-      "Ambiguous or conflicting proposal data"
+      "Live chain preflight fails",
+      "The managed signer lacks gas, permission, voting power, or required proposal rights",
+      "The proposal is ambiguous enough that the mandate points to abstain or no action"
+    ],
+    "rules": [
+      "Do not wait for operator approval before broadcasting mandate-aligned actions.",
+      "Use --send after live preflight passes.",
+      "Record every transaction hash and post-action state."
     ]
   },
   "auditLog": {
