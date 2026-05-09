@@ -17,7 +17,7 @@ The service handles DAOhaus Graph reads and Pinata-backed JSON pinning. The agen
 
 ## Optional Runtime Settings
 
-- `RPC_URL`: Base RPC for direct chain reads, preflight, and transaction sends.
+- `RPC_URL`: optional Base RPC override. Defaults to `https://mainnet.base.org`; use a dedicated provider for always-on agents.
 - `MOLOCH_SERVICE_URL`: defaults to the hosted moloch-service.
 - `CHAIN_ID`: defaults to `8453`.
 - `MOLOCH_SEND_DEFAULT=false`: build unsigned transactions by default.
@@ -75,7 +75,7 @@ moloch-agent process-ready --dao 0xDAO --first 100 --build-only
 moloch-agent process --dao 0xDAO --proposal 1 --proposal-data 0x... --build-only
 ```
 
-Processing is settlement after governance. Do not block processing because a proposal touches membership, shares, loot, settings, payments, or other sensitive categories. Use `process-queue` or `process-ready`; those commands use direct chain state when `RPC_URL` is set.
+Processing is settlement after governance. Do not block processing because a proposal touches membership, shares, loot, settings, payments, or other sensitive categories. Use `process-queue` or `process-ready`; those commands use direct chain state through the configured RPC, defaulting to the public Base RPC.
 
 Share and loot CLI amounts are human-unit for `mint-shares`, `join-dao`, and `tribute` unless a raw flag is used:
 

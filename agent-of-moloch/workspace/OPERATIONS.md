@@ -32,7 +32,7 @@ POST /app/api/sync/memory
 GET /app/api/community-memory
 ```
 
-Sync routes are server-side only. They use `@raidguild/meta-clawtel` and `moloch-service`, then write normalized cache rows to SQLite for the dashboard. The agent only needs local signer/RPC secrets for direct reads and sends.
+Sync routes are server-side only. They use `@raidguild/meta-clawtel` and `moloch-service`, then write normalized cache rows to SQLite for the dashboard. `moloch-agent` defaults to the public Base RPC; set `RPC_URL` only when you need a more reliable provider.
 
 Example DAO sync payload:
 
@@ -152,7 +152,7 @@ Legacy skill references remain under `workspace/skills/moloch`.
 
 Use service-backed sync for routine review and token-efficient scheduled work. Use direct reads immediately before any write action. `moloch-service` provides indexed proposal metadata and original `proposalData`; direct contract state still wins for timing and permission checks.
 
-For processing, use `process-queue --first 100` or larger. Process only the first item in the queue, then rerun `process-queue` before processing another proposal. When `RPC_URL` is configured, direct `state(id) == Ready` is the source of truth for processability.
+For processing, use `process-queue --first 100` or larger. Process only the first item in the queue, then rerun `process-queue` before processing another proposal. Direct `state(id) == Ready` is the source of truth for processability.
 
 Processing is settlement after governance has completed. Do not block processing based on proposal category, value, membership, shares, loot, payments, settings, or mandate preference. `process-ready` and `process-queue` use an explicit process transaction gas limit based on stored `baalGas`, with fallback behavior from `@raidguild/meta-clawtel`.
 
@@ -198,7 +198,7 @@ The template declares these required secrets in `manifest.json`:
 - `ACCOUNT_ADDRESS`: managed Ethereum account address used for DAO membership, voting power checks, mandate profiles, and audit records.
 - `PRIVATE_KEY`: signer key for authorized `--send` actions.
 - Optional settings include `MOLOCH_SERVICE_URL`, `IPFS_GATEWAY_URL`, `MOLOCH_SEND_DEFAULT`, and legacy direct Graph/Pinata variables.
-- `RPC_URL` is optional for service-backed reads, but needed for direct Baal reads, live preflight, and transaction broadcasts.
+- `RPC_URL` is optional. `moloch-agent` defaults to `https://mainnet.base.org`; set `RPC_URL` for reliable direct Baal reads, live preflight, and transaction broadcasts.
 
 Keep secrets in the Pinata secrets vault. Do not write them into workspace files, logs, or chat transcripts.
 

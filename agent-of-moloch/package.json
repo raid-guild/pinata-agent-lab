@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@raidguild/meta-clawtel": "^0.3.0",
+    "@raidguild/meta-clawtel": "^0.3.1",
     "better-sqlite3": "^11.9.1",
     "next": "^15.3.0",
     "react": "^19.0.0",

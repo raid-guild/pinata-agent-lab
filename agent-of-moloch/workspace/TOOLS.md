@@ -81,7 +81,7 @@ Processing note:
 
 - Use `process-queue --first 100` or larger for watcher tasks.
 - Process the first queue item only, then rerun the queue before processing another proposal.
-- With `RPC_URL` configured, direct `state(id) == Ready` is the processability source of truth.
+- Direct `state(id) == Ready` is the processability source of truth.
 - Processing is settlement, not a second mandate vote. Do not block it based on proposal category.
 - The `process` command sets an explicit gas limit by default: stored `baalGas + 400000`, or `800000` when stored `baalGas` is zero. Override with `--gas-limit`.
 
@@ -92,7 +92,7 @@ Membership proposal path check:
 - Decode known successful membership proposals for the DAO before drafting or processing a new membership proposal.
 - `mint-shares --amount 10000` means 10,000 voting shares. Use raw flags only for exact base units.
 
-Optional env for direct chain reads and sends:
+Optional RPC override:
 
 ```bash
 export RPC_URL="https://mainnet.base.org"
@@ -105,7 +105,7 @@ export ACCOUNT_ADDRESS="0x..."
 export PRIVATE_KEY="0x..."
 ```
 
-`ACCOUNT_ADDRESS` is used for voter identity, mandate profiles, and audit records. `PRIVATE_KEY` is used only for authorized transaction actions. `RPC_URL` is optional for service-backed reads, but powers direct chain reads, preflight checks, and transaction broadcasts.
+`ACCOUNT_ADDRESS` is used for voter identity, mandate profiles, and audit records. `PRIVATE_KEY` is used only for authorized transaction actions. `RPC_URL` defaults to `https://mainnet.base.org`; set your own provider for reliable direct chain reads, preflight checks, and transaction broadcasts.
 
 Optional template secrets:
 
