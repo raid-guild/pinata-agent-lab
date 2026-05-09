@@ -150,6 +150,8 @@ Primary runtime:
 
 Use service-backed sync for routine review and token-efficient scheduled work. Use direct reads immediately before any write action. `moloch-service` provides indexed proposal metadata and original `proposalData`; direct contract state still wins for timing and permission checks.
 
+If hosted Graph-backed commands fail with a schema or indexing error, continue with direct RPC reads before deciding the DAO or proposal is invalid. `read-dao`, `read-proposal`, `proposal-lifecycle`, and `process-queue` are the fallback path for existence checks and write preflight. `/app/api/sync/dao` may return partial sync results when direct RPC succeeds but service-backed records fail.
+
 For processing, use `process-queue --first 100` or larger. Process only the first item in the queue, then rerun `process-queue` before processing another proposal. Direct `state(id) == Ready` is the source of truth for processability.
 
 Processing is settlement after governance has completed. Do not block processing based on proposal category, value, membership, shares, loot, payments, settings, or mandate preference. `process-ready` and `process-queue` use an explicit process transaction gas limit based on stored `baalGas`, with fallback behavior from `@raidguild/meta-clawtel`.

@@ -27,6 +27,8 @@ Graph and Pinata credentials should normally live in `moloch-service`, not in th
 
 If `moloch-agent` is not found as a bare shell command, do not treat that as a missing package. Use `npm exec -- moloch-agent ...` from the template root so npm resolves the local `node_modules/.bin` binary.
 
+If Graph-backed commands such as `dao`, `members`, `proposals`, or `records` fail with a service schema or indexing error, do not conclude that the DAO is invalid. Run direct RPC checks with `read-dao`, `read-proposal`, `proposal-lifecycle`, or `process-queue`. Direct RPC reads are the source of truth for whether a Baal DAO exists and for write preflight.
+
 ## Bootstrap
 
 On first run:
@@ -37,7 +39,8 @@ On first run:
 4. Confirm `ACCOUNT_ADDRESS`, `PRIVATE_KEY`, and whether `MOLOCH_SEND_DEFAULT=false` should be set.
 5. Run `npm exec -- moloch-agent health` and `npm exec -- moloch-agent capabilities`.
 6. Run `/app/api/sync/dao` or `npm exec -- moloch-agent dao`, `proposals`, `records`, and `process-queue`.
-7. Store the DAO charter/thesis, voter platform, shared-memory pointers, and sync status in the dashboard cache.
+7. If service-backed Graph reads fail, run `npm exec -- moloch-agent read-dao --dao 0xDAO` and record the DAO as a partial sync if the direct read succeeds.
+8. Store the DAO charter/thesis, voter platform, shared-memory pointers, and sync status in the dashboard cache.
 
 Bootstrap is complete when the agent has a real DAO address, a signer identity, a mandate, a shared-memory plan or pointer, and a successful service-backed sync.
 
@@ -56,6 +59,8 @@ npm exec -- moloch-agent read-proposal --dao 0xDAO --proposal 1
 npm exec -- moloch-agent proposal-lifecycle --dao 0xDAO --proposal 1
 npm exec -- moloch-agent process-queue --dao 0xDAO --first 100
 ```
+
+`dao`, `proposals`, `members`, and `records` are service/Graph-backed. `read-dao`, `read-proposal`, `proposal-lifecycle`, and the direct parts of `process-queue` use RPC. When they disagree, trust direct RPC for existence, timing, permission, and transaction safety.
 
 ## Vote Decision Flow
 

@@ -73,6 +73,11 @@ Service-backed sync cache fields:
 - DAO database records from `npm exec -- moloch-agent records`
 - direct preflight from `npm exec -- moloch-agent read-dao`, `read-proposal`, and `proposal-lifecycle`
 
+Fallback rule:
+
+- If `dao`, `members`, `proposals`, or `records` fail with a hosted service or Graph schema error, run `read-dao` before concluding the DAO is invalid.
+- If direct RPC succeeds, record the sync as partial and continue with direct preflight for any action.
+
 Processing note:
 
 - Use `process-queue --first 100` or larger for watcher tasks.

@@ -82,6 +82,8 @@ npm exec -- moloch-agent process-queue --dao 0xDAO --first 100
 
 Use `workspace/skills/moloch-agent-simple/SKILL.md` as the current operating guide before making vote recommendations or transaction decisions.
 
+Graph-backed commands such as `dao`, `members`, `proposals`, and `records` can fail if the hosted service and subgraph schema drift. Treat that as a service/indexing issue, not proof that the DAO is invalid. Use direct RPC reads like `read-dao`, `read-proposal`, `proposal-lifecycle`, and `process-queue` to verify DAO existence and transaction safety.
+
 For processing, use `process-queue --first 100` or larger, process only the first queue item, then rerun the queue before processing another proposal. Processing is settlement after governance has passed; do not block it because the proposal touches membership, shares, loot, payments, settings, or another sensitive category. The updated skill sets an explicit process transaction gas limit by default: stored `baalGas + 400000`, or `800000` when stored `baalGas` is zero. Override with `--gas-limit` only when needed.
 
 Membership proposal note: Moloch/Baal DAOs may admit members through different executable paths. A Tribute Minion membership proposal includes a Minion `releaseEscrow` action before shares or loot are minted. A direct membership proposal may call the Baal DAO directly with `mintShares(address[],uint256[])` and no Minion escrow action. Before drafting or processing membership proposals, check the DAO's join rules and decode a known successful membership proposal from that DAO. Use `mint-shares --amount 10000` for 10,000 human voting shares; use `--amount-raw`, `--shares-raw`, or `--loot-raw` only for exact base units.

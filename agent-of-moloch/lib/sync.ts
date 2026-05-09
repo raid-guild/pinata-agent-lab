@@ -28,18 +28,26 @@ export async function syncDao(input: SyncInput) {
   if (!dao.daoAddress) throw new Error("DAO address is required before sync");
 
   const first = input.first || 100;
-  const [daoResult, proposalsResult, processQueueResult, profileRecordsResult, memoryRecordsResult] = await Promise.all([
-    runMolochAgent("dao", ["--dao", dao.daoAddress]),
-    runMolochAgent("proposals", ["--dao", dao.daoAddress, "--first", String(first)]),
-    runMolochAgent("process-queue", ["--dao", dao.daoAddress, "--first", String(first)]),
-    runMolochAgent("records", ["--dao", dao.daoAddress, "--table", "daoProfile", "--first", "20"]),
-    runMolochAgent("records", ["--dao", dao.daoAddress, "--table", "communityMemory", "--first", "50"])
+  const [daoResult, directDaoResult, proposalsResult, processQueueResult, profileRecordsResult, memoryRecordsResult] = await Promise.all([
+    runMolochAgentSafe("dao", ["--dao", dao.daoAddress]),
+    runMolochAgentSafe("read-dao", ["--dao", dao.daoAddress]),
+    runMolochAgentSafe("proposals", ["--dao", dao.daoAddress, "--first", String(first)]),
+    runMolochAgentSafe("process-queue", ["--dao", dao.daoAddress, "--first", String(first)]),
+    runMolochAgentSafe("records", ["--dao", dao.daoAddress, "--table", "daoProfile", "--first", "20"]),
+    runMolochAgentSafe("records", ["--dao", dao.daoAddress, "--table", "communityMemory", "--first", "50"])
   ]);
 
-  const proposals = extractArray(proposalsResult, "proposals");
-  const processQueue = extractArray(processQueueResult, "queue");
-  const profileRecords = extractArray(profileRecordsResult, "records");
-  const memoryRecords = extractArray(memoryRecordsResult, "records");
+  if (!daoResult.ok && !directDaoResult.ok) {
+    throw new Error(`Unable to sync DAO. Graph read failed: ${daoResult.error}. Direct RPC read failed: ${directDaoResult.error}`);
+  }
+
+  const proposals = proposalsResult.ok ? extractArray(proposalsResult.data, "proposals") : [];
+  const processQueue = processQueueResult.ok ? extractArray(processQueueResult.data, "queue") : [];
+  const profileRecords = profileRecordsResult.ok ? extractArray(profileRecordsResult.data, "records") : [];
+  const memoryRecords = memoryRecordsResult.ok ? extractArray(memoryRecordsResult.data, "records") : [];
+  const errors = [daoResult, directDaoResult, proposalsResult, processQueueResult, profileRecordsResult, memoryRecordsResult]
+    .filter((result) => !result.ok)
+    .map((result) => ({ command: result.command, error: result.error }));
 
   const artifact = upsertSnapshotArtifact({
     daoId: dao.id,
@@ -48,15 +56,15 @@ export async function syncDao(input: SyncInput) {
     operatingContextPath: "service:dao/records/daoProfile",
     proposalSummaryPath: "service:dao/proposals",
     processQueuePath: "service:dao/process-queue",
-    directStatePath: process.env.RPC_URL ? "rpc:read-dao" : "",
+    directStatePath: directDaoResult.ok ? "rpc:read-dao" : "",
     lastGraphProposalIdSeen: proposals.reduce((max, proposal) => Math.max(max, Number(proposal.proposalId || 0)), 0),
     votingCount: proposals.filter((proposal) => mapProposalStatusFromProposal(proposal) === "voting").length,
     needsProcessingCount: processQueue.length,
     pendingActionCount: processQueue.length,
-    status: "fresh"
+    status: errors.length ? "manual" : "fresh"
   });
 
-  const updatedDao = ingestDaoProfile(dao.id, daoResult, profileRecords);
+  const updatedDao = ingestDaoProfile(dao.id, daoResult.ok ? daoResult.data : directDaoResult.data, profileRecords);
   const cachedProposals = ingestProposals(dao.id, proposals);
   const cachedProfileRecords = profileRecords.map((record) => ingestGraphRecord(dao.id, "daoProfile", record)).filter(Boolean);
   const cachedMemoryRecords = memoryRecords.map((record) => ingestGraphRecord(dao.id, "communityMemory", record)).filter(Boolean);
@@ -67,9 +75,12 @@ export async function syncDao(input: SyncInput) {
     proposals: cachedProposals,
     records: [...cachedProfileRecords, ...cachedMemoryRecords],
     service: {
-      dao: daoResult,
-      processQueue: processQueueResult
-    }
+      dao: daoResult.ok ? daoResult.data : null,
+      directDao: directDaoResult.ok ? directDaoResult.data : null,
+      processQueue: processQueueResult.ok ? processQueueResult.data : null,
+      errors
+    },
+    partial: errors.length > 0
   };
 }
 
@@ -111,6 +122,23 @@ async function runMolochAgent(command: string, args: string[]) {
     maxBuffer: 1024 * 1024 * 20
   });
   return JSON.parse(stdout) as JsonRecord;
+}
+
+async function runMolochAgentSafe(command: string, args: string[]) {
+  try {
+    return {
+      ok: true as const,
+      command,
+      data: await runMolochAgent(command, args)
+    };
+  } catch (error) {
+    return {
+      ok: false as const,
+      command,
+      error: error instanceof Error ? error.message : "unknown moloch-agent error",
+      data: {}
+    };
+  }
 }
 
 function ensureDao(input: SyncInput) {
