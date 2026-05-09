@@ -39,21 +39,9 @@
   ],
   "tasks": [
     {
-      "name": "bootstrap-dao-agent",
-      "prompt": "Run the one-time Agent of Moloch bootstrap. Read workspace/BOOTSTRAP.md and workspace/skills/moloch-agent-simple/SKILL.md. Gather DAO address or summon intent, ACCOUNT_ADDRESS, mandate/conviction, autonomy boundaries, RPC/service status, and scheduled task cadence. Use @raidguild/meta-clawtel commands through moloch-agent. Create or locate the shared community memory root, create the mandate, sync /app/api/sync/dao, and store dashboard/API records. Do not invent missing mandate fields or broadcast transactions without explicit operator approval.",
-      "schedule": "0 9 * * *",
-      "enabled": false
-    },
-    {
       "name": "proposal-action-watcher",
       "prompt": "Run the Proposal Action Watcher from workspace/skills/moloch-agent-simple/SKILL.md. Sync current DAO state with moloch-agent proposals, records, and process-queue. Read mandate, DAO database memory, and dashboard cache. Identify one next sponsor, vote, process, cancel, review, or no-action decision. Before any write, perform live preflight with proposal-lifecycle/read-proposal/process-queue. Processing is settlement and must not be blocked by proposal category. After any send, reread state, log the result, and post memory when useful.",
       "schedule": "0 * * * *",
-      "enabled": false
-    },
-    {
-      "name": "initiative-steward",
-      "prompt": "Run the Initiative Steward task from workspace/skills/moloch-agent-simple/SKILL.md. Load the mandate initiative backlog, moloch-agent synced proposals, shared community-state.md, and relevant communityMemory records. Update operating context from recent passed, failed, rejected, and processed proposals. Maintain initiative statuses, evidence, next useful actions, and proposal readiness. Create or update a proposal draft workspace only when the mandate and open-proposal throttle allow it.",
-      "schedule": "0 12 * * *",
       "enabled": false
     },
     {

@@ -4,7 +4,7 @@ Status: complete
 
 Project summary:
 
-Agent of Moloch is a Pinata template for a characterful Moloch/Baal governance agent. It stores DAOs, charters, theses, governance mandates, proposal records, vote recommendations, rationales, snapshot checkpoints, and suggested governance tasks. The dashboard at `/app` is read-only; writes happen through API routes or chat.
+Agent of Moloch is a Pinata template for a characterful Moloch/Baal governance agent. It stores DAOs, charters, theses, governance mandates, proposal records, vote recommendations, rationales, service sync checkpoints, and suggested governance tasks. The dashboard at `/app` is read-only; writes happen through API routes or chat.
 
 Immediate next steps for a fresh instance:
 

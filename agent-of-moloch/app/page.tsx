@@ -46,7 +46,7 @@ type GovernanceTask = {
   dueDate: string;
 };
 
-type SnapshotArtifact = {
+type SyncCheckpoint = {
   id: number;
   daoName: string;
   artifactDir: string;
@@ -78,7 +78,7 @@ type Bundle = {
   daos: Dao[];
   proposals: Proposal[];
   tasks: GovernanceTask[];
-  artifacts: SnapshotArtifact[];
+  artifacts: SyncCheckpoint[];
   communityRecords: CommunityRecord[];
   stats: {
     daoCount: number;
@@ -141,7 +141,7 @@ export default function Home() {
           <h1>Agent of Moloch</h1>
           <p>
             A characterful governance agent for Baal DAOs: it remembers each DAO's charter, states its voter
-            platform, reads checkpoint artifacts, and queues cautious tasks before any onchain move.
+            platform, syncs service-backed DAO state, and queues cautious tasks before any onchain move.
           </p>
         </div>
 
@@ -152,7 +152,7 @@ export default function Home() {
           </div>
           <strong>{conviction}%</strong>
           <em>mandate scored</em>
-          <p>Checkpoint first. Preflight live. Send only when mandate and harness policy permit it.</p>
+          <p>Sync first. Preflight live. Send only when mandate and harness policy permit it.</p>
         </div>
       </section>
 
@@ -173,8 +173,8 @@ export default function Home() {
           <p>Tracks lifecycle state, vote memos, rationale, due dates, and the next review needed before voting.</p>
         </article>
         <article>
-          <span>Checkpoint</span>
-          <strong>Artifact watch</strong>
+          <span>Sync</span>
+          <strong>Service watch</strong>
           <p>Surfaces service-backed sync state: DAO profile, proposal list, DAO database memory, and process queue.</p>
         </article>
       </section>
@@ -198,7 +198,7 @@ export default function Home() {
             <span><strong>{bundle.stats.daoCount}</strong> DAOs held</span>
             <span><strong>{bundle.stats.readyToVote}</strong> ready votes</span>
             <span><strong>{bundle.stats.urgentTasks}</strong> urgent rites</span>
-            <span><strong>{bundle.stats.pendingArtifactActions}</strong> artifact actions</span>
+            <span><strong>{bundle.stats.pendingArtifactActions}</strong> queued actions</span>
             <span><strong>{bundle.stats.communityRecords}</strong> memory records</span>
           </div>
         </aside>
@@ -266,29 +266,29 @@ export default function Home() {
         </section>
       </section>
 
-      <section className="artifactGrid" aria-label="Snapshot artifact checkpoints">
+      <section className="artifactGrid" aria-label="Service sync checkpoints">
         <div className="sectionHead">
-          <h2>Checkpoint artifacts</h2>
+          <h2>Service sync</h2>
           <span>{bundle.stats.freshArtifacts} fresh</span>
         </div>
         <div className="artifactBoard">
-          {bundle.artifacts.map((artifact) => (
-            <article className={`artifact status-${artifact.status}`} key={artifact.id}>
+          {bundle.artifacts.map((checkpoint) => (
+            <article className={`artifact status-${checkpoint.status}`} key={checkpoint.id}>
               <div className="cardTop">
-                <span>{artifact.daoName}</span>
-                <em>{artifact.status}</em>
+                <span>{checkpoint.daoName}</span>
+                <em>{checkpoint.status}</em>
               </div>
-              <strong>{artifact.artifactDir}</strong>
+              <strong>{checkpoint.artifactDir}</strong>
               <div className="artifactStats">
-                <span><b>{artifact.votingCount}</b> voting</span>
-                <span><b>{artifact.needsProcessingCount}</b> process</span>
-                <span><b>{artifact.lastGraphProposalIdSeen}</b> last seen</span>
+                <span><b>{checkpoint.votingCount}</b> voting</span>
+                <span><b>{checkpoint.needsProcessingCount}</b> process</span>
+                <span><b>{checkpoint.lastGraphProposalIdSeen}</b> last seen</span>
               </div>
-              <p>{artifact.pendingActionCount} pending actions from checkpoint and process queue.</p>
-              <code>{artifact.checkpointPath}</code>
-              <code>{artifact.operatingContextPath}</code>
-              <code>{artifact.proposalSummaryPath}</code>
-              <time>Updated {formatDate(artifact.updatedAt)}</time>
+              <p>{checkpoint.pendingActionCount} pending actions from service sync and process queue.</p>
+              <code>{checkpoint.checkpointPath}</code>
+              <code>{checkpoint.operatingContextPath}</code>
+              <code>{checkpoint.proposalSummaryPath}</code>
+              <time>Updated {formatDate(checkpoint.updatedAt)}</time>
             </article>
           ))}
           {bundle.artifacts.length === 0 ? <p className="empty">No service sync checkpoints recorded yet.</p> : null}

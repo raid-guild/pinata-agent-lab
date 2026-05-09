@@ -12,7 +12,7 @@ The app gives the agent a characterful surface: DAO memory, mandate ledger, prop
 - Service-backed DAO/proposal/memory cache powered by `@raidguild/meta-clawtel`
 - Primary simple agent skill in `workspace/skills/moloch-agent-simple`
 - Default Pinata skills: `@pinata/api` and `@pinata/platform`
-- Disabled manifest task examples for bootstrap, proposal watching, initiative stewardship, and proposal generation
+- Disabled manifest task examples for proposal watching and proposal generation
 
 ## Run
 
@@ -105,11 +105,11 @@ Do not commit `.env` files, private keys, mnemonics, or raw signer credentials.
 
 ## Bootstrap And Tasks
 
-The bundled simple skill includes first-run bootstrap and reusable scheduled task guidance:
+First-run setup lives in `workspace/BOOTSTRAP.md`. The bundled simple skill includes reusable scheduled task guidance:
 
 - `workspace/skills/moloch-agent-simple/SKILL.md`
 
-The manifest includes disabled task examples. Enable them only after the DAO address, signer, mandate, autonomy boundaries, service/RPC access, and shared-memory location are configured. Run bootstrap once to create or locate the DAO shared memory root, fill the first `community-state.md`, create the agent mandate, sync the DAO cache, and publish memory pointers when appropriate.
+The manifest includes disabled recurring task examples. Enable them only after the DAO address, signer, mandate, autonomy boundaries, service/RPC access, and shared-memory location are configured. Run `workspace/BOOTSTRAP.md` once to create or locate the DAO shared memory root, fill the first `community-state.md`, create the agent mandate, sync the DAO cache, and publish memory pointers when appropriate.
 
 Shared memory is the durable coordination layer for multiple agents. Use `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI` in DAO metadata or memory records, and use the local SQLite cache only as task cache.
 

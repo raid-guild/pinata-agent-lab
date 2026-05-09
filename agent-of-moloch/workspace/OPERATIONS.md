@@ -173,12 +173,10 @@ Membership proposals require extra intent checks:
 
 The manifest declares disabled examples for:
 
-- `bootstrap-dao-agent`
 - `proposal-action-watcher`
-- `initiative-steward`
 - `proposal-generation`
 
-Keep them disabled until the DAO address, mandate, signer, service access, shared-memory plan, and autonomy boundaries are configured. The prompts intentionally defer detailed behavior to `workspace/skills/moloch-agent-simple/SKILL.md`.
+Bootstrap is a one-time flow in `workspace/BOOTSTRAP.md`, not a scheduled manifest task. Keep recurring tasks disabled until the DAO address, mandate, signer, service access, shared-memory plan, and autonomy boundaries are configured. The prompts intentionally defer detailed behavior to `workspace/skills/moloch-agent-simple/SKILL.md`.
 
 ## App Auth
 
