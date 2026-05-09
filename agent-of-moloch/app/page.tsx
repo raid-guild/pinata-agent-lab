@@ -117,6 +117,8 @@ const filters = ["all", "submitted", "voting", "ready", "processed"];
 export default function Home() {
   const [bundle, setBundle] = useState<Bundle>(emptyBundle);
   const [filter, setFilter] = useState("all");
+  const [syncingDaoId, setSyncingDaoId] = useState<number | null>(null);
+  const [syncError, setSyncError] = useState("");
 
   useEffect(() => {
     loadBundle(filter);
@@ -131,6 +133,27 @@ export default function Home() {
     const suffix = nextFilter === "all" ? "" : `?status=${nextFilter}`;
     const response = await fetch(`/app/api/governance${suffix}`, { cache: "no-store" });
     setBundle((await response.json()) as Bundle);
+  }
+
+  async function syncDao(daoId: number) {
+    setSyncingDaoId(daoId);
+    setSyncError("");
+    try {
+      const response = await fetch("/app/api/sync/dao", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ daoId })
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to sync DAO");
+      }
+      await loadBundle(filter);
+    } catch (error) {
+      setSyncError(error instanceof Error ? error.message : "Unable to sync DAO");
+    } finally {
+      setSyncingDaoId(null);
+    }
   }
 
   return (
@@ -232,11 +255,17 @@ export default function Home() {
             <h2>Mandate ledger</h2>
             <span>{bundle.stats.activeDaos} active</span>
           </div>
+          {syncError ? <p className="syncError">{syncError}</p> : null}
           {bundle.daos.map((dao) => (
             <article key={dao.id}>
-              <div>
-                <strong>{dao.name}</strong>
-                <span>{dao.status} / chain {dao.chainId}</span>
+              <div className="daoTitleRow">
+                <div>
+                  <strong>{dao.name}</strong>
+                  <span>{dao.status} / chain {dao.chainId}</span>
+                </div>
+                <button disabled={syncingDaoId !== null} onClick={() => syncDao(dao.id)} type="button">
+                  {syncingDaoId === dao.id ? "Syncing" : "Sync"}
+                </button>
               </div>
               <p>{dao.thesis}</p>
               <blockquote>{dao.platform}</blockquote>

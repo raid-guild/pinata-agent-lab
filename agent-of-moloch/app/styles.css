@@ -367,18 +367,48 @@ h1 {
   padding-top: 12px;
 }
 
-.daoLedger article div {
-  align-items: baseline;
+.daoTitleRow {
+  align-items: center;
   display: flex;
   gap: 10px;
   justify-content: space-between;
 }
 
-.daoLedger article div span,
+.daoTitleRow > div {
+  display: grid;
+  gap: 4px;
+}
+
+.daoTitleRow span,
 .task small {
   color: var(--muted);
   font-size: 0.84rem;
   font-weight: 800;
+}
+
+.daoTitleRow button {
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  color: #ffffff;
+  font-weight: 900;
+  min-height: 36px;
+  padding: 8px 12px;
+}
+
+.daoTitleRow button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.syncError {
+  background: #fff0eb;
+  border: 1px solid rgba(182, 59, 37, 0.35);
+  border-radius: 8px;
+  color: var(--ember);
+  font-weight: 800;
+  margin-bottom: 0;
+  padding: 10px;
 }
 
 .daoLedger blockquote {
@@ -546,7 +576,7 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .daoLedger article div,
+  .daoTitleRow,
   .voteLine {
     align-items: flex-start;
     flex-direction: column;
