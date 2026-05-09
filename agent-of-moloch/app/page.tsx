@@ -175,7 +175,7 @@ export default function Home() {
         <article>
           <span>Checkpoint</span>
           <strong>Artifact watch</strong>
-          <p>Surfaces task-snapshot outputs: operating context, proposal summary, process queue, and checkpoint.</p>
+          <p>Surfaces service-backed sync state: DAO profile, proposal list, DAO database memory, and process queue.</p>
         </article>
       </section>
 
@@ -291,7 +291,7 @@ export default function Home() {
               <time>Updated {formatDate(artifact.updatedAt)}</time>
             </article>
           ))}
-          {bundle.artifacts.length === 0 ? <p className="empty">No task-snapshot artifacts recorded yet.</p> : null}
+          {bundle.artifacts.length === 0 ? <p className="empty">No service sync checkpoints recorded yet.</p> : null}
         </div>
       </section>
 

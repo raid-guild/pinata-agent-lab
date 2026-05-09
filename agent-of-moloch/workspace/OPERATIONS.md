@@ -21,7 +21,7 @@ GET /app/api/governance
 GET /app/api/governance?status=voting
 ```
 
-Returns DAOs, proposal records, suggested tasks, snapshot artifacts, DAO database memory records, and summary stats for the dashboard.
+Returns DAOs, proposal records, suggested tasks, sync checkpoints, DAO database memory records, and summary stats for the dashboard.
 
 ## Sync
 
@@ -148,8 +148,6 @@ Primary runtime:
 - `moloch-agent`
 - `workspace/skills/moloch-agent-simple/SKILL.md`
 
-Legacy skill references remain under `workspace/skills/moloch`.
-
 Use service-backed sync for routine review and token-efficient scheduled work. Use direct reads immediately before any write action. `moloch-service` provides indexed proposal metadata and original `proposalData`; direct contract state still wins for timing and permission checks.
 
 For processing, use `process-queue --first 100` or larger. Process only the first item in the queue, then rerun `process-queue` before processing another proposal. Direct `state(id) == Ready` is the source of truth for processability.
@@ -166,12 +164,9 @@ Membership proposals require extra intent checks:
 
 ## Shared Memory
 
-Use `workspace/skills/moloch/SHARED_MEMORY.md` for the current upstream model.
-
-- Local snapshot artifacts are task cache, not durable DAO memory.
+- Local sync cache is task cache, not durable DAO memory.
 - DAO-level coordination should live in Poster records plus IPFS-pinned community memory.
 - Bootstrap should create or locate `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI`.
-- Start new community memory from `workspace/skills/moloch/templates/community-memory`.
 - Use `memory-post` for concise public records and `dao-meta` proposals when DAO metadata pointers need to be published or updated.
 
 ## Scheduled Tasks
@@ -183,7 +178,7 @@ The manifest declares disabled examples for:
 - `initiative-steward`
 - `proposal-generation`
 
-Keep them disabled until the DAO address, mandate, signer, RPC/Graph access, shared-memory plan, and autonomy boundaries are configured. The prompts intentionally defer detailed behavior to `workspace/skills/moloch/AGENT_TASKS.md` so the template follows upstream task updates.
+Keep them disabled until the DAO address, mandate, signer, service access, shared-memory plan, and autonomy boundaries are configured. The prompts intentionally defer detailed behavior to `workspace/skills/moloch-agent-simple/SKILL.md`.
 
 ## App Auth
 

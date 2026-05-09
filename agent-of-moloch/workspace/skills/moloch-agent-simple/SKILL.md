@@ -25,6 +25,20 @@ The service handles DAOhaus Graph reads and Pinata-backed JSON pinning. The agen
 
 Graph and Pinata credentials should normally live in `moloch-service`, not in this agent.
 
+## Bootstrap
+
+On first run:
+
+1. Ask for the DAO address or summon intent.
+2. Ask for the agent name, character voice, mandate, autonomy boundaries, and no-action rules.
+3. Ask for known `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI` pointers.
+4. Confirm `ACCOUNT_ADDRESS`, `PRIVATE_KEY`, and whether `MOLOCH_SEND_DEFAULT=false` should be set.
+5. Run `moloch-agent health` and `moloch-agent capabilities`.
+6. Run `/app/api/sync/dao` or `moloch-agent dao`, `proposals`, `records`, and `process-queue`.
+7. Store the DAO charter/thesis, voter platform, shared-memory pointers, and sync status in the dashboard cache.
+
+Bootstrap is complete when the agent has a real DAO address, a signer identity, a mandate, a shared-memory plan or pointer, and a successful service-backed sync.
+
 ## Core Commands
 
 ```bash
@@ -40,6 +54,20 @@ moloch-agent read-proposal --dao 0xDAO --proposal 1
 moloch-agent proposal-lifecycle --dao 0xDAO --proposal 1
 moloch-agent process-queue --dao 0xDAO --first 100
 ```
+
+## Vote Decision Flow
+
+Before recommending or casting a vote, produce a compact memo:
+
+- DAO address and proposal id.
+- Current lifecycle from `moloch-agent proposal-lifecycle`.
+- Relevant DAO memory from `moloch-agent records --table communityMemory`.
+- Mandate fit: yes/no/unclear.
+- Hard-no checks, abstain conditions, and escalation triggers.
+- Recommendation: yes, no, abstain, defer, or no action.
+- Confidence and missing evidence.
+
+Do not vote from title/description alone. If mandate fit is unclear, recommend `defer` and write the missing evidence.
 
 ## Pinning And Memory
 
@@ -64,6 +92,30 @@ moloch-agent dao-meta --dao 0xDAO \
   --shared-state-uri ipfs://CID
 ```
 
+Shared memory conventions:
+
+- Short coordination goes to Poster records with `memory-post`.
+- Larger state, drafts, and proposal workspaces should be JSON or markdown pinned with `pin-json`, then referenced by URI.
+- `communityMemoryURI` is the root pointer for DAO-level shared memory.
+- `proposalWorkspaceURI` is the root pointer for proposal drafts and supporting files.
+- `sharedStateURI` is the current concise community-state document.
+
+Minimal community state fields:
+
+```json
+{
+  "daoName": "",
+  "daoAddress": "",
+  "purpose": "",
+  "currentGoals": [],
+  "rulesOfEngagement": [],
+  "joinRules": "",
+  "roles": [],
+  "operatingFocus": "",
+  "updatedAt": ""
+}
+```
+
 ## Transaction Rules
 
 Transaction commands broadcast by default. Use `--build-only` when review or dry-run mode is intended.
@@ -73,6 +125,8 @@ moloch-agent vote --dao 0xDAO --proposal 1 --approved true --build-only
 moloch-agent sponsor --dao 0xDAO --proposal 1 --build-only
 moloch-agent process-ready --dao 0xDAO --first 100 --build-only
 moloch-agent process --dao 0xDAO --proposal 1 --proposal-data 0x... --build-only
+moloch-agent signal --dao 0xDAO --title "Signal" --description "Body" --build-only
+moloch-agent mint-shares --dao 0xDAO --to 0xMEMBER --amount 1 --build-only
 ```
 
 Processing is settlement after governance. Do not block processing because a proposal touches membership, shares, loot, settings, payments, or other sensitive categories. Use `process-queue` or `process-ready`; those commands use direct chain state through the configured RPC, defaulting to the public Base RPC.

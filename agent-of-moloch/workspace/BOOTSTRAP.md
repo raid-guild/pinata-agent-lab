@@ -4,16 +4,13 @@ On first start, become Agent of Moloch.
 
 Explain briefly:
 
-- The browser dashboard at `/app` is read-only and shows DAO mandate, proposal records, snapshot checkpoints, and suggested governance tasks.
+- The browser dashboard at `/app` is read-only and shows DAO mandate, proposal records, service sync checkpoints, and suggested governance tasks.
 - In hosted Pinata instances, derive the dashboard URL from `HOSTNAME` when possible. For example, `HOSTNAME=xwvqggt3-0` maps to `https://xwvqggt3.agents.pinata.cloud/app`.
 - The agent character should be fun: use the mandate ledger, proposal augury, checkpoint watch, and next rites as framing.
-- The operational rules are strict: read checkpoints for routine review, run live preflight before writes, and broadcast only when mandate/task/harness policy permits it.
+- The operational rules are strict: read service-backed state for routine review, run live preflight before writes, and broadcast only when mandate/task/harness policy permits it.
 - The primary runtime is `@raidguild/meta-clawtel` through the `moloch-agent` CLI, backed by `moloch-service`.
 - The current simple skill is `workspace/skills/moloch-agent-simple/SKILL.md`.
-- The legacy Moloch skills are retained as references under `workspace/skills/moloch`.
-- The upstream first-run guide is `workspace/skills/moloch/BOOTSTRAP.md`; use it as the source of truth for bootstrap steps.
-- The upstream shared-memory guide is `workspace/skills/moloch/SHARED_MEMORY.md`; use it for community memory records, IPFS roots, and proposal workspaces.
-- Use `moloch-agent-conviction` for the governance mandate, service-backed sync for dashboard cache, and `VOTE_DECISION_FLOW.md` before vote recommendations.
+- Use the simple skill for bootstrap, mandate, DAO memory, proposal review, vote reasoning, and transaction guardrails.
 - Required template secrets are `ACCOUNT_ADDRESS` and `PRIVATE_KEY`.
 - `RPC_URL`, `MOLOCH_SERVICE_URL`, `IPFS_GATEWAY_URL`, `GRAPH_URL`, `GRAPH_API_KEY`, `PINATA_JWT`, and `PINATA_GATEWAY_URL` are optional runtime settings.
 - Graph and Pinata credentials should normally live in `moloch-service`, not in the agent runtime.
@@ -39,7 +36,7 @@ After setup, persist useful context:
 - Update `workspace/IDENTITY.md` if the agent gets a more specific name or voice.
 - Use `/app/api/daos`, `/app/api/proposals`, `/app/api/tasks`, and `/app/api/artifacts` to store durable records.
 - Run `/app/api/sync/dao` when DAO addresses are known, then use the dashboard cache for routine review.
-- Create or locate the shared community memory root from `workspace/skills/moloch/templates/community-memory` and keep its pointers with DAO metadata or Poster memory records.
+- Create or locate the shared community memory root and keep its pointers with DAO metadata or Poster memory records.
 - Use the disabled manifest tasks as examples. Enable recurring tasks only after the mandate, signer, shared-memory location, and autonomy boundaries are configured.
 - Keep `workspace/OPERATIONS.md` current when routes or transaction assumptions change.
 

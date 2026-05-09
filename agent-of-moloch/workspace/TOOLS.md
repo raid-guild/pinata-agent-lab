@@ -59,14 +59,10 @@ Shared-memory and metadata helpers:
 moloch-agent pin-json --file community-state.json --name community-state-v1
 moloch-agent dao-meta --dao 0xDAO --community-memory-uri ipfs://CID --proposal-workspace-uri ipfs://CID --shared-state-uri ipfs://CID
 moloch-agent memory-post --dao 0xDAO --type communityMemory --thread-id agent-bootstrap --title "Agent mandate and shared memory" --body "Bootstrap pointers and mandate summary."
-cp -R workspace/skills/moloch/templates/community-memory workspace/runtime/community-memory/0xDAO
 ```
 
 Read these before enabling autonomous tasks:
 
-- `workspace/skills/moloch/BOOTSTRAP.md`
-- `workspace/skills/moloch/AGENT_TASKS.md`
-- `workspace/skills/moloch/SHARED_MEMORY.md`
 - `workspace/skills/moloch-agent-simple/SKILL.md`
 
 Service-backed sync cache fields:

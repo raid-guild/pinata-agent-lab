@@ -23,7 +23,7 @@ Notes:
 - The dashboard is read-only.
 - Governance writes are available through API routes.
 - The current runtime uses `@raidguild/meta-clawtel@0.3.1` with `moloch-service` for Graph reads and Pinata-backed pinning.
-- The legacy Moloch skill bundle remains available as reference material and is aligned with `HausDAO/moloch-skills` commit `d4afd27a8729cba2332b63ea21b516dc487d3ade`.
+- The template uses `workspace/skills/moloch-agent-simple/SKILL.md`; the old bundled `moloch-skills` tree has been removed.
 - `APP_PASSWORD` is optional.
 - `API_PASSWORD` is optional and enables OpenClaw proxy routes.
 

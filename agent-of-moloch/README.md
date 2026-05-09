@@ -2,7 +2,7 @@
 
 A Pinata-ready governance template for Moloch V3/Baal DAOs.
 
-The app gives the agent a characterful surface: DAO memory, mandate ledger, proposal augury, checkpoint watch, and next rites. Under the flavor, it stays strict about governance operations: read snapshot artifacts, write vote memos, run live preflight, and broadcast only when mandate and harness policy allow it.
+The app gives the agent a characterful surface: DAO memory, mandate ledger, proposal augury, sync watch, and next rites. Under the flavor, it stays strict about governance operations: read service-backed state, write vote memos, run live preflight, and broadcast only when mandate and harness policy allow it.
 
 ## What It Stores
 
@@ -10,10 +10,8 @@ The app gives the agent a characterful surface: DAO memory, mandate ledger, prop
 - Proposal records with proposal id, status, stance, confidence, recommended vote, rationale, due date, and tx hash
 - Suggested tasks for reading DAO state, checking proposals, voting, sponsoring, processing, and record keeping
 - Service-backed DAO/proposal/memory cache powered by `@raidguild/meta-clawtel`
-- Bundled legacy Moloch skills retained as references in `workspace/skills/moloch`
 - Primary simple agent skill in `workspace/skills/moloch-agent-simple`
 - Default Pinata skills: `@pinata/api` and `@pinata/platform`
-- Shared community memory starter files from `workspace/skills/moloch/templates/community-memory`
 - Disabled manifest task examples for bootstrap, proposal watching, initiative stewardship, and proposal generation
 
 ## Run
@@ -80,7 +78,7 @@ moloch-agent process-queue --dao 0xDAO --first 100
 
 `@raidguild/meta-clawtel` uses `moloch-service` for DAOhaus Graph reads and Pinata-backed JSON pinning. The service never receives private keys. `RPC_URL` defaults to the public Base RPC; set your own RPC URL for reliable autonomous operation.
 
-Use `workspace/skills/moloch-agent-simple/SKILL.md` as the current operating guide. Use `workspace/skills/moloch/moloch-agent-conviction` and `workspace/skills/moloch/VOTE_DECISION_FLOW.md` before making vote recommendations.
+Use `workspace/skills/moloch-agent-simple/SKILL.md` as the current operating guide before making vote recommendations or transaction decisions.
 
 For processing, use `process-queue --first 100` or larger, process only the first queue item, then rerun the queue before processing another proposal. Processing is settlement after governance has passed; do not block it because the proposal touches membership, shares, loot, payments, settings, or another sensitive category. The updated skill sets an explicit process transaction gas limit by default: stored `baalGas + 400000`, or `800000` when stored `baalGas` is zero. Override with `--gas-limit` only when needed.
 
@@ -107,17 +105,13 @@ Do not commit `.env` files, private keys, mnemonics, or raw signer credentials.
 
 ## Bootstrap And Tasks
 
-The latest bundled Moloch skills include a first-run bootstrap and reusable scheduled task prompts:
+The bundled simple skill includes first-run bootstrap and reusable scheduled task guidance:
 
 - `workspace/skills/moloch-agent-simple/SKILL.md`
-- `workspace/skills/moloch/BOOTSTRAP.md`
-- `workspace/skills/moloch/AGENT_TASKS.md`
-- `workspace/skills/moloch/SHARED_MEMORY.md`
-- `workspace/skills/moloch/templates/community-memory`
 
 The manifest includes disabled task examples. Enable them only after the DAO address, signer, mandate, autonomy boundaries, service/RPC access, and shared-memory location are configured. Run bootstrap once to create or locate the DAO shared memory root, fill the first `community-state.md`, create the agent mandate, sync the DAO cache, and publish memory pointers when appropriate.
 
-Shared memory is the durable coordination layer for multiple agents. Use `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI` in DAO metadata or memory records, and use local snapshot artifacts only as task cache.
+Shared memory is the durable coordination layer for multiple agents. Use `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI` in DAO metadata or memory records, and use the local SQLite cache only as task cache.
 
 New instances start without demo rows. Set `SEED_DEMO_DATA=true` only when you want local placeholder DAOs and proposals for design testing.
 
@@ -148,5 +142,5 @@ Optional relays are available when `API_PASSWORD` is set:
 ## First Agent Prompt
 
 ```text
-You are Agent of Moloch. Read workspace/BOOTSTRAP.md, workspace/IDENTITY.md, workspace/OPERATIONS.md, workspace/TOOLS.md, workspace/skills/moloch-agent-simple/SKILL.md, workspace/skills/moloch/AGENT_TASKS.md, and workspace/skills/moloch/VOTE_DECISION_FLOW.md. Ask me which DAOs you are in, what each DAO's charter/thesis is, what governance mandate you should hold, and which moloch-service/shared-memory pointers should be used before checking proposals or preparing votes.
+You are Agent of Moloch. Read workspace/BOOTSTRAP.md, workspace/IDENTITY.md, workspace/OPERATIONS.md, workspace/TOOLS.md, and workspace/skills/moloch-agent-simple/SKILL.md. Ask me which DAOs you are in, what each DAO's charter/thesis is, what governance mandate you should hold, and which moloch-service/shared-memory pointers should be used before checking proposals or preparing votes.
 ```

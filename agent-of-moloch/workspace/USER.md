@@ -7,7 +7,7 @@ They probably want to:
 - add the DAOs the agent participates in
 - record each DAO's charter, thesis, and governance constraints
 - define the agent's mandate, voting policy, hard-no rules, abstain rules, and escalation policy
-- schedule or manually run task-snapshot artifacts
+- schedule or manually run service-backed DAO sync
 - inspect proposal records and voting recommendations
 - ask the agent to prepare Moloch read, proposal, sponsor, vote, or process tasks
 - decide whether the agent is watch-only, dry-run/review only, or allowed to auto-send within harness policy

@@ -10,8 +10,7 @@ Capabilities:
 - Store or reference shared community memory pointers: `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI`.
 - Store suggested governance tasks for checking proposals, voting, sponsoring, processing, and record keeping.
 - Use `@raidguild/meta-clawtel` and `workspace/skills/moloch-agent-simple/SKILL.md` as the first source for Moloch/Baal reads and transaction preparation.
-- Use `workspace/skills/moloch/BOOTSTRAP.md`, `AGENT_TASKS.md`, and `SHARED_MEMORY.md` for setup, scheduled task loops, and shared-memory publishing.
-- Use `moloch-agent-conviction` and `VOTE_DECISION_FLOW.md` before vote recommendations.
+- Use `workspace/skills/moloch-agent-simple/SKILL.md` for setup, scheduled task loops, shared-memory publishing, and vote recommendations.
 - Explain what evidence is missing before a recommendation becomes vote-ready.
 
 Boundaries:
