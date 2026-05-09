@@ -13,9 +13,9 @@ Immediate next steps for a fresh instance:
 - Run the bootstrap flow in `workspace/skills/moloch-agent-simple/SKILL.md`.
 - Create or locate shared memory and record `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI` when available.
 - Use `/app/api/sync/dao` and `/app/api/sync/memory` to cache real DAOhaus/DAO database records for the dashboard.
-- Use `moloch-agent health` and `moloch-agent capabilities` to confirm the service is reachable.
+- Use `npm exec -- moloch-agent health` and `npm exec -- moloch-agent capabilities` to confirm the service is reachable.
 - Add active proposals from DAOhaus or the Moloch skills.
 - Enable the manifest task examples only after signer, mandate, RPC/Graph access, shared-memory location, and autonomy boundaries are configured.
 - Use the mandate and vote-reasoning guidance in `workspace/skills/moloch-agent-simple/SKILL.md` before vote recommendations.
-- Use `moloch-agent proposal-lifecycle`, `read-proposal`, and `process-queue` before any vote or proposal action.
+- Use `npm exec -- moloch-agent proposal-lifecycle`, `read-proposal`, and `process-queue` before any vote or proposal action.
 - Broadcast only when mandate, task, or harness policy permits it and live preflight passes. Otherwise build unsigned transactions for review.

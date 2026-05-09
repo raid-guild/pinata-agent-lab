@@ -5,7 +5,7 @@ Use this skill for Agent of Moloch runtime work with `@raidguild/meta-clawtel`.
 The old local `moloch-skills/moloch-shared/scripts/moloch.mjs` flow is now replaced by:
 
 - local npm package: `@raidguild/meta-clawtel`
-- binary: `moloch-agent`
+- binary invocation from the template root: `npm exec -- moloch-agent`
 - background service: `moloch-service`
 
 The service handles DAOhaus Graph reads and Pinata-backed JSON pinning. The agent keeps signing local. Never send private keys, mnemonics, or raw signer material to the service.
@@ -25,6 +25,8 @@ The service handles DAOhaus Graph reads and Pinata-backed JSON pinning. The agen
 
 Graph and Pinata credentials should normally live in `moloch-service`, not in this agent.
 
+If `moloch-agent` is not found as a bare shell command, do not treat that as a missing package. Use `npm exec -- moloch-agent ...` from the template root so npm resolves the local `node_modules/.bin` binary.
+
 ## Bootstrap
 
 On first run:
@@ -33,8 +35,8 @@ On first run:
 2. Ask for the agent name, character voice, mandate, autonomy boundaries, and no-action rules.
 3. Ask for known `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI` pointers.
 4. Confirm `ACCOUNT_ADDRESS`, `PRIVATE_KEY`, and whether `MOLOCH_SEND_DEFAULT=false` should be set.
-5. Run `moloch-agent health` and `moloch-agent capabilities`.
-6. Run `/app/api/sync/dao` or `moloch-agent dao`, `proposals`, `records`, and `process-queue`.
+5. Run `npm exec -- moloch-agent health` and `npm exec -- moloch-agent capabilities`.
+6. Run `/app/api/sync/dao` or `npm exec -- moloch-agent dao`, `proposals`, `records`, and `process-queue`.
 7. Store the DAO charter/thesis, voter platform, shared-memory pointers, and sync status in the dashboard cache.
 
 Bootstrap is complete when the agent has a real DAO address, a signer identity, a mandate, a shared-memory plan or pointer, and a successful service-backed sync.
@@ -42,17 +44,17 @@ Bootstrap is complete when the agent has a real DAO address, a signer identity, 
 ## Core Commands
 
 ```bash
-moloch-agent health
-moloch-agent capabilities
-moloch-agent dao --dao 0xDAO
-moloch-agent proposals --dao 0xDAO --first 100
-moloch-agent proposal --dao 0xDAO --proposal 1
-moloch-agent members --dao 0xDAO --first 100
-moloch-agent records --dao 0xDAO --table communityMemory --first 100
-moloch-agent read-dao --dao 0xDAO
-moloch-agent read-proposal --dao 0xDAO --proposal 1
-moloch-agent proposal-lifecycle --dao 0xDAO --proposal 1
-moloch-agent process-queue --dao 0xDAO --first 100
+npm exec -- moloch-agent health
+npm exec -- moloch-agent capabilities
+npm exec -- moloch-agent dao --dao 0xDAO
+npm exec -- moloch-agent proposals --dao 0xDAO --first 100
+npm exec -- moloch-agent proposal --dao 0xDAO --proposal 1
+npm exec -- moloch-agent members --dao 0xDAO --first 100
+npm exec -- moloch-agent records --dao 0xDAO --table communityMemory --first 100
+npm exec -- moloch-agent read-dao --dao 0xDAO
+npm exec -- moloch-agent read-proposal --dao 0xDAO --proposal 1
+npm exec -- moloch-agent proposal-lifecycle --dao 0xDAO --proposal 1
+npm exec -- moloch-agent process-queue --dao 0xDAO --first 100
 ```
 
 ## Vote Decision Flow
@@ -60,8 +62,8 @@ moloch-agent process-queue --dao 0xDAO --first 100
 Before recommending or casting a vote, produce a compact memo:
 
 - DAO address and proposal id.
-- Current lifecycle from `moloch-agent proposal-lifecycle`.
-- Relevant DAO memory from `moloch-agent records --table communityMemory`.
+- Current lifecycle from `npm exec -- moloch-agent proposal-lifecycle`.
+- Relevant DAO memory from `npm exec -- moloch-agent records --table communityMemory`.
 - Mandate fit: yes/no/unclear.
 - Hard-no checks, abstain conditions, and escalation triggers.
 - Recommendation: yes, no, abstain, defer, or no action.
@@ -74,19 +76,19 @@ Do not vote from title/description alone. If mandate fit is unclear, recommend `
 Use the service-backed pin command for public JSON artifacts:
 
 ```bash
-moloch-agent pin-json --file community-state.json --name community-state-v1
+npm exec -- moloch-agent pin-json --file community-state.json --name community-state-v1
 ```
 
 Use Poster memory records for concise public coordination:
 
 ```bash
-moloch-agent memory-post --dao 0xDAO --thread-id proposal-1 --body "Reason for vote"
+npm exec -- moloch-agent memory-post --dao 0xDAO --thread-id proposal-1 --body "Reason for vote"
 ```
 
 Use DAO metadata proposals for shared memory pointers:
 
 ```bash
-moloch-agent dao-meta --dao 0xDAO \
+npm exec -- moloch-agent dao-meta --dao 0xDAO \
   --community-memory-uri ipfs://CID \
   --proposal-workspace-uri ipfs://CID \
   --shared-state-uri ipfs://CID
@@ -121,12 +123,12 @@ Minimal community state fields:
 Transaction commands broadcast by default. Use `--build-only` when review or dry-run mode is intended.
 
 ```bash
-moloch-agent vote --dao 0xDAO --proposal 1 --approved true --build-only
-moloch-agent sponsor --dao 0xDAO --proposal 1 --build-only
-moloch-agent process-ready --dao 0xDAO --first 100 --build-only
-moloch-agent process --dao 0xDAO --proposal 1 --proposal-data 0x... --build-only
-moloch-agent signal --dao 0xDAO --title "Signal" --description "Body" --build-only
-moloch-agent mint-shares --dao 0xDAO --to 0xMEMBER --amount 1 --build-only
+npm exec -- moloch-agent vote --dao 0xDAO --proposal 1 --approved true --build-only
+npm exec -- moloch-agent sponsor --dao 0xDAO --proposal 1 --build-only
+npm exec -- moloch-agent process-ready --dao 0xDAO --first 100 --build-only
+npm exec -- moloch-agent process --dao 0xDAO --proposal 1 --proposal-data 0x... --build-only
+npm exec -- moloch-agent signal --dao 0xDAO --title "Signal" --description "Body" --build-only
+npm exec -- moloch-agent mint-shares --dao 0xDAO --to 0xMEMBER --amount 1 --build-only
 ```
 
 Processing is settlement after governance. Do not block processing because a proposal touches membership, shares, loot, settings, payments, or other sensitive categories. Use `process-queue` or `process-ready`; those commands use direct chain state through the configured RPC, defaulting to the public Base RPC.
@@ -141,8 +143,8 @@ Share and loot CLI amounts are human-unit for `mint-shares`, `join-dao`, and `tr
 
 For recurring work:
 
-1. Sync local dashboard cache with `/app/api/sync/dao` or direct `moloch-agent` reads.
-2. Read DAO database records with `moloch-agent records --table communityMemory`.
+1. Sync local dashboard cache with `/app/api/sync/dao` or direct `npm exec -- moloch-agent` reads.
+2. Read DAO database records with `npm exec -- moloch-agent records --table communityMemory`.
 3. Read the mandate and shared memory pointers.
 4. Choose one action: vote, sponsor, process, draft, memory-post, or no action.
 5. Run live preflight with `proposal-lifecycle`, `read-proposal`, or `process-queue`.

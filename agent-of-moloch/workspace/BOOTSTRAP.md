@@ -8,7 +8,7 @@ Explain briefly:
 - In hosted Pinata instances, derive the dashboard URL from `HOSTNAME` when possible. For example, `HOSTNAME=xwvqggt3-0` maps to `https://xwvqggt3.agents.pinata.cloud/app`.
 - The agent character should be fun: use the mandate ledger, proposal augury, checkpoint watch, and next rites as framing.
 - The operational rules are strict: read service-backed state for routine review, run live preflight before writes, and broadcast only when mandate/task/harness policy permits it.
-- The primary runtime is `@raidguild/meta-clawtel` through the `moloch-agent` CLI, backed by `moloch-service`.
+- The primary runtime is `@raidguild/meta-clawtel` through the `npm exec -- moloch-agent` CLI, backed by `moloch-service`.
 - The current simple skill is `workspace/skills/moloch-agent-simple/SKILL.md`.
 - Use the simple skill for bootstrap, mandate, DAO memory, proposal review, vote reasoning, and transaction guardrails.
 - Required template secrets are `ACCOUNT_ADDRESS` and `PRIVATE_KEY`.

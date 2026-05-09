@@ -32,7 +32,7 @@ POST /app/api/sync/memory
 GET /app/api/community-memory
 ```
 
-Sync routes are server-side only. They use `@raidguild/meta-clawtel` and `moloch-service`, then write normalized cache rows to SQLite for the dashboard. `moloch-agent` defaults to the public Base RPC; set `RPC_URL` only when you need a more reliable provider.
+Sync routes are server-side only. They use `@raidguild/meta-clawtel` and `moloch-service`, then write normalized cache rows to SQLite for the dashboard. `npm exec -- moloch-agent` defaults to the public Base RPC; set `RPC_URL` only when you need a more reliable provider.
 
 Example DAO sync payload:
 
@@ -145,7 +145,7 @@ Statuses: `fresh`, `stale`, `missing`, `manual`.
 Primary runtime:
 
 - `@raidguild/meta-clawtel`
-- `moloch-agent`
+- `npm exec -- moloch-agent`
 - `workspace/skills/moloch-agent-simple/SKILL.md`
 
 Use service-backed sync for routine review and token-efficient scheduled work. Use direct reads immediately before any write action. `moloch-service` provides indexed proposal metadata and original `proposalData`; direct contract state still wins for timing and permission checks.
@@ -191,7 +191,7 @@ The template declares these required secrets in `manifest.json`:
 - `ACCOUNT_ADDRESS`: managed Ethereum account address used for DAO membership, voting power checks, mandate profiles, and audit records.
 - `PRIVATE_KEY`: signer key for authorized `--send` actions.
 - Optional settings include `MOLOCH_SERVICE_URL`, `IPFS_GATEWAY_URL`, `MOLOCH_SEND_DEFAULT`, and legacy direct Graph/Pinata variables.
-- `RPC_URL` is optional. `moloch-agent` defaults to `https://mainnet.base.org`; set `RPC_URL` for reliable direct Baal reads, live preflight, and transaction broadcasts.
+- `RPC_URL` is optional. `npm exec -- moloch-agent` defaults to `https://mainnet.base.org`; set `RPC_URL` for reliable direct Baal reads, live preflight, and transaction broadcasts.
 
 Keep secrets in the Pinata secrets vault. Do not write them into workspace files, logs, or chat transcripts.
 

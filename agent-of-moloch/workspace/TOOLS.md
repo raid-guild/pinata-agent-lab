@@ -36,29 +36,29 @@ Database:
 Moloch agent CLI:
 
 ```bash
-moloch-agent help
-moloch-agent health
-moloch-agent capabilities
+npm exec -- moloch-agent help
+npm exec -- moloch-agent health
+npm exec -- moloch-agent capabilities
 ```
 
 Common Moloch reads:
 
 ```bash
-moloch-agent dao --dao 0xDAO
-moloch-agent proposals --dao 0xDAO --first 100
-moloch-agent records --dao 0xDAO --table communityMemory --first 100
-moloch-agent read-dao --dao 0xDAO
-moloch-agent read-proposal --dao 0xDAO --proposal 1
-moloch-agent proposal-lifecycle --dao 0xDAO --proposal 1
-moloch-agent process-queue --dao 0xDAO --first 100
+npm exec -- moloch-agent dao --dao 0xDAO
+npm exec -- moloch-agent proposals --dao 0xDAO --first 100
+npm exec -- moloch-agent records --dao 0xDAO --table communityMemory --first 100
+npm exec -- moloch-agent read-dao --dao 0xDAO
+npm exec -- moloch-agent read-proposal --dao 0xDAO --proposal 1
+npm exec -- moloch-agent proposal-lifecycle --dao 0xDAO --proposal 1
+npm exec -- moloch-agent process-queue --dao 0xDAO --first 100
 ```
 
 Shared-memory and metadata helpers:
 
 ```bash
-moloch-agent pin-json --file community-state.json --name community-state-v1
-moloch-agent dao-meta --dao 0xDAO --community-memory-uri ipfs://CID --proposal-workspace-uri ipfs://CID --shared-state-uri ipfs://CID
-moloch-agent memory-post --dao 0xDAO --type communityMemory --thread-id agent-bootstrap --title "Agent mandate and shared memory" --body "Bootstrap pointers and mandate summary."
+npm exec -- moloch-agent pin-json --file community-state.json --name community-state-v1
+npm exec -- moloch-agent dao-meta --dao 0xDAO --community-memory-uri ipfs://CID --proposal-workspace-uri ipfs://CID --shared-state-uri ipfs://CID
+npm exec -- moloch-agent memory-post --dao 0xDAO --type communityMemory --thread-id agent-bootstrap --title "Agent mandate and shared memory" --body "Bootstrap pointers and mandate summary."
 ```
 
 Read these before enabling autonomous tasks:
@@ -67,11 +67,11 @@ Read these before enabling autonomous tasks:
 
 Service-backed sync cache fields:
 
-- DAO profile from `moloch-agent dao`
-- proposal list from `moloch-agent proposals`
-- process queue from `moloch-agent process-queue`
-- DAO database records from `moloch-agent records`
-- direct preflight from `moloch-agent read-dao`, `read-proposal`, and `proposal-lifecycle`
+- DAO profile from `npm exec -- moloch-agent dao`
+- proposal list from `npm exec -- moloch-agent proposals`
+- process queue from `npm exec -- moloch-agent process-queue`
+- DAO database records from `npm exec -- moloch-agent records`
+- direct preflight from `npm exec -- moloch-agent read-dao`, `read-proposal`, and `proposal-lifecycle`
 
 Processing note:
 

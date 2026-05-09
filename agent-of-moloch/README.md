@@ -58,22 +58,24 @@ npm run typecheck
 
 ## Moloch Agent
 
+Run CLI commands from the template root with `npm exec --` so npm resolves the local package binary even when `node_modules/.bin` is not on the shell PATH.
+
 ```bash
-moloch-agent help
-moloch-agent health
-moloch-agent capabilities
+npm exec -- moloch-agent help
+npm exec -- moloch-agent health
+npm exec -- moloch-agent capabilities
 ```
 
 Useful reads:
 
 ```bash
-moloch-agent dao --dao 0xDAO
-moloch-agent proposals --dao 0xDAO --first 100
-moloch-agent records --dao 0xDAO --table communityMemory --first 100
-moloch-agent read-dao --dao 0xDAO
-moloch-agent read-proposal --dao 0xDAO --proposal 1
-moloch-agent proposal-lifecycle --dao 0xDAO --proposal 1
-moloch-agent process-queue --dao 0xDAO --first 100
+npm exec -- moloch-agent dao --dao 0xDAO
+npm exec -- moloch-agent proposals --dao 0xDAO --first 100
+npm exec -- moloch-agent records --dao 0xDAO --table communityMemory --first 100
+npm exec -- moloch-agent read-dao --dao 0xDAO
+npm exec -- moloch-agent read-proposal --dao 0xDAO --proposal 1
+npm exec -- moloch-agent proposal-lifecycle --dao 0xDAO --proposal 1
+npm exec -- moloch-agent process-queue --dao 0xDAO --first 100
 ```
 
 `@raidguild/meta-clawtel` uses `moloch-service` for DAOhaus Graph reads and Pinata-backed JSON pinning. The service never receives private keys. `RPC_URL` defaults to the public Base RPC; set your own RPC URL for reliable autonomous operation.
@@ -97,7 +99,7 @@ export ACCOUNT_ADDRESS="0x..."
 export PRIVATE_KEY="0x..."
 ```
 
-`ACCOUNT_ADDRESS` is the managed voter/account identity used in mandate profiles and audit records. `PRIVATE_KEY` signs authorized onchain actions. `RPC_URL` is optional because `moloch-agent` defaults to `https://mainnet.base.org`; use a dedicated RPC provider for always-on agents. `MOLOCH_SERVICE_URL`, `IPFS_GATEWAY_URL`, `GRAPH_URL`, `GRAPH_API_KEY`, `PINATA_JWT`, and `PINATA_GATEWAY_URL` are optional runtime settings because the default service-backed flow keeps Graph and Pinata credentials outside the agent runtime. Keep secrets in the Pinata secrets vault; do not commit them to files.
+`ACCOUNT_ADDRESS` is the managed voter/account identity used in mandate profiles and audit records. `PRIVATE_KEY` signs authorized onchain actions. `RPC_URL` is optional because `npm exec -- moloch-agent` defaults to `https://mainnet.base.org`; use a dedicated RPC provider for always-on agents. `MOLOCH_SERVICE_URL`, `IPFS_GATEWAY_URL`, `GRAPH_URL`, `GRAPH_API_KEY`, `PINATA_JWT`, and `PINATA_GATEWAY_URL` are optional runtime settings because the default service-backed flow keeps Graph and Pinata credentials outside the agent runtime. Keep secrets in the Pinata secrets vault; do not commit them to files.
 
 Security note: use a dedicated agent wallet, not a primary personal wallet or treasury hot wallet. Pinata Agents store secrets securely in the agent secrets vault, but any signer that can vote or submit transactions carries operational risk. Fund the wallet only for the permissions and gas budget this agent actually needs, and rotate or revoke access if the mandate changes.
 
