@@ -979,7 +979,8 @@ function toGatewayUrl(uri: string) {
   if (!gateway) return "";
 
   const cleanGateway = gateway.replace(/\/$/, "");
-  const gatewayBase = cleanGateway.endsWith("/ipfs") ? cleanGateway : `${cleanGateway}/ipfs`;
+  const absoluteGateway = /^https?:\/\//.test(cleanGateway) ? cleanGateway : `https://${cleanGateway}`;
+  const gatewayBase = absoluteGateway.endsWith("/ipfs") ? absoluteGateway : `${absoluteGateway}/ipfs`;
   if (uri.startsWith("ipfs://")) return `${gatewayBase}/${uri.slice(7)}`;
   if (uri.startsWith("bafy") || uri.startsWith("Qm")) return `${gatewayBase}/${uri}`;
   return "";
