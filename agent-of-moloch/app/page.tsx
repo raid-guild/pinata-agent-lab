@@ -23,7 +23,9 @@ type Dao = {
 
 type Proposal = {
   id: number;
+  daoId: number;
   daoName: string;
+  daoAddress: string;
   proposalId: string;
   title: string;
   summary: string;
@@ -42,6 +44,7 @@ type Proposal = {
 
 type GovernanceTask = {
   id: number;
+  daoId: number | null;
   daoName: string | null;
   proposalTitle: string | null;
   title: string;
@@ -54,6 +57,7 @@ type GovernanceTask = {
 
 type SyncCheckpoint = {
   id: number;
+  daoId: number;
   daoName: string;
   artifactDir: string;
   checkpointPath: string;
@@ -70,6 +74,7 @@ type SyncCheckpoint = {
 
 type CommunityRecord = {
   id: number;
+  daoId: number;
   daoName: string;
   tableName: string;
   content: string;
@@ -124,23 +129,65 @@ const filters = ["all", "submitted", "voting", "ready", "processed"];
 export default function Home() {
   const [bundle, setBundle] = useState<Bundle>(emptyBundle);
   const [filter, setFilter] = useState("all");
+  const [selectedDaoId, setSelectedDaoId] = useState("all");
   const [syncingDaoId, setSyncingDaoId] = useState<number | null>(null);
   const [syncError, setSyncError] = useState("");
+  const [lastOperation, setLastOperation] = useState<{
+    title: string;
+    tx: string;
+    chain: "pending" | "ok" | "skipped" | "failed";
+    daoSync: "pending" | "ok" | "failed";
+    memorySync: "pending" | "ok" | "skipped" | "failed";
+    dashboard: "pending" | "ok" | "failed";
+    detail: string;
+  } | null>(null);
 
   useEffect(() => {
     loadBundle(filter);
   }, [filter]);
 
+  const selectedDao = useMemo(() => {
+    const daoId = Number(selectedDaoId);
+    return selectedDaoId === "all" ? null : bundle.daos.find((dao) => dao.id === daoId) || null;
+  }, [bundle.daos, selectedDaoId]);
+
+  const scoped = useMemo(() => {
+    const daoId = Number(selectedDaoId);
+    if (selectedDaoId === "all") return bundle;
+    return {
+      ...bundle,
+      daos: bundle.daos.filter((dao) => dao.id === daoId),
+      proposals: bundle.proposals.filter((proposal) => proposal.daoId === daoId),
+      tasks: bundle.tasks.filter((task) => task.daoId === daoId),
+      artifacts: bundle.artifacts.filter((artifact) => artifact.daoId === daoId),
+      communityRecords: bundle.communityRecords.filter((record) => record.daoId === daoId)
+    };
+  }, [bundle, selectedDaoId]);
+
+  const scopedStats = useMemo(() => ({
+    daoCount: scoped.daos.length,
+    activeDaos: scoped.daos.filter((dao) => dao.status === "active").length,
+    openProposals: scoped.proposals.filter((proposal) => ["submitted", "voting", "grace", "ready"].includes(proposal.status)).length,
+    readyToVote: scoped.proposals.filter((proposal) => proposal.status === "voting" && proposal.recommendedVote !== "defer").length,
+    openTasks: scoped.tasks.filter((task) => task.status !== "done").length,
+    urgentTasks: scoped.tasks.filter((task) => task.status !== "done" && task.priority === "urgent").length,
+    freshArtifacts: scoped.artifacts.filter((artifact) => artifact.status === "fresh").length,
+    pendingArtifactActions: scoped.artifacts.reduce((sum, artifact) => sum + artifact.pendingActionCount, 0),
+    communityRecords: scoped.communityRecords.length
+  }), [scoped]);
+
   const conviction = useMemo(() => {
-    const scored = bundle.proposals.filter((proposal) => proposal.recommendedVote !== "defer").length;
-    return bundle.proposals.length ? Math.round((scored / bundle.proposals.length) * 100) : 0;
-  }, [bundle.proposals]);
+    const scored = scoped.proposals.filter((proposal) => proposal.recommendedVote !== "defer").length;
+    return scoped.proposals.length ? Math.round((scored / scoped.proposals.length) * 100) : 0;
+  }, [scoped.proposals]);
 
   const memoryCoverage = useMemo(() => {
-    const daoReady = bundle.daos.filter((dao) => dao.communityMemoryUri || dao.sharedStateUri || dao.proposalWorkspaceUri).length;
-    const proposalReady = bundle.proposals.filter((proposal) => proposal.contentUri).length;
+    const daoReady = scoped.daos.filter((dao) => dao.communityMemoryUri || dao.sharedStateUri || dao.proposalWorkspaceUri).length;
+    const proposalReady = scoped.proposals.filter((proposal) => proposal.contentUri).length;
     return { daoReady, proposalReady };
-  }, [bundle.daos, bundle.proposals]);
+  }, [scoped.daos, scoped.proposals]);
+
+  const latestMemoryAt = scoped.communityRecords[0]?.createdAt || "";
 
   async function loadBundle(nextFilter: string) {
     const suffix = nextFilter === "all" ? "" : `?status=${nextFilter}`;
@@ -151,6 +198,15 @@ export default function Home() {
   async function syncDao(daoId: number) {
     setSyncingDaoId(daoId);
     setSyncError("");
+    setLastOperation({
+      title: "Manual DAO sync",
+      tx: "No transaction",
+      chain: "skipped",
+      daoSync: "pending",
+      memorySync: "skipped",
+      dashboard: "pending",
+      detail: "Running /app/api/sync/dao"
+    });
     try {
       const response = await fetch("/app/api/sync/dao", {
         method: "POST",
@@ -162,8 +218,27 @@ export default function Home() {
         throw new Error(payload.error || "Unable to sync DAO");
       }
       await loadBundle(filter);
+      setLastOperation({
+        title: `Synced ${payload.result?.dao?.name || "DAO"}`,
+        tx: "No transaction",
+        chain: "skipped",
+        daoSync: "ok",
+        memorySync: "skipped",
+        dashboard: "ok",
+        detail: payload.result?.partial ? "Dashboard updated with partial service results." : "Dashboard updated with fresh service results."
+      });
     } catch (error) {
-      setSyncError(error instanceof Error ? error.message : "Unable to sync DAO");
+      const message = error instanceof Error ? error.message : "Unable to sync DAO";
+      setSyncError(message);
+      setLastOperation({
+        title: "Sync failed",
+        tx: "No transaction",
+        chain: "skipped",
+        daoSync: "failed",
+        memorySync: "skipped",
+        dashboard: "failed",
+        detail: message
+      });
     } finally {
       setSyncingDaoId(null);
     }
@@ -219,8 +294,18 @@ export default function Home() {
         <aside className="controlPanel">
           <div className="sectionHead">
             <h2>Proposal lens</h2>
-            <span>{bundle.stats.openProposals} open</span>
+            <span>{scopedStats.openProposals} open</span>
           </div>
+
+          <label className="daoSelect">
+            <span>DAO scope</span>
+            <select onChange={(event) => setSelectedDaoId(event.target.value)} value={selectedDaoId}>
+              <option value="all">All DAOs</option>
+              {bundle.daos.map((dao) => (
+                <option key={dao.id} value={dao.id}>{dao.name}</option>
+              ))}
+            </select>
+          </label>
 
           <div className="filterStack" aria-label="Proposal filters">
             {filters.map((item) => (
@@ -231,18 +316,18 @@ export default function Home() {
           </div>
 
           <div className="statStack">
-            <span><strong>{bundle.stats.daoCount}</strong> DAOs held</span>
-            <span><strong>{bundle.stats.readyToVote}</strong> ready votes</span>
-            <span><strong>{bundle.stats.urgentTasks}</strong> urgent rites</span>
-            <span><strong>{bundle.stats.pendingArtifactActions}</strong> queued actions</span>
-            <span><strong>{bundle.stats.communityRecords}</strong> memory records</span>
+            <span><strong>{scopedStats.daoCount}</strong> DAOs held</span>
+            <span><strong>{scopedStats.readyToVote}</strong> ready votes</span>
+            <span><strong>{scopedStats.urgentTasks}</strong> urgent rites</span>
+            <span><strong>{scopedStats.pendingArtifactActions}</strong> queued actions</span>
+            <span><strong>{scopedStats.communityRecords}</strong> memory records</span>
             <span><strong>{memoryCoverage.daoReady}</strong> DAO workspaces</span>
             <span><strong>{memoryCoverage.proposalReady}</strong> proposal workspaces</span>
           </div>
         </aside>
 
         <section className="proposalBoard" aria-label="Read-only proposal dashboard">
-          {bundle.proposals.map((proposal) => (
+          {scoped.proposals.map((proposal) => (
             <article className={`proposalCard stance-${proposal.agentStance}`} key={proposal.id}>
               <div className="cardTop">
                 <span>{proposal.daoName}</span>
@@ -250,6 +335,11 @@ export default function Home() {
               </div>
               <h2>#{proposal.proposalId} {proposal.title}</h2>
               <p>{proposal.summary}</p>
+              <div className="readinessLine">
+                {proposalBadges(proposal).map((badge) => (
+                  <span className={`badge badge-${badge.kind}`} key={badge.label}>{badge.label}</span>
+                ))}
+              </div>
               {proposal.contentUri ? (
                 <div className="memoryLinks proposalMemory">
                   <span>proposal workspace</span>
@@ -262,13 +352,55 @@ export default function Home() {
                 <strong>{proposal.recommendedVote}</strong>
                 <span>{proposal.agentStance} / {proposal.confidence}</span>
               </div>
+              <div className="quickActions" aria-label={`Quick links for proposal ${proposal.proposalId}`}>
+                <a href={daohausProposalUrl(proposal)} rel="noreferrer" target="_blank">DAOhaus</a>
+                {proposal.contentGatewayUrl || /^https?:\/\//.test(proposal.contentUri) ? (
+                  <a href={proposal.contentGatewayUrl || proposal.contentUri} rel="noreferrer" target="_blank">Workspace</a>
+                ) : null}
+                <button onClick={() => navigator.clipboard?.writeText(proposal.proposalId)} type="button">Copy ID</button>
+                <button disabled={syncingDaoId !== null} onClick={() => syncDao(proposal.daoId)} type="button">Sync DAO</button>
+              </div>
               <footer>
                 <small>{proposal.rationale}</small>
                 <time>Due {proposal.dueDate || "unscheduled"} / Updated {formatDate(proposal.updatedAt)}</time>
               </footer>
             </article>
           ))}
-          {bundle.proposals.length === 0 ? <p className="empty">No proposals match this filter.</p> : null}
+          {scoped.proposals.length === 0 ? <p className="empty">No proposals match this filter.</p> : null}
+        </section>
+      </section>
+
+      <section className="opsGrid">
+        <section className="memoryHealth" aria-label="Memory health">
+          <div className="sectionHead">
+            <h2>Memory health</h2>
+            <span>{selectedDao ? selectedDao.name : "all DAOs"}</span>
+          </div>
+          <div className="healthGrid">
+            <HealthItem label="DAO metadata pointers" ready={memoryCoverage.daoReady} total={scoped.daos.length} />
+            <HealthItem label="Proposal workspaces" ready={memoryCoverage.proposalReady} total={scoped.proposals.length} />
+            <HealthItem label="Fresh sync checkpoints" ready={scopedStats.freshArtifacts} total={scoped.artifacts.length} />
+            <HealthItem label="Latest memory record" note={latestMemoryAt ? formatDate(latestMemoryAt) : "none"} />
+          </div>
+        </section>
+
+        <section className="operationPanel" aria-label="Last operation">
+          <div className="sectionHead">
+            <h2>Last operation</h2>
+            <span>{lastOperation ? "tracked" : "idle"}</span>
+          </div>
+          {lastOperation ? (
+            <div className="operationSteps">
+              <strong>{lastOperation.title}</strong>
+              <StatusLine label={lastOperation.tx} status={lastOperation.chain} />
+              <StatusLine label="/app/api/sync/dao" status={lastOperation.daoSync} />
+              <StatusLine label="/app/api/sync/memory" status={lastOperation.memorySync} />
+              <StatusLine label="Dashboard updated" status={lastOperation.dashboard} />
+              <p>{lastOperation.detail}</p>
+            </div>
+          ) : (
+            <p className="empty">Sync or post-write confirmations will appear here.</p>
+          )}
         </section>
       </section>
 
@@ -276,10 +408,10 @@ export default function Home() {
         <section className="daoLedger" aria-label="DAO mandate ledger">
           <div className="sectionHead">
             <h2>Mandate ledger</h2>
-            <span>{bundle.stats.activeDaos} active</span>
+            <span>{scopedStats.activeDaos} active</span>
           </div>
           {syncError ? <p className="syncError">{syncError}</p> : null}
-          {bundle.daos.map((dao) => (
+          {scoped.daos.map((dao) => (
             <article key={dao.id}>
               <div className="daoTitleRow">
                 <div>
@@ -311,9 +443,9 @@ export default function Home() {
         <section className="taskQueue" aria-label="Suggested governance tasks">
           <div className="sectionHead">
             <h2>Next rites</h2>
-            <span>{bundle.stats.openTasks} open</span>
+            <span>{scopedStats.openTasks} open</span>
           </div>
-          {bundle.tasks.map((task) => (
+          {scoped.tasks.map((task) => (
             <article className={`task priority-${task.priority}`} key={task.id}>
               <span>{task.actionType}</span>
               <strong>{task.title}</strong>
@@ -327,10 +459,10 @@ export default function Home() {
       <section className="artifactGrid" aria-label="Service sync checkpoints">
         <div className="sectionHead">
           <h2>Service sync</h2>
-          <span>{bundle.stats.freshArtifacts} fresh</span>
+          <span>{scopedStats.freshArtifacts} fresh</span>
         </div>
         <div className="artifactBoard">
-          {bundle.artifacts.map((checkpoint) => (
+          {scoped.artifacts.map((checkpoint) => (
             <article className={`artifact status-${checkpoint.status}`} key={checkpoint.id}>
               <div className="cardTop">
                 <span>{checkpoint.daoName}</span>
@@ -349,17 +481,17 @@ export default function Home() {
               <time>Updated {formatDate(checkpoint.updatedAt)}</time>
             </article>
           ))}
-          {bundle.artifacts.length === 0 ? <p className="empty">No service sync checkpoints recorded yet.</p> : null}
+          {scoped.artifacts.length === 0 ? <p className="empty">No service sync checkpoints recorded yet.</p> : null}
         </div>
       </section>
 
       <section className="artifactGrid" aria-label="DAO database memory">
         <div className="sectionHead">
           <h2>DAO memory</h2>
-          <span>{bundle.communityRecords.length} records</span>
+          <span>{scoped.communityRecords.length} records</span>
         </div>
         <div className="artifactBoard">
-          {bundle.communityRecords.slice(0, 6).map((record) => (
+          {scoped.communityRecords.slice(0, 6).map((record) => (
             <article className="artifact" key={record.id}>
               <div className="cardTop">
                 <span>{record.daoName}</span>
@@ -371,9 +503,33 @@ export default function Home() {
               <time>Posted {formatDate(record.createdAt)}</time>
             </article>
           ))}
-          {bundle.communityRecords.length === 0 ? <p className="empty">No DAO database memory synced yet.</p> : null}
+          {scoped.communityRecords.length === 0 ? <p className="empty">No DAO database memory synced yet.</p> : null}
         </div>
       </section>
+
+      {selectedDao ? (
+        <section className="daoDetail" aria-label={`${selectedDao.name} detail`}>
+          <div className="sectionHead">
+            <h2>DAO detail</h2>
+            <span>{selectedDao.status}</span>
+          </div>
+          <div className="detailGrid">
+            <div>
+              <strong>{selectedDao.name}</strong>
+              <p>{selectedDao.thesis || "No thesis recorded."}</p>
+              <code>{selectedDao.daoAddress}</code>
+            </div>
+            <div>
+              <span>Mandate</span>
+              <p>{selectedDao.platform || selectedDao.conviction || "No voter platform recorded."}</p>
+            </div>
+            <div>
+              <span>Activity</span>
+              <p>{scoped.proposals.length} proposals / {scoped.tasks.length} tasks / {scoped.communityRecords.length} memory records</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="apiStrip" aria-label="Useful API routes">
         <code>GET /app/api/governance</code>
@@ -410,6 +566,35 @@ function summarizeRecord(record: CommunityRecord) {
   }
 }
 
+function proposalBadges(proposal: Proposal) {
+  const badges = [];
+  if (proposal.contentUri) {
+    badges.push({ label: "workspace", kind: "ok" });
+  } else {
+    badges.push({ label: "missing workspace", kind: "warn" });
+  }
+  if (proposal.status === "voting" && proposal.recommendedVote !== "defer") {
+    badges.push({ label: "ready to vote", kind: "ok" });
+  }
+  if (proposal.status === "ready") {
+    badges.push({ label: "ready to process", kind: "ok" });
+  }
+  if (proposal.status === "grace") {
+    badges.push({ label: "grace", kind: "watch" });
+  }
+  if (proposal.status === "processed") {
+    badges.push({ label: "processed", kind: "ok" });
+  }
+  if (proposal.recommendedVote === "defer") {
+    badges.push({ label: "needs review", kind: "watch" });
+  }
+  return badges;
+}
+
+function daohausProposalUrl(proposal: Proposal) {
+  return `https://admin.daohaus.club/molochv3/0x2105/${proposal.daoAddress}/proposal/${proposal.proposalId}`;
+}
+
 function MemoryLink({ gatewayUrl, uri }: { gatewayUrl: string; uri: string }) {
   const href = gatewayUrl || (/^https?:\/\//.test(uri) ? uri : "");
   if (!href) return <code>{uri}</code>;
@@ -417,5 +602,25 @@ function MemoryLink({ gatewayUrl, uri }: { gatewayUrl: string; uri: string }) {
     <a href={href} rel="noreferrer" target="_blank">
       <code>{uri}</code>
     </a>
+  );
+}
+
+function HealthItem({ label, note, ready, total }: { label: string; note?: string; ready?: number; total?: number }) {
+  const complete = total === undefined || total === 0 ? Boolean(note) : ready === total;
+  return (
+    <div className={`healthItem ${complete ? "complete" : "needsWork"}`}>
+      <span>{label}</span>
+      <strong>{note || `${ready || 0}/${total || 0}`}</strong>
+    </div>
+  );
+}
+
+function StatusLine({ label, status }: { label: string; status: "pending" | "ok" | "skipped" | "failed" }) {
+  const mark = status === "ok" ? "done" : status === "failed" ? "failed" : status === "pending" ? "pending" : "skipped";
+  return (
+    <div className={`statusLine ${mark}`}>
+      <span>{label}</span>
+      <strong>{status}</strong>
+    </div>
   );
 }

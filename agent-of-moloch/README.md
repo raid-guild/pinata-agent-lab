@@ -4,6 +4,8 @@ A Pinata-ready governance template for Moloch V3/Baal DAOs.
 
 The app gives the agent a characterful surface: DAO memory, mandate ledger, proposal augury, sync watch, and next rites. Under the flavor, it stays strict about governance operations: read service-backed state, write vote memos, run live preflight, and broadcast only when mandate and harness policy allow it.
 
+The dashboard supports DAO-scoped review, memory health checks, proposal readiness badges, proposal workspace links, DAOhaus quick links, per-DAO sync, and a last-operation panel for confirming transaction plus dashboard-sync results together.
+
 ## What It Stores
 
 - DAOs with Baal address, chain id, DAOhaus route, charter, thesis, voting power, conviction, and governance mandate

@@ -158,7 +158,8 @@ h1 {
 }
 
 .featureGrid,
-.lowerGrid {
+.lowerGrid,
+.opsGrid {
   display: grid;
   gap: 14px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -169,6 +170,9 @@ h1 {
 .proposalCard,
 .daoLedger,
 .taskQueue,
+.memoryHealth,
+.operationPanel,
+.daoDetail,
 .artifactGrid,
 .artifact {
   background: rgba(255, 253, 247, 0.92);
@@ -244,7 +248,8 @@ h1 {
 }
 
 .filterStack,
-.statStack {
+.statStack,
+.daoSelect {
   display: grid;
   gap: 10px;
 }
@@ -261,6 +266,24 @@ h1 {
   font-weight: 800;
   padding: 10px;
   text-transform: capitalize;
+}
+
+.daoSelect span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.daoSelect select {
+  background: #fffaf0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  min-height: 40px;
+  padding: 9px 10px;
 }
 
 .filterStack button.active {
@@ -347,6 +370,51 @@ h1 {
   font-weight: 800;
 }
 
+.readinessLine,
+.quickActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.badge,
+.quickActions a,
+.quickActions button {
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 900;
+  padding: 6px 8px;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.badge-ok {
+  background: #edf6ef;
+  color: var(--moss);
+}
+
+.badge-warn {
+  background: #fff0eb;
+  color: var(--ember);
+}
+
+.badge-watch {
+  background: #f7edd9;
+  color: #7a5520;
+}
+
+.quickActions a,
+.quickActions button {
+  background: #fffaf0;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.quickActions button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .proposalCard footer {
   align-self: end;
   border-top: 1px solid var(--line);
@@ -357,6 +425,95 @@ h1 {
 
 .lowerGrid {
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+}
+
+.opsGrid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.memoryHealth,
+.operationPanel,
+.daoDetail {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.healthGrid,
+.operationSteps,
+.detailGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.healthGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.healthItem,
+.statusLine,
+.detailGrid > div {
+  background: #fffaf0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+}
+
+.healthItem span,
+.statusLine span,
+.detailGrid span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.healthItem strong,
+.statusLine strong {
+  color: var(--ink);
+  font-size: 1.15rem;
+}
+
+.healthItem.complete {
+  border-color: rgba(66, 111, 84, 0.35);
+}
+
+.healthItem.needsWork,
+.statusLine.failed {
+  border-color: rgba(182, 59, 37, 0.35);
+}
+
+.statusLine.done strong {
+  color: var(--moss);
+}
+
+.statusLine.failed strong {
+  color: var(--ember);
+}
+
+.statusLine.pending strong,
+.statusLine.skipped strong {
+  color: var(--muted);
+}
+
+.operationSteps p,
+.detailGrid p {
+  margin-bottom: 0;
+}
+
+.detailGrid {
+  grid-template-columns: 1.4fr 1fr 0.8fr;
+}
+
+.detailGrid code {
+  background: #f7edd9;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #4b3820;
+  overflow-wrap: anywhere;
+  padding: 7px;
 }
 
 .daoLedger article,
@@ -587,11 +744,14 @@ h1 {
 @media (max-width: 1020px) {
   .hero,
   .workspace,
-  .lowerGrid {
+  .lowerGrid,
+  .opsGrid,
+  .detailGrid {
     grid-template-columns: 1fr;
   }
 
-  .featureGrid {
+  .featureGrid,
+  .healthGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -608,7 +768,8 @@ h1 {
 
   .featureGrid,
   .filterStack,
-  .artifactStats {
+  .artifactStats,
+  .healthGrid {
     grid-template-columns: 1fr;
   }
 
