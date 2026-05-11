@@ -72,6 +72,8 @@ Useful reads:
 npm exec -- moloch-agent dao --dao 0xDAO
 npm exec -- moloch-agent proposals --dao 0xDAO --first 100
 npm exec -- moloch-agent records --dao 0xDAO --table communityMemory --first 100
+npm exec -- moloch-agent workspace-create --kind dao --dao 0xDAO --title "DAO Workspace"
+npm exec -- moloch-agent workspace-create --kind proposal --dao 0xDAO --title "Proposal Workspace"
 npm exec -- moloch-agent read-dao --dao 0xDAO
 npm exec -- moloch-agent read-proposal --dao 0xDAO --proposal 1
 npm exec -- moloch-agent proposal-lifecycle --dao 0xDAO --proposal 1
@@ -116,6 +118,16 @@ First-run setup lives in `workspace/BOOTSTRAP.md`. The bundled simple skill incl
 The manifest includes disabled recurring task examples. Enable them only after the DAO address, signer, mandate, autonomy boundaries, service/RPC access, and shared-memory location are configured. Run `workspace/BOOTSTRAP.md` once to create or locate the DAO shared memory root, fill the first `community-state.md`, create the agent mandate, sync the DAO cache, and publish memory pointers when appropriate.
 
 Shared memory is the durable coordination layer for multiple agents. Use `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI` in DAO metadata or memory records, and use the local SQLite cache only as task cache.
+
+The memory model is:
+
+- DAO-level memory comes from DAO metadata pointers: `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI`.
+- Proposal-level memory comes from proposal details `contentURI`, which the dashboard stores as `contentUri`.
+- Short coordination events and vote reasons come from DAOhaus DAO Database records.
+- `moloch-agent summon` auto-pins a DAO workspace when metadata pointers are missing.
+- Proposal commands auto-pin proposal workspaces when no explicit `--link` or `--content-uri` is supplied.
+
+After every successful summon, proposal creation, sponsor, vote, process, DAO metadata update, or memory write, the agent should rerun `/app/api/sync/dao` and report both the transaction/memory result and dashboard sync result together.
 
 New instances start without demo rows. Set `SEED_DEMO_DATA=true` only when you want local placeholder DAOs and proposals for design testing.
 

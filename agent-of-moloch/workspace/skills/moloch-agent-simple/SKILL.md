@@ -54,6 +54,8 @@ npm exec -- moloch-agent proposals --dao 0xDAO --first 100
 npm exec -- moloch-agent proposal --dao 0xDAO --proposal 1
 npm exec -- moloch-agent members --dao 0xDAO --first 100
 npm exec -- moloch-agent records --dao 0xDAO --table communityMemory --first 100
+npm exec -- moloch-agent workspace-create --kind dao --dao 0xDAO --title "DAO Workspace"
+npm exec -- moloch-agent workspace-create --kind proposal --dao 0xDAO --title "Proposal Workspace"
 npm exec -- moloch-agent read-dao --dao 0xDAO
 npm exec -- moloch-agent read-proposal --dao 0xDAO --proposal 1
 npm exec -- moloch-agent proposal-lifecycle --dao 0xDAO --proposal 1
@@ -101,11 +103,13 @@ npm exec -- moloch-agent dao-meta --dao 0xDAO \
 
 Shared memory conventions:
 
-- Short coordination goes to Poster records with `memory-post`.
-- Larger state, drafts, and proposal workspaces should be JSON or markdown pinned with `pin-json`, then referenced by URI.
-- `communityMemoryURI` is the root pointer for DAO-level shared memory.
-- `proposalWorkspaceURI` is the root pointer for proposal drafts and supporting files.
-- `sharedStateURI` is the current concise community-state document.
+- DAO-level memory is discovered from DAO metadata: `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI`.
+- Proposal-level memory is discovered from proposal `contentURI`.
+- Short coordination and event records go to DAO Database records with `memory-post`.
+- Larger state, drafts, and workspaces should be pinned by the service through `workspace-create` or automatic CLI proposal workspace creation.
+- `summon` auto-pins a starter DAO workspace when metadata pointers are missing.
+- Proposal commands auto-pin a proposal workspace when `--link` or `--content-uri` is omitted.
+- Vote reasons belong in DAO Database records linked to the proposal and workspace. Prefer `vote --reason "..."` when voting.
 
 Minimal community state fields:
 
@@ -128,12 +132,28 @@ Minimal community state fields:
 Transaction commands broadcast by default. Use `--build-only` when review or dry-run mode is intended.
 
 ```bash
-npm exec -- moloch-agent vote --dao 0xDAO --proposal 1 --approved true --build-only
+npm exec -- moloch-agent vote --dao 0xDAO --proposal 1 --approved true --reason "Mandate-aware reason." --build-only
 npm exec -- moloch-agent sponsor --dao 0xDAO --proposal 1 --build-only
 npm exec -- moloch-agent process-ready --dao 0xDAO --first 100 --build-only
 npm exec -- moloch-agent process --dao 0xDAO --proposal 1 --proposal-data 0x... --build-only
 npm exec -- moloch-agent signal --dao 0xDAO --title "Signal" --description "Body" --build-only
 npm exec -- moloch-agent mint-shares --dao 0xDAO --to 0xMEMBER --amount 1 --build-only
+```
+
+After every successful summon, proposal creation, sponsor, vote, process, DAO metadata, or memory write:
+
+1. Reread the relevant direct chain state when the action is onchain.
+2. Run `POST /app/api/sync/dao` for that DAO.
+3. Run `POST /app/api/sync/memory` after memory writes when useful.
+4. Report onchain success and dashboard sync success together.
+
+Example success report:
+
+```text
+Summon tx sent: 0x... ✅
+DAO confirmed onchain ✅
+/app/api/sync/dao completed ✅
+Dashboard updated ✅
 ```
 
 Processing is settlement after governance. Do not block processing because a proposal touches membership, shares, loot, settings, payments, or other sensitive categories. Use `process-queue` or `process-ready`; those commands use direct chain state through the configured RPC, defaulting to the public Base RPC.
@@ -154,4 +174,4 @@ For recurring work:
 4. Choose one action: vote, sponsor, process, draft, memory-post, or no action.
 5. Run live preflight with `proposal-lifecycle`, `read-proposal`, or `process-queue`.
 6. Build unsigned when policy is not explicit; send only when mandate and harness policy allow it.
-7. Reread state and post a concise memory record when useful.
+7. After any successful write, rerun the DAO sync route and report both transaction and dashboard sync results.

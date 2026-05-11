@@ -37,6 +37,8 @@ export type Proposal = {
   rationale: string;
   dueDate: string;
   txHash: string;
+  contentUri: string;
+  contentUriType: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -97,7 +99,7 @@ export type CommunityRecord = {
 };
 
 type DaoInput = Partial<Pick<Dao, "name" | "daoAddress" | "chainId" | "daohausUrl" | "communityMemoryUri" | "proposalWorkspaceUri" | "sharedStateUri" | "charter" | "thesis" | "conviction" | "platform" | "votingPower" | "status">>;
-type ProposalInput = Partial<Pick<Proposal, "daoId" | "proposalId" | "title" | "summary" | "proposalType" | "status" | "agentStance" | "confidence" | "recommendedVote" | "rationale" | "dueDate" | "txHash">>;
+type ProposalInput = Partial<Pick<Proposal, "daoId" | "proposalId" | "title" | "summary" | "proposalType" | "status" | "agentStance" | "confidence" | "recommendedVote" | "rationale" | "dueDate" | "txHash" | "contentUri" | "contentUriType">>;
 type TaskInput = Partial<Pick<GovernanceTask, "daoId" | "proposalRecordId" | "title" | "body" | "actionType" | "status" | "priority" | "dueDate">>;
 type SnapshotInput = Partial<Pick<SnapshotArtifact, "daoId" | "artifactDir" | "checkpointPath" | "operatingContextPath" | "proposalSummaryPath" | "processQueuePath" | "directStatePath" | "lastGraphProposalIdSeen" | "lastPassedProposalIdIncorporated" | "votingCount" | "needsProcessingCount" | "pendingActionCount" | "status">>;
 type CommunityRecordInput = Partial<Pick<CommunityRecord, "daoId" | "tableName" | "recordId" | "content" | "contentJson" | "contentUri" | "threadId" | "topicId" | "proposalId" | "recordType" | "createdAt">>;
@@ -165,6 +167,8 @@ function migrate(database: Database.Database) {
       rationale TEXT NOT NULL DEFAULT '',
       due_date TEXT NOT NULL DEFAULT '',
       tx_hash TEXT NOT NULL DEFAULT '',
+      content_uri TEXT NOT NULL DEFAULT '',
+      content_uri_type TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (dao_id) REFERENCES daos(id) ON DELETE CASCADE
@@ -227,6 +231,8 @@ function migrate(database: Database.Database) {
   ensureColumn(database, "daos", "community_memory_uri", "TEXT NOT NULL DEFAULT ''");
   ensureColumn(database, "daos", "proposal_workspace_uri", "TEXT NOT NULL DEFAULT ''");
   ensureColumn(database, "daos", "shared_state_uri", "TEXT NOT NULL DEFAULT ''");
+  ensureColumn(database, "proposals", "content_uri", "TEXT NOT NULL DEFAULT ''");
+  ensureColumn(database, "proposals", "content_uri_type", "TEXT NOT NULL DEFAULT ''");
 }
 
 function seed(database: Database.Database) {
@@ -454,6 +460,8 @@ export function listProposals(status?: string) {
       proposals.rationale,
       proposals.due_date as dueDate,
       proposals.tx_hash as txHash,
+      proposals.content_uri as contentUri,
+      proposals.content_uri_type as contentUriType,
       proposals.created_at as createdAt,
       proposals.updated_at as updatedAt
     FROM proposals
@@ -735,8 +743,11 @@ export function createProposal(input: ProposalInput) {
 
   const title = required(input.title, "title");
   const result = getDb().prepare(`
-    INSERT INTO proposals (dao_id, proposal_id, title, summary, proposal_type, status, agent_stance, confidence, recommended_vote, rationale, due_date, tx_hash)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO proposals (
+      dao_id, proposal_id, title, summary, proposal_type, status, agent_stance, confidence,
+      recommended_vote, rationale, due_date, tx_hash, content_uri, content_uri_type
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     daoId,
     input.proposalId?.trim() || "unknown",
@@ -749,7 +760,9 @@ export function createProposal(input: ProposalInput) {
     normalize(input.recommendedVote, votes, "defer"),
     input.rationale?.trim() ?? "",
     input.dueDate?.trim() ?? "",
-    input.txHash?.trim() ?? ""
+    input.txHash?.trim() ?? "",
+    input.contentUri?.trim() ?? "",
+    input.contentUriType?.trim() ?? ""
   );
 
   return getProposal(Number(result.lastInsertRowid));
@@ -765,7 +778,8 @@ export function updateProposal(id: number, input: ProposalInput) {
   getDb().prepare(`
     UPDATE proposals
     SET dao_id = ?, proposal_id = ?, title = ?, summary = ?, proposal_type = ?, status = ?, agent_stance = ?,
-      confidence = ?, recommended_vote = ?, rationale = ?, due_date = ?, tx_hash = ?, updated_at = CURRENT_TIMESTAMP
+      confidence = ?, recommended_vote = ?, rationale = ?, due_date = ?, tx_hash = ?, content_uri = ?,
+      content_uri_type = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `).run(
     daoId,
@@ -780,6 +794,8 @@ export function updateProposal(id: number, input: ProposalInput) {
     value(input.rationale, existing.rationale),
     value(input.dueDate, existing.dueDate),
     value(input.txHash, existing.txHash),
+    value(input.contentUri, existing.contentUri),
+    value(input.contentUriType, existing.contentUriType),
     id
   );
 

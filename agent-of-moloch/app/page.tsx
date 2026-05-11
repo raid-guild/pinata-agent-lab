@@ -31,6 +31,8 @@ type Proposal = {
   recommendedVote: string;
   rationale: string;
   dueDate: string;
+  contentUri: string;
+  contentUriType: string;
   updatedAt: string;
 };
 
@@ -129,6 +131,12 @@ export default function Home() {
     return bundle.proposals.length ? Math.round((scored / bundle.proposals.length) * 100) : 0;
   }, [bundle.proposals]);
 
+  const memoryCoverage = useMemo(() => {
+    const daoReady = bundle.daos.filter((dao) => dao.communityMemoryUri || dao.sharedStateUri || dao.proposalWorkspaceUri).length;
+    const proposalReady = bundle.proposals.filter((proposal) => proposal.contentUri).length;
+    return { daoReady, proposalReady };
+  }, [bundle.daos, bundle.proposals]);
+
   async function loadBundle(nextFilter: string) {
     const suffix = nextFilter === "all" ? "" : `?status=${nextFilter}`;
     const response = await fetch(`/app/api/governance${suffix}`, { cache: "no-store" });
@@ -223,6 +231,8 @@ export default function Home() {
             <span><strong>{bundle.stats.urgentTasks}</strong> urgent rites</span>
             <span><strong>{bundle.stats.pendingArtifactActions}</strong> queued actions</span>
             <span><strong>{bundle.stats.communityRecords}</strong> memory records</span>
+            <span><strong>{memoryCoverage.daoReady}</strong> DAO workspaces</span>
+            <span><strong>{memoryCoverage.proposalReady}</strong> proposal workspaces</span>
           </div>
         </aside>
 
@@ -235,6 +245,14 @@ export default function Home() {
               </div>
               <h2>#{proposal.proposalId} {proposal.title}</h2>
               <p>{proposal.summary}</p>
+              {proposal.contentUri ? (
+                <div className="memoryLinks proposalMemory">
+                  <span>proposal workspace</span>
+                  <code>{proposal.contentUri}</code>
+                </div>
+              ) : (
+                <div className="memoryMissing">No proposal workspace linked yet.</div>
+              )}
               <div className="voteLine">
                 <strong>{proposal.recommendedVote}</strong>
                 <span>{proposal.agentStance} / {proposal.confidence}</span>
@@ -269,12 +287,18 @@ export default function Home() {
               </div>
               <p>{dao.thesis}</p>
               <blockquote>{dao.platform}</blockquote>
-              {dao.communityMemoryUri || dao.sharedStateUri ? (
+              {dao.communityMemoryUri || dao.sharedStateUri || dao.proposalWorkspaceUri ? (
                 <div className="memoryLinks">
+                  {dao.communityMemoryUri ? <span>community memory</span> : null}
                   {dao.communityMemoryUri ? <code>{dao.communityMemoryUri}</code> : null}
+                  {dao.sharedStateUri ? <span>shared state</span> : null}
                   {dao.sharedStateUri ? <code>{dao.sharedStateUri}</code> : null}
+                  {dao.proposalWorkspaceUri ? <span>proposal workspace root</span> : null}
+                  {dao.proposalWorkspaceUri ? <code>{dao.proposalWorkspaceUri}</code> : null}
                 </div>
-              ) : null}
+              ) : (
+                <div className="memoryMissing">No DAO memory pointers synced yet.</div>
+              )}
             </article>
           ))}
         </section>

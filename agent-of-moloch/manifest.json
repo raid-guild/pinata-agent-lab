@@ -40,13 +40,13 @@
   "tasks": [
     {
       "name": "proposal-action-watcher",
-      "prompt": "Run the Proposal Action Watcher from workspace/skills/moloch-agent-simple/SKILL.md. Sync current DAO state with npm exec -- moloch-agent proposals, records, and process-queue. Read mandate, DAO database memory, and dashboard cache. Identify one next sponsor, vote, process, cancel, review, or no-action decision. Before any write, perform live preflight with proposal-lifecycle/read-proposal/process-queue. Processing is settlement and must not be blocked by proposal category. After any send, reread state, log the result, and post memory when useful.",
+      "prompt": "Run the Proposal Action Watcher from workspace/skills/moloch-agent-simple/SKILL.md. Sync current DAO state with npm exec -- moloch-agent proposals, records, and process-queue. Read mandate, DAO metadata memory pointers, proposal contentURI workspaces, DAO database memory, and dashboard cache. Identify one next sponsor, vote, process, cancel, review, or no-action decision. Before any write, perform live preflight with proposal-lifecycle/read-proposal/process-queue. Processing is settlement and must not be blocked by proposal category. After any successful send or memory write, run /app/api/sync/dao and /app/api/sync/memory when useful, then report transaction success and dashboard sync success together.",
       "schedule": "0 * * * *",
       "enabled": false
     },
     {
       "name": "proposal-generation",
-      "prompt": "Run the Proposal Generation task from workspace/skills/moloch-agent-simple/SKILL.md. Read service-backed proposal state, shared memory, mandate, and active initiative backlog. If three or more proposals are currently in voting, do not create a new proposal. Otherwise choose at most one draft/signal/membership/reward/settings proposal or no action. Pin proposal JSON with npm exec -- moloch-agent pin-json when needed, include evidence from DAO history, run live preflight, and post the workspace/submission note with memory-post when useful.",
+      "prompt": "Run the Proposal Generation task from workspace/skills/moloch-agent-simple/SKILL.md. Read service-backed proposal state, DAO metadata memory pointers, proposal contentURI workspaces, DAO database memory, mandate, and active initiative backlog. If three or more proposals are currently in voting, do not create a new proposal. Otherwise choose at most one draft/signal/membership/reward/settings proposal or no action. Let moloch-agent auto-create a proposal workspace unless an existing contentURI is provided. After any successful proposal or memory write, run /app/api/sync/dao and /app/api/sync/memory when useful, then report transaction success and dashboard sync success together.",
       "schedule": "0 */6 * * *",
       "enabled": false
     }

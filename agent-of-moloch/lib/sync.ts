@@ -195,7 +195,9 @@ function ingestProposals(daoId: number, proposals: JsonRecord[]) {
       agentStance: "watch",
       confidence: "medium",
       recommendedVote: "defer",
-      rationale: "Synced from @raidguild/meta-clawtel through moloch-service. Review mandate and live preflight before action."
+      rationale: "Synced from @raidguild/meta-clawtel through moloch-service. Review mandate and live preflight before action.",
+      contentUri: stringField(proposal, "contentURI"),
+      contentUriType: stringField(proposal, "contentURIType")
     });
   }).filter(Boolean);
 }
@@ -211,7 +213,7 @@ function ingestGraphRecord(daoId: number, tableName: string, record: JsonRecord)
     recordId,
     content: rawContent,
     contentJson: typeof content === "string" ? "" : JSON.stringify(content),
-    contentUri: stringField(contentRecord, "contentURI") || stringField(contentRecord, "uri") || stringField(record, "contentURI"),
+    contentUri: stringField(contentRecord, "contentURI") || stringField(contentRecord, "workspaceURI") || stringField(contentRecord, "stateURI") || stringField(contentRecord, "uri") || stringField(record, "contentURI"),
     threadId: stringField(contentRecord, "threadId"),
     topicId: stringField(contentRecord, "topicId"),
     proposalId: stringField(contentRecord, "proposalId"),

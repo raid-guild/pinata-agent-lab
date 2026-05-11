@@ -424,6 +424,13 @@ h1 {
   gap: 6px;
 }
 
+.memoryLinks span {
+  color: var(--ember);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .memoryLinks code {
   background: #f7edd9;
   border: 1px solid var(--line);
@@ -432,6 +439,23 @@ h1 {
   font-size: 0.78rem;
   overflow-wrap: anywhere;
   padding: 7px;
+}
+
+.proposalMemory {
+  background: #fffaf0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.memoryMissing {
+  background: #f8f1e4;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 8px;
 }
 
 .task.priority-urgent {

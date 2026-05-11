@@ -98,6 +98,8 @@ Proposal statuses: `draft`, `submitted`, `voting`, `grace`, `ready`, `processed`
 
 Recommended votes: `yes`, `no`, `abstain`, `defer`.
 
+Proposal `contentUri` is the proposal workspace pointer from DAOhaus proposal details `contentURI`. For proposals created through `moloch-agent`, this should be auto-pinned unless an explicit `--link` or `--content-uri` was supplied.
+
 ## Tasks
 
 ```http
@@ -167,9 +169,30 @@ Membership proposals require extra intent checks:
 ## Shared Memory
 
 - Local sync cache is task cache, not durable DAO memory.
-- DAO-level coordination should live in Poster records plus IPFS-pinned community memory.
-- Bootstrap should create or locate `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI`.
+- DAO-level memory is discovered from DAO metadata: `communityMemoryURI`, `proposalWorkspaceURI`, and `sharedStateURI`.
+- Proposal-level memory is discovered from proposal `contentURI`.
+- Short discussion and event records are discovered from DAOhaus DAO Database records.
+- Bootstrap should create or locate DAO metadata pointers. `moloch-agent summon` auto-pins a starter DAO workspace when pointers are missing.
+- Proposal commands auto-pin proposal workspaces when no `--link` or `--content-uri` is supplied.
 - Use `memory-post` for concise public records and `dao-meta` proposals when DAO metadata pointers need to be published or updated.
+
+After every successful summon, proposal creation, sponsor, vote, process, DAO metadata update, or memory write, run sync before reporting completion:
+
+```text
+Onchain or memory write succeeded
+POST /app/api/sync/dao completed
+POST /app/api/sync/memory completed when the write created DAO Database memory
+Dashboard updated
+```
+
+Report both sides together, for example:
+
+```text
+Summon tx sent: 0x... ✅
+DAO confirmed onchain ✅
+/app/api/sync/dao completed ✅
+Dashboard updated ✅
+```
 
 ## Scheduled Tasks
 
@@ -205,4 +228,4 @@ Keep secrets in the Pinata secrets vault. Do not write them into workspace files
 - Never recommend a vote without a mandate-aware memo.
 - Never create new proposals when 3 or more proposals are currently in voting unless the operator explicitly overrides the throttle.
 - Never print or store private keys.
-- After a write, summarize what changed and point the user back to `/app` for status.
+- After a successful write, rerun sync routes and report both onchain/memory success and dashboard sync success together.
