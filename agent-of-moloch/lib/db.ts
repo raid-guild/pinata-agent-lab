@@ -9,8 +9,11 @@ export type Dao = {
   chainId: string;
   daohausUrl: string;
   communityMemoryUri: string;
+  communityMemoryGatewayUrl: string;
   proposalWorkspaceUri: string;
+  proposalWorkspaceGatewayUrl: string;
   sharedStateUri: string;
+  sharedStateGatewayUrl: string;
   charter: string;
   thesis: string;
   conviction: string;
@@ -39,6 +42,7 @@ export type Proposal = {
   txHash: string;
   contentUri: string;
   contentUriType: string;
+  contentGatewayUrl: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -95,6 +99,7 @@ export type CommunityRecord = {
   proposalId: string;
   recordType: string;
   createdAt: string;
+  contentGatewayUrl: string;
   updatedAt: string;
 };
 
@@ -418,7 +423,7 @@ export function getGovernanceBundle(status?: string) {
 }
 
 export function listDaos() {
-  return getDb().prepare(`
+  const rows = getDb().prepare(`
     SELECT
       id,
       name,
@@ -439,6 +444,7 @@ export function listDaos() {
     FROM daos
     ORDER BY CASE status WHEN 'active' THEN 1 WHEN 'watching' THEN 2 ELSE 3 END, name ASC
   `).all() as Dao[];
+  return rows.map(withDaoGatewayLinks);
 }
 
 export function listProposals(status?: string) {
@@ -473,7 +479,8 @@ export function listProposals(status?: string) {
       proposals.updated_at DESC
   `;
 
-  return (cleanStatus ? getDb().prepare(query).all(cleanStatus) : getDb().prepare(query).all()) as Proposal[];
+  const rows = (cleanStatus ? getDb().prepare(query).all(cleanStatus) : getDb().prepare(query).all()) as Proposal[];
+  return rows.map(withProposalGatewayLinks);
 }
 
 export function listTasks(status?: string) {
@@ -558,7 +565,8 @@ export function listCommunityRecords(daoId?: number) {
     ORDER BY community_records.created_at DESC, community_records.updated_at DESC
   `;
 
-  return (daoId ? getDb().prepare(query).all(daoId) : getDb().prepare(query).all()) as CommunityRecord[];
+  const rows = (daoId ? getDb().prepare(query).all(daoId) : getDb().prepare(query).all()) as CommunityRecord[];
+  return rows.map(withCommunityRecordGatewayLinks);
 }
 
 export function upsertSnapshotArtifact(input: SnapshotInput) {
@@ -938,4 +946,41 @@ function ensureColumn(database: Database.Database, table: string, column: string
     return;
   }
   database.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+}
+
+function withDaoGatewayLinks(dao: Dao) {
+  return {
+    ...dao,
+    communityMemoryGatewayUrl: toGatewayUrl(dao.communityMemoryUri),
+    proposalWorkspaceGatewayUrl: toGatewayUrl(dao.proposalWorkspaceUri),
+    sharedStateGatewayUrl: toGatewayUrl(dao.sharedStateUri)
+  };
+}
+
+function withProposalGatewayLinks(proposal: Proposal) {
+  return {
+    ...proposal,
+    contentGatewayUrl: toGatewayUrl(proposal.contentUri)
+  };
+}
+
+function withCommunityRecordGatewayLinks(record: CommunityRecord) {
+  return {
+    ...record,
+    contentGatewayUrl: toGatewayUrl(record.contentUri)
+  };
+}
+
+function toGatewayUrl(uri: string) {
+  if (!uri) return "";
+  if (/^https?:\/\//.test(uri)) return uri;
+
+  const gateway = process.env.IPFS_GATEWAY_URL || process.env.PINATA_GATEWAY_URL || "";
+  if (!gateway) return "";
+
+  const cleanGateway = gateway.replace(/\/$/, "");
+  const gatewayBase = cleanGateway.endsWith("/ipfs") ? cleanGateway : `${cleanGateway}/ipfs`;
+  if (uri.startsWith("ipfs://")) return `${gatewayBase}/${uri.slice(7)}`;
+  if (uri.startsWith("bafy") || uri.startsWith("Qm")) return `${gatewayBase}/${uri}`;
+  return "";
 }

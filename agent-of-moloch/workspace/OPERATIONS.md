@@ -175,6 +175,7 @@ Membership proposals require extra intent checks:
 - Bootstrap should create or locate DAO metadata pointers. `moloch-agent summon` auto-pins a starter DAO workspace when pointers are missing.
 - Proposal commands auto-pin proposal workspaces when no `--link` or `--content-uri` is supplied.
 - Use `memory-post` for concise public records and `dao-meta` proposals when DAO metadata pointers need to be published or updated.
+- When `IPFS_GATEWAY_URL` or `PINATA_GATEWAY_URL` is set, `/app/api/governance` includes gateway URLs for DAO memory pointers, proposal workspaces, and DAO Database record content. The dashboard uses those links while keeping canonical `ipfs://` URI text visible.
 
 After every successful summon, proposal creation, sponsor, vote, process, DAO metadata update, or memory write, run sync before reporting completion:
 

@@ -126,6 +126,7 @@ The memory model is:
 - Short coordination events and vote reasons come from DAOhaus DAO Database records.
 - `moloch-agent summon` auto-pins a DAO workspace when metadata pointers are missing.
 - Proposal commands auto-pin proposal workspaces when no explicit `--link` or `--content-uri` is supplied.
+- When `IPFS_GATEWAY_URL` or `PINATA_GATEWAY_URL` is set, the dashboard links `ipfs://` memory pointers through that gateway while preserving the canonical URI text.
 
 After every successful summon, proposal creation, sponsor, vote, process, DAO metadata update, or memory write, the agent should rerun `/app/api/sync/dao` and report both the transaction/memory result and dashboard sync result together.
 

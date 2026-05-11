@@ -8,8 +8,11 @@ type Dao = {
   daoAddress: string;
   chainId: string;
   communityMemoryUri: string;
+  communityMemoryGatewayUrl: string;
   proposalWorkspaceUri: string;
+  proposalWorkspaceGatewayUrl: string;
   sharedStateUri: string;
+  sharedStateGatewayUrl: string;
   charter: string;
   thesis: string;
   conviction: string;
@@ -33,6 +36,7 @@ type Proposal = {
   dueDate: string;
   contentUri: string;
   contentUriType: string;
+  contentGatewayUrl: string;
   updatedAt: string;
 };
 
@@ -70,6 +74,7 @@ type CommunityRecord = {
   tableName: string;
   content: string;
   contentUri: string;
+  contentGatewayUrl: string;
   threadId: string;
   proposalId: string;
   recordType: string;
@@ -248,7 +253,7 @@ export default function Home() {
               {proposal.contentUri ? (
                 <div className="memoryLinks proposalMemory">
                   <span>proposal workspace</span>
-                  <code>{proposal.contentUri}</code>
+                  <MemoryLink gatewayUrl={proposal.contentGatewayUrl} uri={proposal.contentUri} />
                 </div>
               ) : (
                 <div className="memoryMissing">No proposal workspace linked yet.</div>
@@ -290,11 +295,11 @@ export default function Home() {
               {dao.communityMemoryUri || dao.sharedStateUri || dao.proposalWorkspaceUri ? (
                 <div className="memoryLinks">
                   {dao.communityMemoryUri ? <span>community memory</span> : null}
-                  {dao.communityMemoryUri ? <code>{dao.communityMemoryUri}</code> : null}
+                  {dao.communityMemoryUri ? <MemoryLink gatewayUrl={dao.communityMemoryGatewayUrl} uri={dao.communityMemoryUri} /> : null}
                   {dao.sharedStateUri ? <span>shared state</span> : null}
-                  {dao.sharedStateUri ? <code>{dao.sharedStateUri}</code> : null}
+                  {dao.sharedStateUri ? <MemoryLink gatewayUrl={dao.sharedStateGatewayUrl} uri={dao.sharedStateUri} /> : null}
                   {dao.proposalWorkspaceUri ? <span>proposal workspace root</span> : null}
-                  {dao.proposalWorkspaceUri ? <code>{dao.proposalWorkspaceUri}</code> : null}
+                  {dao.proposalWorkspaceUri ? <MemoryLink gatewayUrl={dao.proposalWorkspaceGatewayUrl} uri={dao.proposalWorkspaceUri} /> : null}
                 </div>
               ) : (
                 <div className="memoryMissing">No DAO memory pointers synced yet.</div>
@@ -362,7 +367,7 @@ export default function Home() {
               </div>
               <strong>{record.recordType || record.threadId || record.proposalId || "memory"}</strong>
               <p>{summarizeRecord(record)}</p>
-              {record.contentUri ? <code>{record.contentUri}</code> : null}
+              {record.contentUri ? <MemoryLink gatewayUrl={record.contentGatewayUrl} uri={record.contentUri} /> : null}
               <time>Posted {formatDate(record.createdAt)}</time>
             </article>
           ))}
@@ -403,4 +408,14 @@ function summarizeRecord(record: CommunityRecord) {
   } catch {
     return record.content.slice(0, 180) || "Synced DAO database record.";
   }
+}
+
+function MemoryLink({ gatewayUrl, uri }: { gatewayUrl: string; uri: string }) {
+  const href = gatewayUrl || (/^https?:\/\//.test(uri) ? uri : "");
+  if (!href) return <code>{uri}</code>;
+  return (
+    <a href={href} rel="noreferrer" target="_blank">
+      <code>{uri}</code>
+    </a>
+  );
 }
